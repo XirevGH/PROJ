@@ -10,6 +10,7 @@ class USpringArmComponent;
 class UCameraComponent;	
 class USkeletalMeshComponent;
 class UCharacterMovementComponent;
+class UInputMappingContext;
 
 UCLASS()
 class PROJ_API ABaseCharacter : public ACharacter
@@ -39,6 +40,9 @@ public:
 	UPROPERTY(EditAnywhere)
 	USkeletalMeshComponent* SkeletalMesh;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, category = "Enhanced Input")
+	UInputMappingContext* PlayerInputContext;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, category = "Enhanced Input")
 	UInputAction* LookAction;
 	
