@@ -4,7 +4,9 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "AbilitySystemComponent.h"
 #include "Engine/LocalPlayer.h"
+#include "GameplayAbilitySystem/GP_Dash.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
 
@@ -15,15 +17,25 @@ ABaseCharacter::ABaseCharacter()
 
 	GetCharacterMovement()->MaxWalkSpeed = 600.f;
 	GetCharacterMovement()->bOrientRotationToMovement = true;
-	
+	//SpringArm
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
 	SpringArm->SetupAttachment(RootComponent);  
 	SpringArm->TargetArmLength = 300.f;
 	SpringArm->bUsePawnControlRotation = true;
-	
+	//Camera
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
 	Camera->bUsePawnControlRotation = false;
+	//AbilitySystem
+	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystem"));
+	AbilitySystemComponent->SetIsReplicated(true);
+	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
+	
+}
+
+UAbilitySystemComponent* ABaseCharacter::GetAbilitySystemComponent() const
+{
+	return AbilitySystemComponent;
 }
 
 void ABaseCharacter::BeginPlay()
@@ -41,6 +53,28 @@ void ABaseCharacter::BeginPlay()
 	
 }
 
+void ABaseCharacter::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+
+	if (AbilitySystemComponent)
+	{
+		AbilitySystemComponent->InitAbilityActorInfo(this,this);
+		InitializeAbilities();
+	}
+}
+
+void ABaseCharacter::OnRep_PlayerState()
+{
+	Super::OnRep_PlayerState();
+	if (AbilitySystemComponent)
+	{
+		AbilitySystemComponent->InitAbilityActorInfo(this,this);
+		InitializeAbilities();
+	}
+}
+
+
 void ABaseCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
@@ -56,13 +90,27 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		EnhancedInput->BindAction(JumpAction, ETriggerEvent::Completed, this, &ABaseCharacter::StopJumping);
 		EnhancedInput->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ABaseCharacter::InputMove);
 		EnhancedInput->BindAction(LookAction, ETriggerEvent::Triggered, this, &ABaseCharacter::InputLook);
+		EnhancedInput->BindAction(DashAction, ETriggerEvent::Started, this, &ABaseCharacter::ActivateDashAbility);
 	}
 }
-
+void ABaseCharacter::InitializeAbilities()
+{
+	if (AbilitySystemComponent ) //&& HasAuthority()
+	{
+		UE_LOG(LogTemp, Display, TEXT("Component + HasAuthority"));
+		AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(UGP_Dash::StaticClass(), 1, 0));
+	}
+}
+void ABaseCharacter::ActivateDashAbility()
+{
+	if (AbilitySystemComponent)
+	{
+		AbilitySystemComponent->TryActivateAbilityByClass(UGP_Dash::StaticClass());
+	}
+}
 void ABaseCharacter::InputMove(const FInputActionValue& Value)
 {
 	FVector2D MoveAxis = Value.Get<FVector2D>();
-	UE_LOG(LogTemp, Warning, TEXT("Move Axis: %s"), *MoveAxis.ToString());
 	if (Controller)
 	{
 		const FRotator Rotation = Controller->GetControlRotation();
@@ -79,7 +127,6 @@ void ABaseCharacter::InputMove(const FInputActionValue& Value)
 }
 void ABaseCharacter::InputLook(const FInputActionValue& Value)
 {
-	UE_LOG(LogTemp, Display, TEXT("InputMove"));
 	const FVector2D LookAxisValue = Value.Get<FVector2D>();
 	if (!GetController())
 	{

@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "InputAction.h"
+#include "AbilitySystemInterface.h"
 #include "InputActionValue.h"
 #include "BaseCharacter.generated.h"
 
@@ -13,7 +14,7 @@ class UCharacterMovementComponent;
 class UInputMappingContext;
 
 UCLASS()
-class PROJ_API ABaseCharacter : public ACharacter
+class PROJ_API ABaseCharacter : public ACharacter, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
 
@@ -21,6 +22,13 @@ class PROJ_API ABaseCharacter : public ACharacter
 public:
 	ABaseCharacter();
 
+	//Ability System
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+	
+	//AbilitySystem Component
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "AbilitySystem")
+	UAbilitySystemComponent* AbilitySystemComponent;
+	
 	virtual void Tick(float DeltaTime) override;
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
@@ -52,8 +60,18 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, category = "Enhanced Input")
 	UInputAction* MoveAction;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, category = "Enhanced Input")
+	UInputAction* DashAction;
+	
 protected:
 	virtual void BeginPlay() override;
 
-	
+	virtual void PossessedBy(AController* NewController) override;
+
+	virtual void OnRep_PlayerState() override;
+
+	UFUNCTION()
+	void InitializeAbilities();
+	UFUNCTION()
+	void ActivateDashAbility();
 };
