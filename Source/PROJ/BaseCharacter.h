@@ -27,7 +27,7 @@ public:
 	/* Movement*/
 	void InputMove(const FInputActionValue& Value);
 	void InputLook(const FInputActionValue& Value);
-
+	void Jump() override;
 	UPROPERTY(VisibleAnywhere)
 	UCharacterMovementComponent* MovementComponent;
 	
