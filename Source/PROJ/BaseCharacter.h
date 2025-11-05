@@ -60,10 +60,18 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, category = "Enhanced Input")
 	UInputAction* MoveAction;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, category = "Enhanced Input")
+	UInputAction* DashAction;
+	
 protected:
 	virtual void BeginPlay() override;
 
 	virtual void PossessedBy(AController* NewController) override;
 
 	virtual void OnRep_PlayerState() override;
+
+	UFUNCTION()
+	void InitializeAbilities();
+	UFUNCTION()
+	void ActivateDashAbility();
 };
