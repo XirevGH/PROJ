@@ -3,6 +3,8 @@
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "EnhancedInputComponent.h"
+#include "EnhancedInputSubsystems.h"
+#include "Engine/LocalPlayer.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
 
@@ -27,6 +29,15 @@ ABaseCharacter::ABaseCharacter()
 void ABaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if (APlayerController* PC = Cast<APlayerController>(GetController()))
+	{
+		if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
+			ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer()))
+		{
+			Subsystem->AddMappingContext(PlayerInputContext, 0);
+		}
+	}
 	
 }
 
@@ -44,12 +55,14 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		EnhancedInput->BindAction(JumpAction, ETriggerEvent::Started, this, &ABaseCharacter::Jump);
 		EnhancedInput->BindAction(JumpAction, ETriggerEvent::Completed, this, &ABaseCharacter::StopJumping);
 		EnhancedInput->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ABaseCharacter::InputMove);
+		EnhancedInput->BindAction(LookAction, ETriggerEvent::Triggered, this, &ABaseCharacter::InputLook);
 	}
 }
 
 void ABaseCharacter::InputMove(const FInputActionValue& Value)
 {
 	FVector2D MoveAxis = Value.Get<FVector2D>();
+	UE_LOG(LogTemp, Warning, TEXT("Move Axis: %s"), *MoveAxis.ToString());
 	if (Controller)
 	{
 		const FRotator Rotation = Controller->GetControlRotation();
@@ -66,6 +79,7 @@ void ABaseCharacter::InputMove(const FInputActionValue& Value)
 }
 void ABaseCharacter::InputLook(const FInputActionValue& Value)
 {
+	UE_LOG(LogTemp, Display, TEXT("InputMove"));
 	const FVector2D LookAxisValue = Value.Get<FVector2D>();
 	if (!GetController())
 	{
@@ -75,4 +89,9 @@ void ABaseCharacter::InputLook(const FInputActionValue& Value)
 	
 	AddControllerYawInput(LookAxisValue.X * 1.f);
 	AddControllerPitchInput(LookAxisValue.Y * 1.f);
+}
+
+void ABaseCharacter::Jump()
+{
+	Super::Jump();
 }
