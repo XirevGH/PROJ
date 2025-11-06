@@ -19,6 +19,22 @@ UGP_Dash::UGP_Dash()
 	StunnedTag = FGameplayTag::RequestGameplayTag(FName("State.Stunned"));
 	CooldownTag = FGameplayTag::RequestGameplayTag(FName("Cooldown.Dash"));
 
+	static ConstructorHelpers::FClassFinder<UGameplayEffect> CooldownBPClass(
+	TEXT("/Game/GameplayAbilitySystem/GameplayEffect/GE_Cooldown.GE_Cooldown_C"));
+	if (CooldownBPClass.Succeeded())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("CooldownBPClass is found"));
+		CooldownGameplayEffect = CooldownBPClass.Class;
+	}
+	if (!CooldownGameplayEffect)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Failed to load CooldownGameplayEffect! Check the path."));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("CooldownGameplayEffect loaded successfully!"));
+	}
+
 	//Block activation om actor har stun tag.
 	BlockAbilitiesWithTag.AddTag(StunnedTag);
 }
@@ -58,11 +74,22 @@ void UGP_Dash::ActivateAbility(
 	}
 
 	// Apply cooldown effect
-	/*if (CooldownGameplayEffect)
+	if (CooldownGameplayEffect)
 	{
-		FGameplayEffectSpecHandle SpecHandle = MakeOutgoingGameplayEffectSpec(CooldownGameplayEffect, 1.f);
-		ApplyGameplayEffectSpecToOwner(Handle, ActorInfo, ActivationInfo, SpecHandle);
-	}*/
-
+		UE_LOG(LogTemp, Warning, TEXT("Applying cooldown effect..."));
+		
+		FGameplayEffectSpecHandle SpecHandle = MakeOutgoingGameplayEffectSpec(CooldownGameplayEffect, GetAbilityLevel());
+		
+		if (SpecHandle.IsValid())
+		{
+			SpecHandle.Data->SetDuration(CooldownDuration,true);
+			
+			FActiveGameplayEffectHandle HandleApplied = ActorInfo->AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+			if (HandleApplied.IsValid())
+			{
+				UE_LOG(LogTemp, Warning, TEXT("Cooldown applied successfully!"));
+			}
+		}
+	}
 	EndAbility(Handle, ActorInfo, ActivationInfo, false, false);
 }

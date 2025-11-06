@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Abilities/GameplayAbility.h"
 #include "GameplayTagContainer.h"
+#include "GameplayEffect.h"
 #include "GP_Dash.generated.h"
 
 /**
@@ -18,9 +19,16 @@ class PROJ_API UGP_Dash : public UGameplayAbility
 public:
 	UGP_Dash();
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Tags")
 	FGameplayTag DashTag;
-	FGameplayTag StunnedTag; 
-	FGameplayTag CooldownTag; 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Tags")
+	FGameplayTag StunnedTag;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Tags")
+	FGameplayTag CooldownTag;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Cooldown")
+	TSubclassOf<UGameplayEffect> CooldownGameplayEffect;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability|Cooldown")
+	float CooldownDuration = 3.0f;
 	
 	virtual void ActivateAbility(
 		const FGameplayAbilitySpecHandle Handle,

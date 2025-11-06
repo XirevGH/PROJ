@@ -58,7 +58,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, category = "Enhanced Input")
 	UInputAction* DashAction;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, category = "Gameplay ability system")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, category = "Gameplay ability system")
 	UAbilitySystemComponent* AbilitySystemComponent;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Abilities")
@@ -76,7 +76,7 @@ protected:
 	virtual void PossessedBy(AController* NewController) override;
 
 	virtual void OnRep_PlayerState() override;
-	
+
 	UFUNCTION(BlueprintCallable)
 	void ActivateDashAbility();
 };
