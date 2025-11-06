@@ -15,9 +15,9 @@ UGP_Dash::UGP_Dash()
 	NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::LocalPredicted;
 
 	// Define the tags used by this ability
-	FGameplayTag DashTag = FGameplayTag::RequestGameplayTag(FName("Ability.Movement.Dash"));
-	FGameplayTag StunnedTag = FGameplayTag::RequestGameplayTag(FName("State.Stunned"));
-	FGameplayTag CooldownTag = FGameplayTag::RequestGameplayTag(FName("Cooldown.Dash"));
+	DashTag = FGameplayTag::RequestGameplayTag(FName("Ability.Movement.Dash"));
+	StunnedTag = FGameplayTag::RequestGameplayTag(FName("State.Stunned"));
+	CooldownTag = FGameplayTag::RequestGameplayTag(FName("Cooldown.Dash"));
 
 	//Block activation om actor har stun tag.
 	BlockAbilitiesWithTag.AddTag(StunnedTag);
@@ -58,11 +58,11 @@ void UGP_Dash::ActivateAbility(
 	}
 
 	// Apply cooldown effect
-	if (CooldownGameplayEffect)
+	/*if (CooldownGameplayEffect)
 	{
 		FGameplayEffectSpecHandle SpecHandle = MakeOutgoingGameplayEffectSpec(CooldownGameplayEffect, 1.f);
 		ApplyGameplayEffectSpecToOwner(Handle, ActorInfo, ActivationInfo, SpecHandle);
-	}
+	}*/
 
 	EndAbility(Handle, ActorInfo, ActivationInfo, false, false);
 }
