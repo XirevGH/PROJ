@@ -8,6 +8,7 @@
 
 #include "BasePlayerState.generated.h"
 
+class UCharacterAttributeSet;
 class UAttributeSet;
 class UGameplayAbility;
 
@@ -34,7 +35,7 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UAbilitySystemComponent* AbilitySystemComponent;
 
-	UPROPERTY()
-	UAttributeSet* AttributeSet;
+	UPROPERTY(Transient)
+	UCharacterAttributeSet* AttributeSet;
 
 };

@@ -1,13 +1,18 @@
 
 #include "BasePlayerState.h"
 #include "AbilitySystemComponent.h"
+#include "AttributeSets/CharacterAttributeSet.h"
 
 ABasePlayerState::ABasePlayerState()
 {
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystem"));
+	AttributeSet = CreateDefaultSubobject<UCharacterAttributeSet>(TEXT("AttributeSet"));
+	
 	AbilitySystemComponent->SetIsReplicated(true);
 	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
-
+	
+	
+	
 	bReplicates = true;
 }
 
