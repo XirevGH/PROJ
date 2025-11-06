@@ -9,6 +9,7 @@
 #include "GameplayAbilitySystem/GP_Dash.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
+#include "GameplayAbilitySystem/BasePlayerState.h"
 
 
 ABaseCharacter::ABaseCharacter()
@@ -20,22 +21,15 @@ ABaseCharacter::ABaseCharacter()
 	//SpringArm
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
 	SpringArm->SetupAttachment(RootComponent);  
-	SpringArm->TargetArmLength = 300.f;
+	SpringArm->TargetArmLength = 450.f;
 	SpringArm->bUsePawnControlRotation = true;
 	//Camera
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
 	Camera->bUsePawnControlRotation = false;
-	//AbilitySystem
-	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystem"));
-	AbilitySystemComponent->SetIsReplicated(true);
-	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
-	
-}
 
-UAbilitySystemComponent* ABaseCharacter::GetAbilitySystemComponent() const
-{
-	return AbilitySystemComponent;
+	DefaultAbilities = { UGP_Dash::StaticClass() };
+	
 }
 
 void ABaseCharacter::BeginPlay()
@@ -50,30 +44,34 @@ void ABaseCharacter::BeginPlay()
 			Subsystem->AddMappingContext(PlayerInputContext, 0);
 		}
 	}
-	
 }
 
 void ABaseCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
 
-	if (AbilitySystemComponent)
+	ABasePlayerState* PS = GetPlayerState<ABasePlayerState>();
+	if (PS && PS->GetAbilitySystemComponent())
 	{
-		AbilitySystemComponent->InitAbilityActorInfo(this,this);
-		InitializeAbilities();
+		AbilitySystemComponent = PS->GetAbilitySystemComponent();
+		AbilitySystemComponent->InitAbilityActorInfo(PS,this);
+		//Loopa varje klass default abilities och ge rätt
+		PS->GiveDefaultAbilities(DefaultAbilities);
 	}
 }
 
 void ABaseCharacter::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
-	if (AbilitySystemComponent)
+	ABasePlayerState* PS = GetPlayerState<ABasePlayerState>();
+	if (PS && PS->GetAbilitySystemComponent())
 	{
-		AbilitySystemComponent->InitAbilityActorInfo(this,this);
-		InitializeAbilities();
+		AbilitySystemComponent = PS->GetAbilitySystemComponent();
+		AbilitySystemComponent->InitAbilityActorInfo(PS,this);
+		//Loopa varje klass default abilities och ge rätt
+		PS->GiveDefaultAbilities(DefaultAbilities);
 	}
 }
-
 
 void ABaseCharacter::Tick(float DeltaTime)
 {
@@ -93,21 +91,19 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		EnhancedInput->BindAction(DashAction, ETriggerEvent::Started, this, &ABaseCharacter::ActivateDashAbility);
 	}
 }
-void ABaseCharacter::InitializeAbilities()
-{
-	if (AbilitySystemComponent ) //&& HasAuthority()
-	{
-		UE_LOG(LogTemp, Display, TEXT("Component + HasAuthority"));
-		AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(UGP_Dash::StaticClass(), 1, 0));
-	}
-}
+
 void ABaseCharacter::ActivateDashAbility()
 {
 	if (AbilitySystemComponent)
 	{
 		AbilitySystemComponent->TryActivateAbilityByClass(UGP_Dash::StaticClass());
 	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("AbilitySystemComponent is null!"));
+	}
 }
+
 void ABaseCharacter::InputMove(const FInputActionValue& Value)
 {
 	FVector2D MoveAxis = Value.Get<FVector2D>();

@@ -2,11 +2,25 @@
 
 
 #include "GP_Dash.h"
+
+#include "AbilitySystemComponent.h"
+#include "GameplayTagContainer.h"
+#include "GameplayTagsManager.h"
+#include "GameplayEffect.h"
 #include "GameFramework/Character.h"
 
 UGP_Dash::UGP_Dash()
 {
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
+	NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::LocalPredicted;
+
+	// Define the tags used by this ability
+	FGameplayTag DashTag = FGameplayTag::RequestGameplayTag(FName("Ability.Movement.Dash"));
+	FGameplayTag StunnedTag = FGameplayTag::RequestGameplayTag(FName("State.Stunned"));
+	FGameplayTag CooldownTag = FGameplayTag::RequestGameplayTag(FName("Cooldown.Dash"));
+
+	//Block activation om actor har stun tag.
+	BlockAbilitiesWithTag.AddTag(StunnedTag);
 }
 
 void UGP_Dash::ActivateAbility(
@@ -15,18 +29,39 @@ void UGP_Dash::ActivateAbility(
 	const FGameplayAbilityActivationInfo ActivationInfo,
 	const FGameplayEventData* TriggerEventData)
 {
-	UE_LOG(LogTemp, Display, TEXT("Activating Dash Ability CPP"));
 	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 		return;
 	}
-
+	
+	// Check if actor is stunned
+	if (ActorInfo->AbilitySystemComponent->HasMatchingGameplayTag(StunnedTag))
+	{
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
+		return;
+	}
+	
+	// Check for cooldown
+	if (ActorInfo->AbilitySystemComponent->HasMatchingGameplayTag(CooldownTag))
+	{
+		
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
+		return;
+	}
+	// Dash logic
 	ACharacter* Character = Cast<ACharacter>(ActorInfo->AvatarActor.Get());
 	if (Character)
 	{
 		FVector DashDirection = Character->GetActorForwardVector();
 		Character->LaunchCharacter(DashDirection * 2500, true, true);
+	}
+
+	// Apply cooldown effect
+	if (CooldownGameplayEffect)
+	{
+		FGameplayEffectSpecHandle SpecHandle = MakeOutgoingGameplayEffectSpec(CooldownGameplayEffect, 1.f);
+		ApplyGameplayEffectSpecToOwner(Handle, ActorInfo, ActivationInfo, SpecHandle);
 	}
 
 	EndAbility(Handle, ActorInfo, ActivationInfo, false, false);

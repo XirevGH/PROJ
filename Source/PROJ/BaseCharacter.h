@@ -3,31 +3,26 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "InputAction.h"
-#include "AbilitySystemInterface.h"
+
 #include "InputActionValue.h"
 #include "BaseCharacter.generated.h"
 
+class UAbilitySystemComponent;
 class USpringArmComponent;
 class UCameraComponent;	
 class USkeletalMeshComponent;
 class UCharacterMovementComponent;
 class UInputMappingContext;
+class UGameplayAbility;
 
 UCLASS()
-class PROJ_API ABaseCharacter : public ACharacter, public IAbilitySystemInterface
+class PROJ_API ABaseCharacter : public ACharacter
 {
 	GENERATED_BODY()
 
 	
 public:
 	ABaseCharacter();
-
-	//Ability System
-	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
-	
-	//AbilitySystem Component
-	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "AbilitySystem")
-	UAbilitySystemComponent* AbilitySystemComponent;
 	
 	virtual void Tick(float DeltaTime) override;
 
@@ -62,16 +57,26 @@ public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, category = "Enhanced Input")
 	UInputAction* DashAction;
-	
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, category = "Gameplay ability system")
+	UAbilitySystemComponent* AbilitySystemComponent;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Abilities")
+	TArray<TSubclassOf<UGameplayAbility>> DefaultAbilities;
+	/* Exemple	*/
+	/************/
+	/* WarriorCharacter.cpp
+	AWarriorCharacter::AWarriorCharacter()
+	{
+		DefaultAbilities = { UGP_Slash::StaticClass(), UGP_ShieldBash::StaticClass() };
+	}*/
 protected:
 	virtual void BeginPlay() override;
 
 	virtual void PossessedBy(AController* NewController) override;
 
 	virtual void OnRep_PlayerState() override;
-
-	UFUNCTION()
-	void InitializeAbilities();
-	UFUNCTION()
+	
+	UFUNCTION(BlueprintCallable)
 	void ActivateDashAbility();
 };
