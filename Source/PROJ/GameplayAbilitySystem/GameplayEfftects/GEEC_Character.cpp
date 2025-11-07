@@ -1,0 +1,93 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+
+#include "GEEC_Character.h"
+#include "PROJ/GameplayAbilitySystem/AttributeSets/CharacterAttributeSet.h"
+
+struct FDamageStatics
+{
+	DECLARE_ATTRIBUTE_CAPTUREDEF(CurrentHealth)
+	DECLARE_ATTRIBUTE_CAPTUREDEF(MaxHealth)
+
+	FDamageStatics()
+	{
+		// Capture target's health
+		DEFINE_ATTRIBUTE_CAPTUREDEF(UCharacterAttributeSet, CurrentHealth, Target, false);
+		DEFINE_ATTRIBUTE_CAPTUREDEF(UCharacterAttributeSet, MaxHealth, Target, false);
+	}
+};
+
+static FDamageStatics& DamageStatics()
+{
+	static FDamageStatics Statics;
+	return Statics;
+}
+
+UGEEC_Character::UGEEC_Character()
+{
+	// Register attributes we want to capture
+	RelevantAttributesToCapture.Add(DamageStatics().CurrentHealthDef);
+	RelevantAttributesToCapture.Add(DamageStatics().MaxHealthDef);
+}
+
+void UGEEC_Character::Execute_Implementation(const FGameplayEffectCustomExecutionParameters& ExecutionParams,
+                                             FGameplayEffectCustomExecutionOutput& OutExecutionOutput) const
+{
+    Super::Execute_Implementation(ExecutionParams, OutExecutionOutput);
+	
+    UAbilitySystemComponent* TargetASC = ExecutionParams.GetTargetAbilitySystemComponent();
+    const UAbilitySystemComponent* SourceASC = ExecutionParams.GetSourceAbilitySystemComponent();
+
+    if (!TargetASC || !SourceASC)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Invalid ASC in Damage Calculation"));
+        return;
+    }
+
+    const FGameplayEffectSpec& Spec = ExecutionParams.GetOwningSpec();
+    
+    const FGameplayTagContainer* SourceTags = Spec.CapturedSourceTags.GetAggregatedTags();
+    const FGameplayTagContainer* TargetTags = Spec.CapturedTargetTags.GetAggregatedTags();
+
+    FAggregatorEvaluateParameters EvaluateParameters;
+    EvaluateParameters.SourceTags = SourceTags;
+    EvaluateParameters.TargetTags = TargetTags;
+
+    // Get damage from weapon
+    float Damage = 0.0f;
+    
+    // First try to get damage from captured attribute
+    if (!ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(DamageStatics().MaxHealthDef, EvaluateParameters, Damage))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Failed to capture weapon Damage attribute in %s"),
+        	*SourceASC->GetOwner()->GetActorNameOrLabel());
+        
+        // Fallback: Try to get damage from SetByCaller in the GameplayEffect
+      
+        
+        if (Damage <= 0.0f)
+        {
+            UE_LOG(LogTemp, Warning, TEXT("No damage value available. Using default."));
+            Damage = 10.0f; // Default fallback damage
+        }
+    }
+    float Health = 0.0f;
+    ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(DamageStatics().CurrentHealthDef, EvaluateParameters, Health);
+
+    if (Health <= 0.0f)
+    {
+       return;
+    }
+    
+    // You can add modifiers here (critical hits, buffs, etc.)
+    float FinalDamage = Damage * FMath::FRandRange(0.95f, 1.05);
+
+	UE_LOG(LogTemp, Warning, TEXT("Deal Damage by %f"), FinalDamage);
+    // Apply the damage as negative health
+    if (FinalDamage > 0.0f)
+    {
+        OutExecutionOutput.AddOutputModifier(FGameplayModifierEvaluatedData(DamageStatics().CurrentHealthProperty, 
+                                                                         EGameplayModOp::Additive, 
+                                                                         -FinalDamage));
+    }
+}

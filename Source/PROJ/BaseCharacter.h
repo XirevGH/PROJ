@@ -14,6 +14,7 @@ class USkeletalMeshComponent;
 class UCharacterMovementComponent;
 class UInputMappingContext;
 class UGameplayAbility;
+class UHealthComponent;
 
 UCLASS()
 class PROJ_API ABaseCharacter : public ACharacter
@@ -70,6 +71,10 @@ public:
 	{
 		DefaultAbilities = { UGP_Slash::StaticClass(), UGP_ShieldBash::StaticClass() };
 	}*/
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Abilities")
+	UHealthComponent* HealthComponent;
+
 protected:
 	virtual void BeginPlay() override;
 

@@ -30,6 +30,8 @@ public:
 	UFUNCTION()
 	void GiveDefaultAbilities(const TArray<TSubclassOf<UGameplayAbility>>& Abilities);
 
+	void InitializeASC(class AActor* Avatar);
+
 protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)

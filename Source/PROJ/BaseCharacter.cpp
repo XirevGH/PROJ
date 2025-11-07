@@ -5,11 +5,13 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "AbilitySystemComponent.h"
+#include "CharacterComponents/HealthComponent.h"
 #include "Engine/LocalPlayer.h"
 #include "GameplayAbilitySystem/GP_Dash.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
 #include "GameplayAbilitySystem/BasePlayerState.h"
+#include "GameplayAbilitySystem/GameplayAbilities/GA_Basic_Attack.h"
 
 
 ABaseCharacter::ABaseCharacter()
@@ -28,7 +30,9 @@ ABaseCharacter::ABaseCharacter()
 	Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
 	Camera->bUsePawnControlRotation = false;
 
-	DefaultAbilities = { UGP_Dash::StaticClass() };
+	DefaultAbilities = { UGP_Dash::StaticClass(), UGA_Basic_Attack::StaticClass() };
+
+	HealthComponent = CreateDefaultSubobject<UHealthComponent>(TEXT("HealthComponent"));
 	
 }
 
@@ -54,7 +58,7 @@ void ABaseCharacter::PossessedBy(AController* NewController)
 	if (PS && PS->GetAbilitySystemComponent())
 	{
 		AbilitySystemComponent = PS->GetAbilitySystemComponent();
-		AbilitySystemComponent->InitAbilityActorInfo(PS,this);
+		PS->InitializeASC(this);
 		//Loopa varje klass default abilities och ge rätt
 		PS->GiveDefaultAbilities(DefaultAbilities);
 	}
@@ -67,9 +71,7 @@ void ABaseCharacter::OnRep_PlayerState()
 	if (PS && PS->GetAbilitySystemComponent())
 	{
 		AbilitySystemComponent = PS->GetAbilitySystemComponent();
-		AbilitySystemComponent->InitAbilityActorInfo(PS,this);
-		//Loopa varje klass default abilities och ge rätt
-		PS->GiveDefaultAbilities(DefaultAbilities);
+		PS->InitializeASC(this);
 	}
 }
 
