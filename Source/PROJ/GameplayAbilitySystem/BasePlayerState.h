@@ -37,5 +37,6 @@ protected:
 
 	UPROPERTY(Transient)
 	UCharacterAttributeSet* AttributeSet;
+	
 
 };

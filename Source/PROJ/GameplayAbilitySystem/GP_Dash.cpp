@@ -5,9 +5,9 @@
 
 #include "AbilitySystemComponent.h"
 #include "GameplayTagContainer.h"
-#include "GameplayTagsManager.h"
 #include "GameplayEffect.h"
 #include "GameFramework/Character.h"
+#include "GEC_BaseCooldown.h"
 
 UGP_Dash::UGP_Dash()
 {
@@ -19,21 +19,7 @@ UGP_Dash::UGP_Dash()
 	StunnedTag = FGameplayTag::RequestGameplayTag(FName("State.Stunned"));
 	CooldownTag = FGameplayTag::RequestGameplayTag(FName("Cooldown.Dash"));
 
-	static ConstructorHelpers::FClassFinder<UGameplayEffect> CooldownBPClass(
-	TEXT("/Game/GameplayAbilitySystem/GameplayEffect/GE_Cooldown.GE_Cooldown_C"));
-	if (CooldownBPClass.Succeeded())
-	{
-		UE_LOG(LogTemp, Warning, TEXT("CooldownBPClass is found"));
-		CooldownGameplayEffect = CooldownBPClass.Class;
-	}
-	if (!CooldownGameplayEffect)
-	{
-		UE_LOG(LogTemp, Error, TEXT("Failed to load CooldownGameplayEffect! Check the path."));
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("CooldownGameplayEffect loaded successfully!"));
-	}
+	CooldownGameplayEffect = UGEC_BaseCooldown::StaticClass();
 
 	//Block activation om actor har stun tag.
 	BlockAbilitiesWithTag.AddTag(StunnedTag);
@@ -70,21 +56,19 @@ void UGP_Dash::ActivateAbility(
 	if (Character)
 	{
 		FVector DashDirection = Character->GetActorForwardVector();
-		Character->LaunchCharacter(DashDirection * 2500, true, true);
+		Character->LaunchCharacter(DashDirection * 1500, true, true);
 	}
 
 	// Apply cooldown effect
 	if (CooldownGameplayEffect)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Applying cooldown effect..."));
-		
 		FGameplayEffectSpecHandle SpecHandle = MakeOutgoingGameplayEffectSpec(CooldownGameplayEffect, GetAbilityLevel());
-		
 		if (SpecHandle.IsValid())
 		{
 			SpecHandle.Data->SetDuration(CooldownDuration,true);
-			
+			SpecHandle.Data->DynamicGrantedTags.AddTag(CooldownTag);
 			FActiveGameplayEffectHandle HandleApplied = ActorInfo->AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+			
 			if (HandleApplied.IsValid())
 			{
 				UE_LOG(LogTemp, Warning, TEXT("Cooldown applied successfully!"));
