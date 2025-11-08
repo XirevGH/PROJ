@@ -1,15 +1,19 @@
 
 #include "BasePlayerState.h"
 #include "AbilitySystemComponent.h"
+#include "BaseAbilitySystemComponent.h"
 #include "AttributeSets/CharacterAttributeSet.h"
 
 ABasePlayerState::ABasePlayerState()
 {
-	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystem"));
+	SetNetUpdateFrequency(100.f);
+	SetMinNetUpdateFrequency(66.f);
 	
-	AbilitySystemComponent->SetIsReplicated(true);
-	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
-	AttributeSet = CreateDefaultSubobject<UCharacterAttributeSet>(TEXT("AttributeSet"));
+	BaseAbilitySystemComponent = CreateDefaultSubobject<UBaseAbilitySystemComponent>(TEXT("AbilitySystem"));
+	BaseAbilitySystemComponent->SetIsReplicated(true);
+	BaseAbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
+	
+	BaseAttributeSet = CreateDefaultSubobject<UCharacterAttributeSet>(TEXT("AttributeSet"));
 
 	bReplicates = true;
 }
@@ -21,23 +25,33 @@ void ABasePlayerState::BeginPlay()
 
 UAbilitySystemComponent* ABasePlayerState::GetAbilitySystemComponent() const
 {
-	return AbilitySystemComponent;
+	return BaseAbilitySystemComponent;
+}
+
+UBaseAbilitySystemComponent* ABasePlayerState::GetBaseAbilitySystemComponent() const
+{
+	return BaseAbilitySystemComponent;
+}
+
+UCharacterAttributeSet* ABasePlayerState::GetCharacterAttributeSet() const
+{
+	return BaseAttributeSet;
 }
 
 void ABasePlayerState::GiveDefaultAbilities(const TArray<TSubclassOf<UGameplayAbility>>& Abilities)
 {
-	if (HasAuthority() && AbilitySystemComponent)
+	if (HasAuthority() && BaseAbilitySystemComponent)
 	{
 		for (auto& AbilityClass : Abilities)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Server: Giving %s to %s"), 
 					   *AbilityClass->GetName(), *GetName());
-			AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(AbilityClass, 1, 0, this));
+			BaseAbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(AbilityClass, 1, 0, this));
 		}
 	}
 }
 
 void ABasePlayerState::InitializeASC(class AActor* Avatar)
 {
-	AbilitySystemComponent->InitAbilityActorInfo(this, Avatar);
+	BaseAbilitySystemComponent->InitAbilityActorInfo(this, Avatar);
 }

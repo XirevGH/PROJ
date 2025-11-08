@@ -10,6 +10,7 @@
 #include "GameplayAbilitySystem/GP_Dash.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
+#include "GameplayAbilitySystem/BaseAbilitySystemComponent.h"
 #include "GameplayAbilitySystem/BasePlayerState.h"
 #include "GameplayAbilitySystem/GameplayAbilities/GA_Basic_Attack.h"
 
@@ -54,6 +55,11 @@ void ABaseCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
 
+	if (HasAuthority())
+	{
+		InitAbilityActorInfo();
+	}
+	/*
 	ABasePlayerState* PS = GetPlayerState<ABasePlayerState>();
 	if (PS && PS->GetAbilitySystemComponent())
 	{
@@ -61,24 +67,25 @@ void ABaseCharacter::PossessedBy(AController* NewController)
 		PS->InitializeASC(this);
 		//Loopa varje klass default abilities och ge rätt
 		PS->GiveDefaultAbilities(DefaultAbilities);
-	}
+	}*/
 }
 
 void ABaseCharacter::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
-	ABasePlayerState* PS = GetPlayerState<ABasePlayerState>();
+	
+	InitAbilityActorInfo();
+	/*ABasePlayerState* PS = GetPlayerState<ABasePlayerState>();
 	if (PS && PS->GetAbilitySystemComponent())
 	{
 		AbilitySystemComponent = PS->GetAbilitySystemComponent();
 		PS->InitializeASC(this);
-	}
+	}*/
 }
 
 void ABaseCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
 void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -103,6 +110,20 @@ void ABaseCharacter::ActivateDashAbility()
 	else
 	{
 		UE_LOG(LogTemp, Error, TEXT("AbilitySystemComponent is null!"));
+	}
+}
+
+void ABaseCharacter::InitAbilityActorInfo()
+{
+	if (ABasePlayerState* PS = GetPlayerState<ABasePlayerState>())
+	{
+		BaseAbilitySystemComp = PS->GetBaseAbilitySystemComponent();
+		BaseAttributes = PS->GetCharacterAttributeSet();
+
+		if (IsValid(BaseAbilitySystemComp))
+		{
+			BaseAbilitySystemComp->InitAbilityActorInfo(PS, this);
+		}
 	}
 }
 
@@ -131,7 +152,6 @@ void ABaseCharacter::InputLook(const FInputActionValue& Value)
 		UE_LOG(LogTemp, Warning, TEXT("No Controller!"));
 		return;
 	}
-	
 	AddControllerYawInput(LookAxisValue.X * 1.f);
 	AddControllerPitchInput(LookAxisValue.Y * 1.f);
 }

@@ -7,6 +7,8 @@
 #include "InputActionValue.h"
 #include "BaseCharacter.generated.h"
 
+class UBaseAbilitySystemComponent;
+class UCharacterAttributeSet;
 class UAbilitySystemComponent;
 class USpringArmComponent;
 class UCameraComponent;	
@@ -32,6 +34,7 @@ public:
 	void InputMove(const FInputActionValue& Value);
 	void InputLook(const FInputActionValue& Value);
 	void Jump() override;
+	
 	UPROPERTY(VisibleAnywhere)
 	UCharacterMovementComponent* MovementComponent;
 	
@@ -84,4 +87,12 @@ protected:
 
 	UFUNCTION(BlueprintCallable)
 	void ActivateDashAbility();
+private:
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+	TObjectPtr<UBaseAbilitySystemComponent> BaseAbilitySystemComp;
+
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+	TObjectPtr<UCharacterAttributeSet> BaseAttributes;
+
+	void InitAbilityActorInfo();
 };

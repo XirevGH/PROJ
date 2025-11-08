@@ -8,6 +8,7 @@
 
 #include "BasePlayerState.generated.h"
 
+class UBaseAbilitySystemComponent;
 class UCharacterAttributeSet;
 class UAttributeSet;
 class UGameplayAbility;
@@ -26,19 +27,26 @@ public:
 	virtual void BeginPlay() override;
 	
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+	
+	UFUNCTION(BlueprintPure)
+	UBaseAbilitySystemComponent* GetBaseAbilitySystemComponent() const;
+	
+	UFUNCTION(BlueprintPure)
+	UCharacterAttributeSet* GetCharacterAttributeSet() const;
 
 	UFUNCTION()
 	void GiveDefaultAbilities(const TArray<TSubclassOf<UGameplayAbility>>& Abilities);
 
 	void InitializeASC(class AActor* Avatar);
 
-protected:
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	UAbilitySystemComponent* AbilitySystemComponent;
+	
+private:
+	
+	UPROPERTY(BlueprintReadOnly, meta=(AllowPrivateAccess))
+	TObjectPtr<UBaseAbilitySystemComponent> BaseAbilitySystemComponent;
 
 	UPROPERTY(Transient)
-	UCharacterAttributeSet* AttributeSet;
+	UCharacterAttributeSet* BaseAttributeSet;
 	
 
 };
