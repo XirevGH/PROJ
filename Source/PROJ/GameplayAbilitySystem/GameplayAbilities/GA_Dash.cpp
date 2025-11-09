@@ -15,14 +15,14 @@ UGA_Dash::UGA_Dash()
 	NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::LocalPredicted;
 
 	// Define the tags used by this ability
-	DashTag = FGameplayTag::RequestGameplayTag(FName("Ability.Movement.Dash"));
-	StunnedTag = FGameplayTag::RequestGameplayTag(FName("State.Stunned"));
-	CooldownTag = FGameplayTag::RequestGameplayTag(FName("Cooldown.Dash"));
+	// DashTag = FGameplayTag::RequestGameplayTag(FName("Ability.Movement.Dash"));
+	// StunnedTag = FGameplayTag::RequestGameplayTag(FName("State.Stunned"));
+	// CooldownTag = FGameplayTag::RequestGameplayTag(FName("Cooldown.Dash"));
 
 	CooldownGameplayEffect = UGE_BaseCooldown::StaticClass();
 
 	//Block activation om actor har stun tag.
-	BlockAbilitiesWithTag.AddTag(StunnedTag);
+	// BlockAbilitiesWithTag.AddTag(StunnedTag);
 }
 
 void UGA_Dash::ActivateAbility(
@@ -38,19 +38,19 @@ void UGA_Dash::ActivateAbility(
 	}
 	
 	// Check if actor is stunned
-	if (ActorInfo->AbilitySystemComponent->HasMatchingGameplayTag(StunnedTag))
-	{
-		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
-		return;
-	}
-	
-	// Check for cooldown
-	if (ActorInfo->AbilitySystemComponent->HasMatchingGameplayTag(CooldownTag))
-	{
-		
-		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
-		return;
-	}
+	// if (ActorInfo->AbilitySystemComponent->HasMatchingGameplayTag(StunnedTag))
+	// {
+	// 	EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
+	// 	return;
+	// }
+	//
+	// // Check for cooldown
+	// if (ActorInfo->AbilitySystemComponent->HasMatchingGameplayTag(CooldownTag))
+	// {
+	// 	
+	// 	EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
+	// 	return;
+	// }
 	// Dash logic
 	ACharacter* Character = Cast<ACharacter>(ActorInfo->AvatarActor.Get());
 	if (Character)
@@ -66,7 +66,7 @@ void UGA_Dash::ActivateAbility(
 		if (SpecHandle.IsValid())
 		{
 			SpecHandle.Data->SetDuration(CooldownDuration,true);
-			SpecHandle.Data->DynamicGrantedTags.AddTag(CooldownTag);
+			// SpecHandle.Data->DynamicGrantedTags.AddTag(CooldownTag);
 			FActiveGameplayEffectHandle HandleApplied = ActorInfo->AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
 			
 			if (HandleApplied.IsValid())

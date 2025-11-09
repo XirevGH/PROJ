@@ -20,14 +20,14 @@ class PROJ_API UGA_Dash : public UBaseGameplayAbility
 public:
 	UGA_Dash();
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Tags")
-	FGameplayTag DashTag;
-	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Tags")
-	FGameplayTag StunnedTag;
-	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Tags")
-	FGameplayTag CooldownTag;
+	// UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Tags")
+	// FGameplayTag DashTag;
+	//
+	// UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Tags")
+	// FGameplayTag StunnedTag;
+	//
+	// UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Tags")
+	// FGameplayTag CooldownTag;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Cooldown")
 	TSubclassOf<UGE_BaseCooldown> CooldownGameplayEffect;
