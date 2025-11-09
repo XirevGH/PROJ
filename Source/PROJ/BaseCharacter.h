@@ -109,5 +109,5 @@ private:
 	void BindCallbacksToDependencies();
 
 	UFUNCTION(BlueprintCallable)
-	void BroadcastIntialValues();
+	void BroadcastInitialValues();
 };

@@ -59,29 +59,15 @@ void ABaseCharacter::PossessedBy(AController* NewController)
 	if (HasAuthority())
 	{
 		InitAbilityActorInfo();
-	}
-	/*
-	ABasePlayerState* PS = GetPlayerState<ABasePlayerState>();
-	if (PS && PS->GetAbilitySystemComponent())
-	{
-		AbilitySystemComponent = PS->GetAbilitySystemComponent();
-		PS->InitializeASC(this);
-		//Loopa varje klass default abilities och ge rätt
+		ABasePlayerState* PS = GetPlayerState<ABasePlayerState>();
 		PS->GiveDefaultAbilities(DefaultAbilities);
-	}*/
+	}
 }
 
 void ABaseCharacter::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
-	
 	InitAbilityActorInfo();
-	/*ABasePlayerState* PS = GetPlayerState<ABasePlayerState>();
-	if (PS && PS->GetAbilitySystemComponent())
-	{
-		AbilitySystemComponent = PS->GetAbilitySystemComponent();
-		PS->InitializeASC(this);
-	}*/
 }
 
 void ABaseCharacter::Tick(float DeltaTime)
@@ -104,9 +90,9 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 
 void ABaseCharacter::ActivateDashAbility()
 {
-	if (AbilitySystemComponent)
+	if (BaseAbilitySystemComp)
 	{
-		AbilitySystemComponent->TryActivateAbilityByClass(UGP_Dash::StaticClass());
+		BaseAbilitySystemComp->TryActivateAbilityByClass(UGP_Dash::StaticClass());
 	}
 	else
 	{
@@ -168,7 +154,7 @@ void ABaseCharacter::BindCallbacksToDependencies()
 	}
 }
 
-void ABaseCharacter::BroadcastIntialValues()
+void ABaseCharacter::BroadcastInitialValues()
 {
 	if (IsValid(BaseAttributes))
 	{
