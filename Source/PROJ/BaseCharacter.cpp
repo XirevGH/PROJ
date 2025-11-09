@@ -12,6 +12,7 @@
 #include "GameFramework/Controller.h"
 #include "GameplayAbilitySystem/BaseAbilitySystemComponent.h"
 #include "GameplayAbilitySystem/BasePlayerState.h"
+#include "GameplayAbilitySystem/AttributeSets/CharacterAttributeSet.h"
 #include "GameplayAbilitySystem/GameplayAbilities/GA_Basic_Attack.h"
 #include "Library/BaseAbilitySystemLibrary.h"
 
@@ -123,6 +124,7 @@ void ABaseCharacter::InitAbilityActorInfo()
 		if (IsValid(BaseAbilitySystemComp))
 		{
 			BaseAbilitySystemComp->InitAbilityActorInfo(PS, this);
+			BindCallbacksToDependencies();
 
 			if (HasAuthority())
 			{
@@ -151,6 +153,39 @@ void ABaseCharacter::InitClassDefaults()
 		}
 	}
 }
+
+void ABaseCharacter::BindCallbacksToDependencies()
+{
+	if (IsValid(BaseAbilitySystemComp) && IsValid(BaseAttributes))
+	{
+		BaseAbilitySystemComp->GetGameplayAttributeValueChangeDelegate(
+			BaseAttributes->GetCurrentHealthAttribute()).
+			AddUObject(this, &ABaseCharacter::HandleHealthChanged);
+		
+		BaseAbilitySystemComp->GetGameplayAttributeValueChangeDelegate(
+			BaseAttributes->GetManaAttribute()).
+			AddUObject(this, &ABaseCharacter::HandleManaChanged);
+	}
+}
+
+void ABaseCharacter::BroadcastIntialValues()
+{
+	if (IsValid(BaseAttributes))
+	{
+		OnHealthChanged(BaseAttributes->GetCurrentHealth(), BaseAttributes->GetMaxHealth());
+		OnManaChanged(BaseAttributes->GetMana(), BaseAttributes->GetMaxMana());
+	}
+}
+void ABaseCharacter::HandleHealthChanged(const FOnAttributeChangeData& Data)
+{
+	OnHealthChanged(Data.NewValue, BaseAttributes->GetMaxHealth());
+}
+
+void ABaseCharacter::HandleManaChanged(const FOnAttributeChangeData& Data)
+{
+	OnManaChanged(Data.NewValue, BaseAttributes->GetMaxMana());
+}
+
 
 void ABaseCharacter::InputMove(const FInputActionValue& Value)
 {
@@ -185,3 +220,5 @@ void ABaseCharacter::Jump()
 {
 	Super::Jump();
 }
+
+

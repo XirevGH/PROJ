@@ -27,25 +27,31 @@ public:
 	
 	UPROPERTY(BlueprintReadOnly, Category = "Attribute", ReplicatedUsing = OnRep_MaxHealth)
 	FGameplayAttributeData MaxHealth;
-	ATTRIBUTE_ACCESSORS_BASIC(UCharacterAttributeSet, MaxHealth)
+	ATTRIBUTE_ACCESSORS(UCharacterAttributeSet, MaxHealth)
 
 	UPROPERTY(BlueprintReadOnly, Category = "Attribute", ReplicatedUsing = OnRep_CurrentHealth)
 	FGameplayAttributeData CurrentHealth;
-	ATTRIBUTE_ACCESSORS_BASIC(UCharacterAttributeSet, CurrentHealth)
+	ATTRIBUTE_ACCESSORS(UCharacterAttributeSet, CurrentHealth)
 	
-	UFUNCTION()
-	void OnRep_MaxHealth(const FGameplayAttributeData& OldValue) const
-	{
-		GAMEPLAYATTRIBUTE_REPNOTIFY(UCharacterAttributeSet, MaxHealth, OldValue);
-	};
 
-	UFUNCTION()
-	void OnRep_CurrentHealth(const FGameplayAttributeData& OldValue) const
-	{
-		GAMEPLAYATTRIBUTE_REPNOTIFY(UCharacterAttributeSet, CurrentHealth, OldValue);
-	};
+	UPROPERTY(BlueprintReadOnly, Category = "Attribute", ReplicatedUsing = OnRep_MaxMana)
+	FGameplayAttributeData MaxMana;
+	ATTRIBUTE_ACCESSORS(UCharacterAttributeSet, MaxMana)
 
+	UPROPERTY(BlueprintReadOnly, Category = "Attribute", ReplicatedUsing = OnRep_Mana)
+	FGameplayAttributeData Mana;
+	ATTRIBUTE_ACCESSORS(UCharacterAttributeSet, Mana)
+	
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data) override;
 	
+	UFUNCTION()
+	void OnRep_MaxHealth(const FGameplayAttributeData& OldValue) const;
+	UFUNCTION()
+	void OnRep_CurrentHealth(const FGameplayAttributeData& OldValue) const;
+
+	UFUNCTION()
+	void OnRep_MaxMana(const FGameplayAttributeData& OldValue) const;
+	UFUNCTION()
+	void OnRep_Mana(const FGameplayAttributeData& OldValue) const;
 };

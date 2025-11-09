@@ -8,6 +8,7 @@
 #include "InputActionValue.h"
 #include "BaseCharacter.generated.h"
 
+struct FOnAttributeChangeData;
 class UBaseAbilitySystemComponent;
 class UCharacterAttributeSet;
 class UAbilitySystemComponent;
@@ -35,6 +36,14 @@ public:
 	void InputMove(const FInputActionValue& Value);
 	void InputLook(const FInputActionValue& Value);
 	void Jump() override;
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnHealthChanged(float CurrentHealth, float MaxHealth);
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnManaChanged(float CurrentMana, float MaxMana);
+
+	void HandleHealthChanged(const FOnAttributeChangeData& Data);
+	void HandleManaChanged(const FOnAttributeChangeData& Data);
 	
 	UPROPERTY(VisibleAnywhere)
 	UCharacterMovementComponent* MovementComponent;
@@ -97,4 +106,8 @@ private:
 	
 	void InitAbilityActorInfo();
 	void InitClassDefaults();
+	void BindCallbacksToDependencies();
+
+	UFUNCTION(BlueprintCallable)
+	void BroadcastIntialValues();
 };
