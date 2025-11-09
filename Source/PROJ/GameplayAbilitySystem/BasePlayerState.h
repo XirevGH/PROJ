@@ -48,5 +48,4 @@ private:
 	UPROPERTY(Transient)
 	UCharacterAttributeSet* BaseAttributeSet;
 	
-
 };

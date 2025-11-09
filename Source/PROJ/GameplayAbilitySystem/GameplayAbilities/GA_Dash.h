@@ -3,34 +3,34 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Abilities/GameplayAbility.h"
+#include "BaseGameplayAbility.h"
 #include "GameplayTagContainer.h"
 #include "GameplayEffect.h"
-#include "GP_Dash.generated.h"
+#include "GA_Dash.generated.h"
 
-class UGEC_BaseCooldown;
+class UGE_BaseCooldown;
 /**
  * 
  */
 UCLASS()
-class PROJ_API UGP_Dash : public UGameplayAbility
+class PROJ_API UGA_Dash : public UBaseGameplayAbility
 {
 	GENERATED_BODY()
 	
 public:
-	UGP_Dash();
+	UGA_Dash();
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Tags")
-	FGameplayTag DashTag;
-	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Tags")
-	FGameplayTag StunnedTag;
-	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Tags")
-	FGameplayTag CooldownTag;
+	// UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Tags")
+	// FGameplayTag DashTag;
+	//
+	// UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Tags")
+	// FGameplayTag StunnedTag;
+	//
+	// UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Tags")
+	// FGameplayTag CooldownTag;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Cooldown")
-	TSubclassOf<UGEC_BaseCooldown> CooldownGameplayEffect;
+	TSubclassOf<UGE_BaseCooldown> CooldownGameplayEffect;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability|Cooldown")
 	float CooldownDuration = 3.0f;

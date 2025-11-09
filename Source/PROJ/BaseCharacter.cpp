@@ -7,7 +7,6 @@
 #include "AbilitySystemComponent.h"
 #include "Data/CharacterClassInfo.h"
 #include "Engine/LocalPlayer.h"
-#include "GameplayAbilitySystem/GP_Dash.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
 #include "GameplayAbilitySystem/BaseAbilitySystemComponent.h"
@@ -15,6 +14,8 @@
 #include "GameplayAbilitySystem/AttributeSets/CharacterAttributeSet.h"
 #include "GameplayAbilitySystem/GameplayAbilities/GA_Basic_Attack.h"
 #include "Library/BaseAbilitySystemLibrary.h"
+#include "./PROJ.h"
+#include "./PROJ/GameplayAbilitySystem/GameplayAbilities/BaseGameplayAbility.h"
 
 
 ABaseCharacter::ABaseCharacter()
@@ -32,9 +33,6 @@ ABaseCharacter::ABaseCharacter()
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
 	Camera->bUsePawnControlRotation = false;
-
-	DefaultAbilities = { UGP_Dash::StaticClass(), UGA_Basic_Attack::StaticClass() };
-
 	
 }
 
@@ -50,24 +48,123 @@ void ABaseCharacter::BeginPlay()
 			Subsystem->AddMappingContext(PlayerInputContext, 0);
 		}
 	}
+
+	ABasePlayerState* PS = GetPlayerState<ABasePlayerState>();
+	if (!PS)
+		return;
+	UCharacterAttributeSet* AttributeSet = PS->AttributeSet;
+
+	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetCurrentHealthAttribute()).AddUObject(this, &ABaseCharacter::OnHealthAttributeChanged);
+}
+
+UAbilitySystemComponent* ABaseCharacter::GetAbilitySystemComponent() const
+{
+	return AbilitySystemComponent.Get();
+}
+
+void ABaseCharacter::InitAbilitySystemComponent()
+{
+	ABasePlayerState* PS = GetPlayerState<ABasePlayerState>();
+	if (!PS)
+		return;
+	AbilitySystemComponent = PS->GetAbilitySystemComponent();
+	if (!AbilitySystemComponent.IsValid())
+		return;
+	AbilitySystemComponent->InitAbilityActorInfo(PS, this);
 }
 
 void ABaseCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
-
+	InitAbilitySystemComponent();
+	
+	InitializeEffects();
 	if (HasAuthority())
 	{
 		InitAbilityActorInfo();
 		ABasePlayerState* PS = GetPlayerState<ABasePlayerState>();
 		PS->GiveDefaultAbilities(DefaultAbilities);
 	}
+	InitAbilitySystemComponent();
+	
+	InitializeEffects();
 }
 
 void ABaseCharacter::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
+	
 	InitAbilityActorInfo();
+	InitAbilitySystemComponent();
+
+	InitializeEffects();
+}
+
+void ABaseCharacter::OnHealthAttributeChanged(const FOnAttributeChangeData& Data)
+{
+	OnHealthChanged(Data.OldValue, Data.NewValue);
+}
+
+void ABaseCharacter::OnPrimaryAbility(const FInputActionValue& Value)
+{
+	SendAbilityLocalInput(Value, static_cast<int32>(EAbilityInputID::PrimaryAbility));
+}
+
+void ABaseCharacter::OnSecondaryAbility(const FInputActionValue& Value)
+{
+	SendAbilityLocalInput(Value, static_cast<int32>(EAbilityInputID::SecondaryAbility));
+}
+
+void ABaseCharacter::OnMovementAbility(const FInputActionValue& Value)
+{
+	SendAbilityLocalInput(Value, static_cast<int32>(EAbilityInputID::MovementAbility));
+}
+
+void ABaseCharacter::OnUtilityAbility(const FInputActionValue& Value)
+{
+	SendAbilityLocalInput(Value, static_cast<int32>(EAbilityInputID::UtilityAbility));
+}
+
+void ABaseCharacter::SendAbilityLocalInput(const FInputActionValue& Value, int32 InputID)
+{
+	if (!AbilitySystemComponent.IsValid())
+		return;
+	
+	if (Value.Get<bool>())
+	{
+		AbilitySystemComponent->AbilityLocalInputPressed(InputID);
+	}
+	else
+	{
+		AbilitySystemComponent->AbilityLocalInputReleased(InputID);
+	}
+}
+
+void ABaseCharacter::InitializeEffects()
+{
+	if (!AbilitySystemComponent.IsValid())
+		return;
+	FGameplayEffectContextHandle EffectContext = AbilitySystemComponent->MakeEffectContext();
+	EffectContext.AddSourceObject(this);
+
+	for (TSubclassOf<UGameplayEffect>& Effect : DefaultEffects)
+	{
+		FGameplayEffectSpecHandle SpecHandle = AbilitySystemComponent->MakeOutgoingSpec(Effect, 1, EffectContext);
+		if (SpecHandle.IsValid())
+		{
+			FActiveGameplayEffectHandle GEHandle = AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+		}
+	}
+}
+
+void ABaseCharacter::InitializeAbilities()
+{
+	if (!HasAuthority() || !AbilitySystemComponent.IsValid())
+		return;
+	for (TSubclassOf<UBaseGameplayAbility>& Ability : DefaultAbilities)
+	{
+		FGameplayAbilitySpecHandle SpecHandle = AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(Ability, 1, static_cast<int32>(Ability.GetDefaultObject()->AbilityInputID), this));
+	}
 }
 
 void ABaseCharacter::Tick(float DeltaTime)
@@ -84,21 +181,14 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		EnhancedInput->BindAction(JumpAction, ETriggerEvent::Completed, this, &ABaseCharacter::StopJumping);
 		EnhancedInput->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ABaseCharacter::InputMove);
 		EnhancedInput->BindAction(LookAction, ETriggerEvent::Triggered, this, &ABaseCharacter::InputLook);
-		EnhancedInput->BindAction(DashAction, ETriggerEvent::Started, this, &ABaseCharacter::ActivateDashAbility);
+
+		EnhancedInput->BindAction(PrimaryAbilityAction, ETriggerEvent::Triggered, this, &ABaseCharacter::OnPrimaryAbility);
+		EnhancedInput->BindAction(SecondaryAbilityAction, ETriggerEvent::Triggered, this, &ABaseCharacter::OnSecondaryAbility);
+		EnhancedInput->BindAction(MovementAbilityAction, ETriggerEvent::Triggered, this, &ABaseCharacter::OnMovementAbility);
+		EnhancedInput->BindAction(UtilityAbilityAction, ETriggerEvent::Triggered, this, &ABaseCharacter::OnUtilityAbility);
 	}
 }
 
-void ABaseCharacter::ActivateDashAbility()
-{
-	if (BaseAbilitySystemComp)
-	{
-		BaseAbilitySystemComp->TryActivateAbilityByClass(UGP_Dash::StaticClass());
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("AbilitySystemComponent is null!"));
-	}
-}
 
 void ABaseCharacter::InitAbilityActorInfo()
 {

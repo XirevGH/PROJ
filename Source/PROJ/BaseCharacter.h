@@ -4,8 +4,9 @@
 #include "GameplayTagContainer.h"
 #include "GameFramework/Character.h"
 #include "InputAction.h"
-
+#include "AbilitySystemInterface.h"
 #include "InputActionValue.h"
+#include "GameplayAbilitySystem/AttributeSets/CharacterAttributeSet.h"
 #include "BaseCharacter.generated.h"
 
 struct FOnAttributeChangeData;
@@ -21,7 +22,7 @@ class UGameplayAbility;
 class UHealthComponent;
 
 UCLASS()
-class PROJ_API ABaseCharacter : public ACharacter
+class PROJ_API ABaseCharacter : public ACharacter, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
 
@@ -37,9 +38,9 @@ public:
 	void InputLook(const FInputActionValue& Value);
 	void Jump() override;
 
-	UFUNCTION(BlueprintImplementableEvent)
+	UFUNCTION(BlueprintImplementableEvent, Category = "GAS")
 	void OnHealthChanged(float CurrentHealth, float MaxHealth);
-	UFUNCTION(BlueprintImplementableEvent)
+	UFUNCTION(BlueprintImplementableEvent, Category = "GAS")
 	void OnManaChanged(float CurrentMana, float MaxMana);
 
 	void HandleHealthChanged(const FOnAttributeChangeData& Data);
@@ -72,11 +73,23 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, category = "Enhanced Input")
 	UInputAction* DashAction;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, category = "Gameplay ability system")
-	UAbilitySystemComponent* AbilitySystemComponent;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, category = "Enhanced Input")
+	UInputAction* PrimaryAbilityAction;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Abilities")
-	TArray<TSubclassOf<UGameplayAbility>> DefaultAbilities;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, category = "Enhanced Input")
+	UInputAction* SecondaryAbilityAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, category = "Enhanced Input")
+	UInputAction* MovementAbilityAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, category = "Enhanced Input")
+	UInputAction* UtilityAbilityAction;
+
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "GAS")
+	TArray<TSubclassOf<class UGameplayEffect>> DefaultEffects;
+	
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "GAS")
+	TArray<TSubclassOf<class UBaseGameplayAbility>> DefaultAbilities;
 	/* Exemple	*/
 	/************/
 	/* WarriorCharacter.cpp
@@ -87,14 +100,33 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+
+	void InitAbilitySystemComponent();
 
 	virtual void PossessedBy(AController* NewController) override;
-
 	virtual void OnRep_PlayerState() override;
+	
+	
 
-	UFUNCTION(BlueprintCallable)
-	void ActivateDashAbility();
+
+protected:
+	virtual void OnHealthAttributeChanged(const FOnAttributeChangeData& Data);
+	
+	void OnPrimaryAbility(const FInputActionValue& Value);
+	void OnSecondaryAbility(const FInputActionValue& Value);
+	void OnMovementAbility(const FInputActionValue& Value);
+	void OnUtilityAbility(const FInputActionValue& Value);
+
+	void SendAbilityLocalInput(const FInputActionValue& Value, int32 InputID);
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, category = "GAS")
+	TWeakObjectPtr<class UAbilitySystemComponent> AbilitySystemComponent;
 private:
+	void InitializeEffects();
+	void InitializeAbilities();
+
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = true))
 	TObjectPtr<UBaseAbilitySystemComponent> BaseAbilitySystemComp;
 
@@ -111,3 +143,5 @@ private:
 	UFUNCTION(BlueprintCallable)
 	void BroadcastInitialValues();
 };
+
+
