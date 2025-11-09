@@ -32,13 +32,12 @@ public:
 
 	void InitializeASC(class AActor* Avatar);
 
+	UPROPERTY(Transient)
+	UCharacterAttributeSet* AttributeSet;
+	
 protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UAbilitySystemComponent* AbilitySystemComponent;
-
-	UPROPERTY(Transient)
-	UCharacterAttributeSet* AttributeSet;
 	
-
 };

@@ -10,7 +10,7 @@ ABasePlayerState::ABasePlayerState()
 	AbilitySystemComponent->SetIsReplicated(true);
 	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
 	AttributeSet = CreateDefaultSubobject<UCharacterAttributeSet>(TEXT("AttributeSet"));
-
+	//Add update net frequency?
 	bReplicates = true;
 }
 

@@ -1,15 +1,15 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "GP_Dash.h"
+#include "GA_Dash.h"
 
 #include "AbilitySystemComponent.h"
 #include "GameplayTagContainer.h"
 #include "GameplayEffect.h"
 #include "GameFramework/Character.h"
-#include "GEC_BaseCooldown.h"
+#include "../GameplayEffects/GE_BaseCooldown.h"
 
-UGP_Dash::UGP_Dash()
+UGA_Dash::UGA_Dash()
 {
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
 	NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::LocalPredicted;
@@ -19,13 +19,13 @@ UGP_Dash::UGP_Dash()
 	StunnedTag = FGameplayTag::RequestGameplayTag(FName("State.Stunned"));
 	CooldownTag = FGameplayTag::RequestGameplayTag(FName("Cooldown.Dash"));
 
-	CooldownGameplayEffect = UGEC_BaseCooldown::StaticClass();
+	CooldownGameplayEffect = UGE_BaseCooldown::StaticClass();
 
 	//Block activation om actor har stun tag.
 	BlockAbilitiesWithTag.AddTag(StunnedTag);
 }
 
-void UGP_Dash::ActivateAbility(
+void UGA_Dash::ActivateAbility(
 	const FGameplayAbilitySpecHandle Handle,
 	const FGameplayAbilityActorInfo* ActorInfo,
 	const FGameplayAbilityActivationInfo ActivationInfo,
