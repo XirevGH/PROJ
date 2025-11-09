@@ -42,9 +42,6 @@ public:
 	void OnHealthChanged(float CurrentHealth, float MaxHealth);
 	UFUNCTION(BlueprintImplementableEvent, Category = "GAS")
 	void OnManaChanged(float CurrentMana, float MaxMana);
-
-	void HandleHealthChanged(const FOnAttributeChangeData& Data);
-	void HandleManaChanged(const FOnAttributeChangeData& Data);
 	
 	UPROPERTY(VisibleAnywhere)
 	UCharacterMovementComponent* MovementComponent;
@@ -90,41 +87,31 @@ public:
 	
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "GAS")
 	TArray<TSubclassOf<class UBaseGameplayAbility>> DefaultAbilities;
-	/* Exemple	*/
-	/************/
-	/* WarriorCharacter.cpp
-	AWarriorCharacter::AWarriorCharacter()
-	{
-		DefaultAbilities = { UGP_Slash::StaticClass(), UGP_ShieldBash::StaticClass() };
-	}*/
 
 protected:
 	virtual void BeginPlay() override;
-	
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+	
 
 	void InitAbilitySystemComponent();
 
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void OnRep_PlayerState() override;
 	
-	
-
-
-protected:
 	virtual void OnHealthAttributeChanged(const FOnAttributeChangeData& Data);
+	virtual void OnManaAttributeChanged(const FOnAttributeChangeData& Data);
 	
 	void OnPrimaryAbility(const FInputActionValue& Value);
 	void OnSecondaryAbility(const FInputActionValue& Value);
 	void OnMovementAbility(const FInputActionValue& Value);
 	void OnUtilityAbility(const FInputActionValue& Value);
 
-	void SendAbilityLocalInput(const FInputActionValue& Value, int32 InputID);
+	void SendAbilityLocalInput(const FInputActionValue& Value, int32 InputID) const;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, category = "GAS")
 	TWeakObjectPtr<class UAbilitySystemComponent> AbilitySystemComponent;
 private:
-	void InitializeEffects();
+	//void InitializeEffects();
 	void InitializeAbilities();
 
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = true))
@@ -137,7 +124,7 @@ private:
 	FGameplayTag CharacterTag;
 	
 	void InitAbilityActorInfo();
-	void InitClassDefaults();
+	void InitClassDefaults() const;
 	void BindCallbacksToDependencies();
 
 	UFUNCTION(BlueprintCallable)

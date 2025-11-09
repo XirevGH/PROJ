@@ -12,7 +12,6 @@
 #include "GameplayAbilitySystem/BaseAbilitySystemComponent.h"
 #include "GameplayAbilitySystem/BasePlayerState.h"
 #include "GameplayAbilitySystem/AttributeSets/CharacterAttributeSet.h"
-#include "GameplayAbilitySystem/GameplayAbilities/GA_Basic_Attack.h"
 #include "Library/BaseAbilitySystemLibrary.h"
 #include "./PROJ.h"
 #include "./PROJ/GameplayAbilitySystem/GameplayAbilities/BaseGameplayAbility.h"
@@ -48,18 +47,11 @@ void ABaseCharacter::BeginPlay()
 			Subsystem->AddMappingContext(PlayerInputContext, 0);
 		}
 	}
-
-	ABasePlayerState* PS = GetPlayerState<ABasePlayerState>();
-	if (!PS)
-		return;
-	UCharacterAttributeSet* AttributeSet = PS->AttributeSet;
-
-	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetCurrentHealthAttribute()).AddUObject(this, &ABaseCharacter::OnHealthAttributeChanged);
 }
 
 UAbilitySystemComponent* ABaseCharacter::GetAbilitySystemComponent() const
 {
-	return AbilitySystemComponent.Get();
+	return BaseAbilitySystemComp;
 }
 
 void ABaseCharacter::InitAbilitySystemComponent()
@@ -76,33 +68,28 @@ void ABaseCharacter::InitAbilitySystemComponent()
 void ABaseCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
-	InitAbilitySystemComponent();
 	
-	InitializeEffects();
-	if (HasAuthority())
-	{
-		InitAbilityActorInfo();
-		ABasePlayerState* PS = GetPlayerState<ABasePlayerState>();
-		PS->GiveDefaultAbilities(DefaultAbilities);
-	}
 	InitAbilitySystemComponent();
-	
-	InitializeEffects();
+	InitAbilityActorInfo();
+	InitializeAbilities();
 }
 
 void ABaseCharacter::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
 	
-	InitAbilityActorInfo();
 	InitAbilitySystemComponent();
-
-	InitializeEffects();
+	InitAbilityActorInfo();
 }
 
 void ABaseCharacter::OnHealthAttributeChanged(const FOnAttributeChangeData& Data)
 {
-	OnHealthChanged(Data.OldValue, Data.NewValue);
+	OnHealthChanged(Data.OldValue, BaseAttributes->GetMaxHealth());
+}
+
+void ABaseCharacter::OnManaAttributeChanged(const FOnAttributeChangeData& Data)
+{
+	OnManaChanged(Data.OldValue, BaseAttributes->GetMaxMana());
 }
 
 void ABaseCharacter::OnPrimaryAbility(const FInputActionValue& Value)
@@ -125,7 +112,7 @@ void ABaseCharacter::OnUtilityAbility(const FInputActionValue& Value)
 	SendAbilityLocalInput(Value, static_cast<int32>(EAbilityInputID::UtilityAbility));
 }
 
-void ABaseCharacter::SendAbilityLocalInput(const FInputActionValue& Value, int32 InputID)
+void ABaseCharacter::SendAbilityLocalInput(const FInputActionValue& Value, int32 InputID) const
 {
 	if (!AbilitySystemComponent.IsValid())
 		return;
@@ -139,7 +126,7 @@ void ABaseCharacter::SendAbilityLocalInput(const FInputActionValue& Value, int32
 		AbilitySystemComponent->AbilityLocalInputReleased(InputID);
 	}
 }
-
+/*
 void ABaseCharacter::InitializeEffects()
 {
 	if (!AbilitySystemComponent.IsValid())
@@ -156,7 +143,7 @@ void ABaseCharacter::InitializeEffects()
 		}
 	}
 }
-
+*/
 void ABaseCharacter::InitializeAbilities()
 {
 	if (!HasAuthority() || !AbilitySystemComponent.IsValid())
@@ -210,7 +197,7 @@ void ABaseCharacter::InitAbilityActorInfo()
 	}
 }
 
-void ABaseCharacter::InitClassDefaults()
+void ABaseCharacter::InitClassDefaults() const
 {
 	if (!CharacterTag.IsValid())
 	{
@@ -236,11 +223,11 @@ void ABaseCharacter::BindCallbacksToDependencies()
 	{
 		BaseAbilitySystemComp->GetGameplayAttributeValueChangeDelegate(
 			BaseAttributes->GetCurrentHealthAttribute()).
-			AddUObject(this, &ABaseCharacter::HandleHealthChanged);
+			AddUObject(this, &ABaseCharacter::OnHealthAttributeChanged);
 		
 		BaseAbilitySystemComp->GetGameplayAttributeValueChangeDelegate(
 			BaseAttributes->GetManaAttribute()).
-			AddUObject(this, &ABaseCharacter::HandleManaChanged);
+			AddUObject(this, &ABaseCharacter::OnManaAttributeChanged);
 	}
 }
 
@@ -252,16 +239,6 @@ void ABaseCharacter::BroadcastInitialValues()
 		OnManaChanged(BaseAttributes->GetMana(), BaseAttributes->GetMaxMana());
 	}
 }
-void ABaseCharacter::HandleHealthChanged(const FOnAttributeChangeData& Data)
-{
-	OnHealthChanged(Data.NewValue, BaseAttributes->GetMaxHealth());
-}
-
-void ABaseCharacter::HandleManaChanged(const FOnAttributeChangeData& Data)
-{
-	OnManaChanged(Data.NewValue, BaseAttributes->GetMaxMana());
-}
-
 
 void ABaseCharacter::InputMove(const FInputActionValue& Value)
 {
