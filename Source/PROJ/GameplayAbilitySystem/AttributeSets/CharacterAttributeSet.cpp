@@ -4,12 +4,6 @@
 #include "CharacterAttributeSet.h"
 #include "Net/UnrealNetwork.h"
 
-UCharacterAttributeSet::UCharacterAttributeSet()
-{
-	MaxHealth = 1;
-	CurrentHealth = 1;
-}
-
 void UCharacterAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);

@@ -5,7 +5,7 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "AbilitySystemComponent.h"
-#include "CharacterComponents/HealthComponent.h"
+#include "Data/CharacterClassInfo.h"
 #include "Engine/LocalPlayer.h"
 #include "GameplayAbilitySystem/GP_Dash.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -13,6 +13,7 @@
 #include "GameplayAbilitySystem/BaseAbilitySystemComponent.h"
 #include "GameplayAbilitySystem/BasePlayerState.h"
 #include "GameplayAbilitySystem/GameplayAbilities/GA_Basic_Attack.h"
+#include "Library/BaseAbilitySystemLibrary.h"
 
 
 ABaseCharacter::ABaseCharacter()
@@ -33,7 +34,6 @@ ABaseCharacter::ABaseCharacter()
 
 	DefaultAbilities = { UGP_Dash::StaticClass(), UGA_Basic_Attack::StaticClass() };
 
-	HealthComponent = CreateDefaultSubobject<UHealthComponent>(TEXT("HealthComponent"));
 	
 }
 
@@ -123,6 +123,31 @@ void ABaseCharacter::InitAbilityActorInfo()
 		if (IsValid(BaseAbilitySystemComp))
 		{
 			BaseAbilitySystemComp->InitAbilityActorInfo(PS, this);
+
+			if (HasAuthority())
+			{
+				InitClassDefaults();
+			}
+		}
+	}
+}
+
+void ABaseCharacter::InitClassDefaults()
+{
+	if (!CharacterTag.IsValid())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("No CharacterTag is selected in this char %s"), *GetNameSafe(this));
+	}
+	else if (UCharacterClassInfo* ClassInfo = UBaseAbilitySystemLibrary::GetCharacterClassDefaultInfo(this))
+	{
+		if (const FCharacterClassDefaultInfo* SelectedClassInfo = ClassInfo->ClassDefaultInfoMap.Find(CharacterTag))
+		{
+			if (IsValid(BaseAbilitySystemComp))
+			{
+				BaseAbilitySystemComp->AddCharacterAbilities(SelectedClassInfo->StartingAbilities);
+				BaseAbilitySystemComp->AddCharacterPassives(SelectedClassInfo->StartingPassives);
+				BaseAbilitySystemComp->InitializeDefaultAttributes(SelectedClassInfo->DefaultAttributes);
+			}
 		}
 	}
 }

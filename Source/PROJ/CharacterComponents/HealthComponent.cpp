@@ -3,6 +3,7 @@
 
 #include "HealthComponent.h"
 #include "AbilitySystemComponent.h"
+#include "PROJ/GameplayAbilitySystem/BaseAbilitySystemComponent.h"
 #include "PROJ/GameplayAbilitySystem/AttributeSets/CharacterAttributeSet.h"
 
 // Sets default values for this component's properties
@@ -10,7 +11,7 @@ UHealthComponent::UHealthComponent()
 {
 }
 
-void UHealthComponent::Initialize(UAbilitySystemComponent* ASC)
+void UHealthComponent::Initialize(UBaseAbilitySystemComponent* ASC)
 {
 	ASC->GetGameplayAttributeValueChangeDelegate(
 		UCharacterAttributeSet::GetCurrentHealthAttribute()

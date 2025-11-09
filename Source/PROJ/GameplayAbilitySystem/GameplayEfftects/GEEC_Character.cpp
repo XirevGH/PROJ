@@ -2,6 +2,8 @@
 
 
 #include "GEEC_Character.h"
+
+#include "PROJ/GameplayAbilitySystem/BaseAbilitySystemComponent.h"
 #include "PROJ/GameplayAbilitySystem/AttributeSets/CharacterAttributeSet.h"
 
 struct FDamageStatics
@@ -35,8 +37,8 @@ void UGEEC_Character::Execute_Implementation(const FGameplayEffectCustomExecutio
 {
     Super::Execute_Implementation(ExecutionParams, OutExecutionOutput);
 	
-    UAbilitySystemComponent* TargetASC = ExecutionParams.GetTargetAbilitySystemComponent();
-    const UAbilitySystemComponent* SourceASC = ExecutionParams.GetSourceAbilitySystemComponent();
+    UBaseAbilitySystemComponent* TargetASC = Cast<UBaseAbilitySystemComponent>(ExecutionParams.GetTargetAbilitySystemComponent());
+    const UBaseAbilitySystemComponent* SourceASC = Cast<UBaseAbilitySystemComponent>(ExecutionParams.GetSourceAbilitySystemComponent());
 
     if (!TargetASC || !SourceASC)
     {

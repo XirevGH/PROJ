@@ -24,7 +24,6 @@ class PROJ_API UCharacterAttributeSet : public UAttributeSet
 	GENERATED_BODY()
 	
 public:
-	UCharacterAttributeSet();
 	
 	UPROPERTY(BlueprintReadOnly, Category = "Attribute", ReplicatedUsing = OnRep_MaxHealth)
 	FGameplayAttributeData MaxHealth;

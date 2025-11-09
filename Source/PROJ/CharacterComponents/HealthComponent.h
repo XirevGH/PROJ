@@ -6,6 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "HealthComponent.generated.h"
 
+class UBaseAbilitySystemComponent;
 struct FOnAttributeChangeData;
 class UAbilitySystemComponent;
 
@@ -22,7 +23,7 @@ public:
 
 protected:
 	// Called when the game starts
-	void Initialize(UAbilitySystemComponent* ASC);
+	void Initialize(UBaseAbilitySystemComponent* ASC);
 
 	private:
 	void OnCurrentHealthChanged(const FOnAttributeChangeData& Data) const;

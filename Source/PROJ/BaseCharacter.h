@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "GameFramework/Character.h"
 #include "InputAction.h"
 
@@ -75,9 +76,6 @@ public:
 		DefaultAbilities = { UGP_Slash::StaticClass(), UGP_ShieldBash::StaticClass() };
 	}*/
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Abilities")
-	UHealthComponent* HealthComponent;
-
 protected:
 	virtual void BeginPlay() override;
 
@@ -94,5 +92,9 @@ private:
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = true))
 	TObjectPtr<UCharacterAttributeSet> BaseAttributes;
 
+	UPROPERTY(EditAnywhere, Category = "Custom Values|Character Info")
+	FGameplayTag CharacterTag;
+	
 	void InitAbilityActorInfo();
+	void InitClassDefaults();
 };
