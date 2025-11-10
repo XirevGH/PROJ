@@ -80,6 +80,7 @@ void ABaseCharacter::OnRep_PlayerState()
 	
 	InitAbilitySystemComponent();
 	InitAbilityActorInfo();
+	OnPlayerStateReplicated();
 }
 
 void ABaseCharacter::OnHealthAttributeChanged(const FOnAttributeChangeData& Data)

@@ -91,12 +91,14 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
-	
 
 	void InitAbilitySystemComponent();
 
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void OnRep_PlayerState() override;
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "PlayerState")
+	void OnPlayerStateReplicated();
 	
 	virtual void OnHealthAttributeChanged(const FOnAttributeChangeData& Data);
 	virtual void OnManaAttributeChanged(const FOnAttributeChangeData& Data);
