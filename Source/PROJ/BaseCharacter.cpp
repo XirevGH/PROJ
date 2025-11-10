@@ -20,7 +20,7 @@
 ABaseCharacter::ABaseCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
-
+	bReplicates = true;
 	GetCharacterMovement()->MaxWalkSpeed = 600.f;
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	//SpringArm
@@ -77,7 +77,7 @@ void ABaseCharacter::PossessedBy(AController* NewController)
 void ABaseCharacter::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
-	
+
 	InitAbilitySystemComponent();
 	InitAbilityActorInfo();
 	OnPlayerStateReplicated();
