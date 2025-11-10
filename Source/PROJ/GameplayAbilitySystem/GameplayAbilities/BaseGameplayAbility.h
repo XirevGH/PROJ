@@ -15,6 +15,11 @@ class PROJ_API UBaseGameplayAbility : public UGameplayAbility
 {
 	GENERATED_BODY()
 public:
+
+	UPROPERTY(EditDefaultsOnly, Category = "Custom Values| Input")
+	FGameplayTag InputTag;
+	
+	
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category =  "Ability")
 	EAbilityInputID AbilityInputID{ EAbilityInputID::None };
 };
