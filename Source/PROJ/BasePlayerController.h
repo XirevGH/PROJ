@@ -33,7 +33,7 @@ protected:
 private:
 
 	UPROPERTY()
-	TObjectPtr<UBaseAbilitySystemComponent> BaseAbilitySystemComponent;
+	mutable TObjectPtr<UBaseAbilitySystemComponent> BaseAbilitySystemComponent = nullptr;
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Custom Values|Input")
 	TObjectPtr<UBaseInputConfig> BaseInputConfig;

@@ -2,7 +2,6 @@
 
 
 #include "BasePlayerController.h"
-
 #include "GameplayAbilitySystem/BaseAbilitySystemComponent.h"
 #include "GameplayAbilitySystem/BasePlayerState.h"
 #include "Input/BaseEnhancedInputComponent.h"
@@ -19,22 +18,24 @@ void ABasePlayerController::SetupInputComponent()
 
 UAbilitySystemComponent* ABasePlayerController::GetAbilitySystemComponent() const
 {
+	if (!IsValid(BaseAbilitySystemComponent))
+	{
+		if (const ABasePlayerState* PS = GetPlayerState<ABasePlayerState>())
+		{
+			BaseAbilitySystemComponent = PS->GetBaseAbilitySystemComponent();
+		}
+	}
 	return BaseAbilitySystemComponent;
 }
 
 void ABasePlayerController::BeginPlay()
 {
 	Super::BeginPlay();
-	
-	if (const ABasePlayerState* BasePlayerState = GetPlayerState<ABasePlayerState>())
-	{
-		BaseAbilitySystemComponent = BasePlayerState->GetBaseAbilitySystemComponent();
-	}
 }
 
 void ABasePlayerController::AbilityInputPressed(FGameplayTag InputTag)
 {
-	if (IsValid(BaseAbilitySystemComponent))
+	if (IsValid(GetAbilitySystemComponent()))
 	{
 		BaseAbilitySystemComponent->AbilityInputPressed(InputTag);
 	}
@@ -42,7 +43,7 @@ void ABasePlayerController::AbilityInputPressed(FGameplayTag InputTag)
 
 void ABasePlayerController::AbilityInputReleased(FGameplayTag InputTag)
 {
-	if (IsValid(BaseAbilitySystemComponent))
+	if (IsValid(GetAbilitySystemComponent()))
 	{
 		BaseAbilitySystemComponent->AbilityInputReleased(InputTag);
 	}
