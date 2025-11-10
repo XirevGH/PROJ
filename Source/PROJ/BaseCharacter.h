@@ -82,21 +82,23 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, category = "Enhanced Input")
 	UInputAction* UtilityAbilityAction;
 
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "GAS")
+	UPROPERTY(EditAnywhere ,BlueprintReadWrite, Category = "GAS")
 	TArray<TSubclassOf<class UGameplayEffect>> DefaultEffects;
 	
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "GAS")
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = "GAS")
 	TArray<TSubclassOf<class UBaseGameplayAbility>> DefaultAbilities;
 
 protected:
 	virtual void BeginPlay() override;
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
-	
 
 	void InitAbilitySystemComponent();
 
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void OnRep_PlayerState() override;
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "PlayerState")
+	void OnPlayerStateReplicated();
 	
 	virtual void OnHealthAttributeChanged(const FOnAttributeChangeData& Data);
 	virtual void OnManaAttributeChanged(const FOnAttributeChangeData& Data);
@@ -115,7 +117,7 @@ private:
 	void InitializeAbilities();
 
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = true))
-	TObjectPtr<UBaseAbilitySystemComponent> BaseAbilitySystemComp;
+	TWeakObjectPtr<UBaseAbilitySystemComponent> BaseAbilitySystemComp;
 
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = true))
 	TObjectPtr<UCharacterAttributeSet> BaseAttributes;

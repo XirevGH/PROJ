@@ -51,7 +51,7 @@ void ABaseCharacter::BeginPlay()
 
 UAbilitySystemComponent* ABaseCharacter::GetAbilitySystemComponent() const
 {
-	return BaseAbilitySystemComp;
+	return BaseAbilitySystemComp.Get();
 }
 
 void ABaseCharacter::InitAbilitySystemComponent()
@@ -59,10 +59,10 @@ void ABaseCharacter::InitAbilitySystemComponent()
 	ABasePlayerState* PS = GetPlayerState<ABasePlayerState>();
 	if (!PS)
 		return;
-	AbilitySystemComponent = PS->GetAbilitySystemComponent();
-	if (!AbilitySystemComponent.IsValid())
+	BaseAbilitySystemComp =  Cast<UBaseAbilitySystemComponent>(PS->GetAbilitySystemComponent());
+	if (!BaseAbilitySystemComp.IsValid())
 		return;
-	AbilitySystemComponent->InitAbilityActorInfo(PS, this);
+	BaseAbilitySystemComp->InitAbilityActorInfo(PS, this);
 }
 
 void ABaseCharacter::PossessedBy(AController* NewController)
@@ -80,6 +80,7 @@ void ABaseCharacter::OnRep_PlayerState()
 	
 	InitAbilitySystemComponent();
 	InitAbilityActorInfo();
+	OnPlayerStateReplicated();
 }
 
 void ABaseCharacter::OnHealthAttributeChanged(const FOnAttributeChangeData& Data)
@@ -114,16 +115,16 @@ void ABaseCharacter::OnUtilityAbility(const FInputActionValue& Value)
 
 void ABaseCharacter::SendAbilityLocalInput(const FInputActionValue& Value, int32 InputID) const
 {
-	if (!AbilitySystemComponent.IsValid())
+	if (!BaseAbilitySystemComp.IsValid())
 		return;
 	
 	if (Value.Get<bool>())
 	{
-		AbilitySystemComponent->AbilityLocalInputPressed(InputID);
+		BaseAbilitySystemComp->AbilityLocalInputPressed(InputID);
 	}
 	else
 	{
-		AbilitySystemComponent->AbilityLocalInputReleased(InputID);
+		BaseAbilitySystemComp->AbilityLocalInputReleased(InputID);
 	}
 }
 /*
@@ -146,11 +147,11 @@ void ABaseCharacter::InitializeEffects()
 */
 void ABaseCharacter::InitializeAbilities()
 {
-	if (!HasAuthority() || !AbilitySystemComponent.IsValid())
+	if (!HasAuthority() || !BaseAbilitySystemComp.IsValid())
 		return;
 	for (TSubclassOf<UBaseGameplayAbility>& Ability : DefaultAbilities)
 	{
-		FGameplayAbilitySpecHandle SpecHandle = AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(Ability, 1, static_cast<int32>(Ability.GetDefaultObject()->AbilityInputID), this));
+		FGameplayAbilitySpecHandle SpecHandle = BaseAbilitySystemComp->GiveAbility(FGameplayAbilitySpec(Ability, 1, static_cast<int32>(Ability.GetDefaultObject()->AbilityInputID), this));
 	}
 }
 
@@ -184,7 +185,7 @@ void ABaseCharacter::InitAbilityActorInfo()
 		BaseAbilitySystemComp = PS->GetBaseAbilitySystemComponent();
 		BaseAttributes = PS->GetCharacterAttributeSet();
 
-		if (IsValid(BaseAbilitySystemComp))
+		if (BaseAbilitySystemComp.IsValid())
 		{
 			BaseAbilitySystemComp->InitAbilityActorInfo(PS, this);
 			BindCallbacksToDependencies();
@@ -207,7 +208,7 @@ void ABaseCharacter::InitClassDefaults() const
 	{
 		if (const FCharacterClassDefaultInfo* SelectedClassInfo = ClassInfo->ClassDefaultInfoMap.Find(CharacterTag))
 		{
-			if (IsValid(BaseAbilitySystemComp))
+			if (BaseAbilitySystemComp.IsValid())
 			{
 				BaseAbilitySystemComp->AddCharacterAbilities(SelectedClassInfo->StartingAbilities);
 				BaseAbilitySystemComp->AddCharacterPassives(SelectedClassInfo->StartingPassives);
@@ -219,7 +220,7 @@ void ABaseCharacter::InitClassDefaults() const
 
 void ABaseCharacter::BindCallbacksToDependencies()
 {
-	if (IsValid(BaseAbilitySystemComp) && IsValid(BaseAttributes))
+	if (BaseAbilitySystemComp.IsValid() && IsValid(BaseAttributes))
 	{
 		BaseAbilitySystemComp->GetGameplayAttributeValueChangeDelegate(
 			BaseAttributes->GetCurrentHealthAttribute()).
