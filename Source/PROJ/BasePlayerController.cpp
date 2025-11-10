@@ -48,3 +48,9 @@ void ABasePlayerController::AbilityInputReleased(FGameplayTag InputTag)
 		BaseAbilitySystemComponent->AbilityInputReleased(InputTag);
 	}
 }
+
+void ABasePlayerController::OnRep_PlayerState()
+{
+	Super::OnRep_PlayerState();
+	OnPlayerStateReady();
+}
