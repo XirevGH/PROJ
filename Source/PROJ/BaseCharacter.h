@@ -82,10 +82,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, category = "Enhanced Input")
 	UInputAction* UtilityAbilityAction;
 
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "GAS")
+	UPROPERTY(EditAnywhere ,BlueprintReadWrite, Category = "GAS")
 	TArray<TSubclassOf<class UGameplayEffect>> DefaultEffects;
 	
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "GAS")
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = "GAS")
 	TArray<TSubclassOf<class UBaseGameplayAbility>> DefaultAbilities;
 
 protected:
@@ -115,7 +115,7 @@ private:
 	void InitializeAbilities();
 
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = true))
-	TObjectPtr<UBaseAbilitySystemComponent> BaseAbilitySystemComp;
+	TWeakObjectPtr<UBaseAbilitySystemComponent> BaseAbilitySystemComp;
 
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = true))
 	TObjectPtr<UCharacterAttributeSet> BaseAttributes;
