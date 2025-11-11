@@ -34,16 +34,23 @@ public:
 	UFUNCTION()
 	void OnProjectileHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 
+	UFUNCTION()
+	void NotifyActorBeginOverlap(AActor* OtherActor) override;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
 	class UProjectileMovementComponent* ProjectileMovement;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components")
 	UStaticMeshComponent* Mesh;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Projectile")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components")
+	class USphereComponent* CollisionComp;
+	
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Projectile Stats")
 	float ProjectileSpeed;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Projectile")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Projectile Stats")
 	float ProjectileLifeTime;
 	
 	FTimerHandle DestroyTimerHandle;
