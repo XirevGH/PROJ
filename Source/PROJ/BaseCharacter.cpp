@@ -69,19 +69,34 @@ void ABaseCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
 	
+	if (!BasePlayerState)
+	{
+		BasePlayerState = GetPlayerState<ABasePlayerState>();
+	}
+	
 	InitAbilitySystemComponent();
 	InitAbilityActorInfo();
+
+	//Ska denna vara här?
 	InitializeAbilities();
+
+	OnCharacterInitialized();
 }
 
 void ABaseCharacter::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
 
-	BasePlayerState = GetPlayerState<ABasePlayerState>();
+	if (!BasePlayerState)
+	{
+		BasePlayerState = GetPlayerState<ABasePlayerState>();
+	}
+	
 	InitAbilitySystemComponent();
 	InitAbilityActorInfo();
-	OnPlayerStateReplicated();
+	InitializeAbilities();
+	
+	OnCharacterInitialized();
 }
 
 void ABaseCharacter::OnHealthAttributeChanged(const FOnAttributeChangeData& Data)

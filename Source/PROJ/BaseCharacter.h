@@ -99,7 +99,7 @@ protected:
 	virtual void OnRep_PlayerState() override;
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "PlayerState")
-	void OnPlayerStateReplicated();
+	void OnCharacterInitialized();
 
 	UPROPERTY(BlueprintReadOnly, Category = "PlayerState")
 	ABasePlayerState* BasePlayerState;
