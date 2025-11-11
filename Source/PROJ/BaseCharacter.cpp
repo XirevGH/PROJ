@@ -20,7 +20,7 @@
 ABaseCharacter::ABaseCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
-
+	bReplicates = true;
 	GetCharacterMovement()->MaxWalkSpeed = 600.f;
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	//SpringArm
@@ -56,31 +56,47 @@ UAbilitySystemComponent* ABaseCharacter::GetAbilitySystemComponent() const
 
 void ABaseCharacter::InitAbilitySystemComponent()
 {
-	ABasePlayerState* PS = GetPlayerState<ABasePlayerState>();
-	if (!PS)
+
+	if (!BasePlayerState)
 		return;
-	BaseAbilitySystemComp =  Cast<UBaseAbilitySystemComponent>(PS->GetAbilitySystemComponent());
+	BaseAbilitySystemComp =  Cast<UBaseAbilitySystemComponent>(BasePlayerState->GetAbilitySystemComponent());
 	if (!BaseAbilitySystemComp.IsValid())
 		return;
-	BaseAbilitySystemComp->InitAbilityActorInfo(PS, this);
+	BaseAbilitySystemComp->InitAbilityActorInfo(BasePlayerState, this);
 }
 
 void ABaseCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
 	
+	if (!BasePlayerState)
+	{
+		BasePlayerState = GetPlayerState<ABasePlayerState>();
+	}
+	
 	InitAbilitySystemComponent();
 	InitAbilityActorInfo();
+
+	//Ska denna vara här?
 	InitializeAbilities();
+
+	OnCharacterInitialized();
 }
 
 void ABaseCharacter::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
+
+	if (!BasePlayerState)
+	{
+		BasePlayerState = GetPlayerState<ABasePlayerState>();
+	}
 	
 	InitAbilitySystemComponent();
 	InitAbilityActorInfo();
-	OnPlayerStateReplicated();
+	InitializeAbilities();
+	
+	OnCharacterInitialized();
 }
 
 void ABaseCharacter::OnHealthAttributeChanged(const FOnAttributeChangeData& Data)
@@ -180,14 +196,14 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 
 void ABaseCharacter::InitAbilityActorInfo()
 {
-	if (ABasePlayerState* PS = GetPlayerState<ABasePlayerState>())
+	if (IsValid(BasePlayerState))
 	{
-		BaseAbilitySystemComp = PS->GetBaseAbilitySystemComponent();
-		BaseAttributes = PS->GetCharacterAttributeSet();
+		BaseAbilitySystemComp = BasePlayerState->GetBaseAbilitySystemComponent();
+		BaseAttributes = BasePlayerState->GetCharacterAttributeSet();
 
 		if (BaseAbilitySystemComp.IsValid())
 		{
-			BaseAbilitySystemComp->InitAbilityActorInfo(PS, this);
+			BaseAbilitySystemComp->InitAbilityActorInfo(BasePlayerState, this);
 			BindCallbacksToDependencies();
 
 			if (HasAuthority())
