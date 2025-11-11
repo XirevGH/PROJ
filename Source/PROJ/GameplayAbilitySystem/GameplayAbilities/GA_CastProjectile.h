@@ -9,16 +9,17 @@
 /**
  * 
  */
+class AProjectile;
 UCLASS()
 class PROJ_API UGA_CastProjectile : public UBaseGameplayAbility
 {
 	GENERATED_BODY()
 	public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	AActor* ProjectileActor;
+	AProjectile* ProjectileActor;
 
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	TSubclassOf<AActor> ProjectileActorClass;
+	TSubclassOf<AProjectile> ProjectileActorClass;
 	
 	UGA_CastProjectile();
 
@@ -33,7 +34,15 @@ class PROJ_API UGA_CastProjectile : public UBaseGameplayAbility
 	UFUNCTION(BlueprintImplementableEvent)
 	void OntargetReady(const FGameplayAbilityTargetDataHandle& TargetData);
 
+	UFUNCTION()
+	void OnProjectileHit(const FHitResult& Hit);
+
 	UFUNCTION(BlueprintCallable)
 	void Cast();
+	private:
+	UPROPERTY()
+	FGameplayAbilityTargetDataHandle CurrentTargetData;
+
+	FGameplayAbilityTargetData_SingleTargetHit* NewTargetData;
 
 };
