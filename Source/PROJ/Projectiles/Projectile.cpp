@@ -26,7 +26,10 @@ void AProjectile::BeginPlay()
 	ProjectileMovement->MaxSpeed = ProjectileSpeed;
 	ProjectileMovement->bRotationFollowsVelocity = true;
 	ProjectileMovement->ProjectileGravityScale = 0.f;
-
+	ProjectileMovement->SetIsReplicated(true);
+	SetReplicates(true);  
+	SetReplicateMovement(false);
+	
 	ProjectileMovement->Velocity = GetActorForwardVector() * ProjectileSpeed;
 	Mesh->OnComponentHit.AddDynamic(this, &AProjectile::OnProjectileHit);
 	GetWorldTimerManager().SetTimer(DestroyTimerHandle, this, &AProjectile::DestroySelf, ProjectileLifeTime, false);
@@ -57,7 +60,7 @@ void AProjectile::OnProjectileHit(UPrimitiveComponent* HitComp, AActor* OtherAct
 	{
 		OnProjectileHitDelegate.Broadcast(Hit);
 	}
-	UE_LOG(LogTemp, Warning, TEXT("Hit"));
+	//UE_LOG(LogTemp, Warning, TEXT("Hit"));
 	Destroy();
 }
 

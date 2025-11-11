@@ -22,7 +22,7 @@ void UGA_CastProjectile::ActivateAbility(const FGameplayAbilitySpecHandle Handle
 void UGA_CastProjectile::OnProjectileHit(const FHitResult& Hit)
 {
 	NewTargetData = new FGameplayAbilityTargetData_SingleTargetHit(Hit);
-	UE_LOG(LogTemp, Warning, TEXT("Spawned projectile: %s"), *Hit.GetActor()->GetName());
+	UE_LOG(LogTemp, Warning, TEXT("Spawned Hit: %s"), *Hit.GetActor()->GetName());
 	CurrentTargetData.Add(NewTargetData);
 }
 
@@ -42,7 +42,7 @@ void UGA_CastProjectile::Cast()
 	if (ProjectileActor)
 	{
 		//ProjectileActor->IgnoreCaster(Avatar);
-		UE_LOG(LogTemp, Warning, TEXT("Spawned projectile: %s"), *ProjectileActor->GetName());
+		//UE_LOG(LogTemp, Warning, TEXT("Spawned projectile: %s"), *ProjectileActor->GetName());
 		ProjectileActor->OnProjectileHitDelegate.AddDynamic(this, &UGA_CastProjectile::OnProjectileHit);
 	}
 	else
