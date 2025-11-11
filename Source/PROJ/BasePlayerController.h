@@ -30,10 +30,17 @@ protected:
 
 	void AbilityInputPressed(FGameplayTag InputTag);
 	void AbilityInputReleased(FGameplayTag InputTag);
+
+	virtual void OnRep_PlayerState() override;
+
+	/** Blueprint event called when the PlayerState is ready. */
+	UFUNCTION(BlueprintImplementableEvent, Category = "PlayerController")
+	void OnPlayerStateReady();
+	
 private:
 
 	UPROPERTY()
-	TObjectPtr<UBaseAbilitySystemComponent> BaseAbilitySystemComponent;
+	mutable TObjectPtr<UBaseAbilitySystemComponent> BaseAbilitySystemComponent = nullptr;
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Custom Values|Input")
 	TObjectPtr<UBaseInputConfig> BaseInputConfig;

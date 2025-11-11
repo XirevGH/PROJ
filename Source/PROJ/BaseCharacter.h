@@ -6,6 +6,7 @@
 #include "InputAction.h"
 #include "AbilitySystemInterface.h"
 #include "InputActionValue.h"
+#include "GameplayAbilitySystem/BasePlayerState.h"
 #include "GameplayAbilitySystem/AttributeSets/CharacterAttributeSet.h"
 #include "BaseCharacter.generated.h"
 
@@ -98,7 +99,10 @@ protected:
 	virtual void OnRep_PlayerState() override;
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "PlayerState")
-	void OnPlayerStateReplicated();
+	void OnCharacterInitialized();
+
+	UPROPERTY(BlueprintReadOnly, Category = "PlayerState")
+	ABasePlayerState* BasePlayerState;
 	
 	virtual void OnHealthAttributeChanged(const FOnAttributeChangeData& Data);
 	virtual void OnManaAttributeChanged(const FOnAttributeChangeData& Data);
