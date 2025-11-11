@@ -20,9 +20,9 @@ AProjectile::AProjectile()
 void AProjectile::BeginPlay()
 {
 	Super::BeginPlay();
-	 // 0 = no gravity
 	Mesh->SetNotifyRigidBodyCollision(true);
 	Mesh->SetSimulatePhysics(false);
+	//Mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	ProjectileMovement->InitialSpeed = ProjectileSpeed;
 	ProjectileMovement->MaxSpeed = ProjectileSpeed;
 	ProjectileMovement->bRotationFollowsVelocity = true;
@@ -32,7 +32,11 @@ void AProjectile::BeginPlay()
 	SetReplicateMovement(false);
 	
 	ProjectileMovement->Velocity = GetActorForwardVector() * ProjectileSpeed;
+	CollisionComp->SetGenerateOverlapEvents(true);
+	
 	CollisionComp->OnComponentBeginOverlap.AddDynamic(this, &AProjectile::OnBeginOverlap);
+	Mesh->OnComponentHit.AddDynamic(this, &AProjectile::OnProjectileHit);
+	
 	GetWorldTimerManager().SetTimer(DestroyTimerHandle, this, &AProjectile::DestroySelf, ProjectileLifeTime, false);
 }
 
@@ -52,6 +56,13 @@ void AProjectile::IgnoreCaster(AActor* Caster) const
 	Mesh->IgnoreActorWhenMoving(Caster, true);
 }
 
+void AProjectile::OnProjectileHit(UPrimitiveComponent* HitComp, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
+{
+	UE_LOG(LogTemp, Warning, TEXT("Hit via OnHit"));
+	Destroy();
+}
+
 
 void AProjectile::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -60,7 +71,7 @@ void AProjectile::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActo
 	{
 		OnProjectileHitDelegate.Broadcast(SweepResult);
 	}
-	//UE_LOG(LogTemp, Warning, TEXT("Hit"));
+	UE_LOG(LogTemp, Warning, TEXT("Hit via OnBeginOverlap"));
 	Destroy();
 	
 }

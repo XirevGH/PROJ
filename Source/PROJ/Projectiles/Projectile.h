@@ -30,6 +30,14 @@ public:
 
 	UFUNCTION()
 	void IgnoreCaster(AActor* Caster) const;
+
+	UFUNCTION()
+	void OnProjectileHit(
+		UPrimitiveComponent* HitComp,
+		AActor* OtherActor,
+		UPrimitiveComponent* OtherComp,
+		FVector NormalImpulse,
+		const FHitResult& Hit);
 	
 	UFUNCTION()
 	void OnBeginOverlap(
@@ -38,8 +46,7 @@ public:
 	   UPrimitiveComponent* OtherComp,
 	   int32 OtherBodyIndex,
 	   bool bFromSweep,
-	   const FHitResult& SweepResult
-   );
+	   const FHitResult& SweepResult);
 
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
@@ -64,3 +71,4 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FOnProjectileHit OnProjectileHitDelegate;
 };
+
