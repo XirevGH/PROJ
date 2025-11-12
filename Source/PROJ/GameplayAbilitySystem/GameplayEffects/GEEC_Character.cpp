@@ -9,13 +9,11 @@
 struct FDamageStatics
 {
 	DECLARE_ATTRIBUTE_CAPTUREDEF(CurrentHealth)
-	DECLARE_ATTRIBUTE_CAPTUREDEF(MaxHealth)
 
 	FDamageStatics()
 	{
 		// Capture target's health
 		DEFINE_ATTRIBUTE_CAPTUREDEF(UCharacterAttributeSet, CurrentHealth, Target, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UCharacterAttributeSet, MaxHealth, Target, false);
 	}
 };
 
@@ -29,7 +27,6 @@ UGEEC_Character::UGEEC_Character()
 {
 	// Register attributes we want to capture
 	RelevantAttributesToCapture.Add(DamageStatics().CurrentHealthDef);
-	RelevantAttributesToCapture.Add(DamageStatics().MaxHealthDef);
 }
 
 void UGEEC_Character::Execute_Implementation(const FGameplayEffectCustomExecutionParameters& ExecutionParams,
@@ -57,22 +54,8 @@ void UGEEC_Character::Execute_Implementation(const FGameplayEffectCustomExecutio
 
     // Get damage from weapon
     float Damage = 0.0f;
-    
+	Damage = Spec.GetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(FName("Data.Damage")), true);
     // First try to get damage from captured attribute
-    if (!ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(DamageStatics().MaxHealthDef, EvaluateParameters, Damage))
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Failed to capture weapon Damage attribute in %s"),
-        	*SourceASC->GetOwner()->GetActorNameOrLabel());
-        
-        // Fallback: Try to get damage from SetByCaller in the GameplayEffect
-      
-        
-        if (Damage <= 0.0f)
-        {
-            UE_LOG(LogTemp, Warning, TEXT("No damage value available. Using default."));
-            Damage = 10.0f; // Default fallback damage
-        }
-    }
     float Health = 0.0f;
     ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(DamageStatics().CurrentHealthDef, EvaluateParameters, Health);
 

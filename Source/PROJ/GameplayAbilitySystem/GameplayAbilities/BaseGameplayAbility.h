@@ -22,4 +22,10 @@ public:
 	
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category =  "Ability")
 	EAbilityInputID AbilityInputID{ EAbilityInputID::None };
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category="Effects")
+	TArray<TSubclassOf<UGameplayEffect>> DefaultEffects;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Damage")
+	float BaseDamage = 0;
 };
