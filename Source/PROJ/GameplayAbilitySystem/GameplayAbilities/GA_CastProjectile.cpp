@@ -15,6 +15,12 @@ void UGA_CastProjectile::ActivateAbility(const FGameplayAbilitySpecHandle Handle
 	const FGameplayEventData* TriggerEventData)
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
+	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
+	{
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+		return;
+	}
+	
 	Cast();
 	EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 }
@@ -50,21 +56,21 @@ void UGA_CastProjectile::SpawnProjectile()
 		{
 			ProjectileActor->SetReplicates(true);
 			ProjectileActor->SetReplicateMovement(true);
+			ProjectileActor->OnProjectileHitDelegate.AddDynamic(this, &UGA_CastProjectile::OnProjectileHit);
+			ProjectileActor->Caster = Avatar;
+			ProjectileActor->CastedAbility = this;
+			ProjectileActor->CasterASC = GetAbilitySystemComponentFromActorInfo();
+			ProjectileActor->Effects = DefaultEffects;
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Failed to spawn projectile"));
+		
 		}
 	}
 	
 
-	if (ProjectileActor)
-	{
-		ProjectileActor->OnProjectileHitDelegate.AddDynamic(this, &UGA_CastProjectile::OnProjectileHit);
-		ProjectileActor->Caster = Avatar;
-		ProjectileActor->CastedAbility = this;
-		ProjectileActor->CasterASC = GetAbilitySystemComponentFromActorInfo();
-		ProjectileActor->Effects = DefaultEffects;
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Failed to spawn projectile"));
-	}
+	
+		
 	
 }
