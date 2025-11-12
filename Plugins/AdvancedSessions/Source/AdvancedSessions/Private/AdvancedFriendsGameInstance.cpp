@@ -36,10 +36,12 @@ void UAdvancedFriendsGameInstance::OnSessionUserInviteAccepted(const bool bWasSu
 			ModResult.Session.SessionSettings.bUsesPresence = true;
 			ModResult.Session.SessionSettings.bUseLobbiesIfAvailable = true;
 			// SessionInterface->JoinSession(0, NAME_GameSession, ModResult);
+			OnSessionInviteAcceptedMaster(bWasSuccessful, ControllerId, UserId, InviteResult);
 		}
 		else
 		{
 			// SessionInterface->JoinSession(0, NAME_GameSession, InviteResult);
+			OnSessionInviteAcceptedMaster(bWasSuccessful, ControllerId, UserId, InviteResult);
 		}
 	}
 	UE_LOG(AdvancedFriendsInterfaceLog, Log, TEXT("Called Join Session for Steam Friends List UI InviteResults: %s, UserId: %s"), *InviteResult.GetSessionIdStr(), *UserId->ToString());
