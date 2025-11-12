@@ -31,8 +31,8 @@ void AProjectile::BeginPlay()
 	ProjectileMovement->bRotationFollowsVelocity = true;
 	ProjectileMovement->ProjectileGravityScale = 0.f;
 	ProjectileMovement->SetIsReplicated(true);
-	SetReplicates(true);  
-	SetReplicateMovement(false);
+	//SetReplicates(true);  
+	//SetReplicateMovement(false);
 	
 	CollisionComp->SetNotifyRigidBodyCollision(true);
 	ProjectileMovement->Velocity = GetActorForwardVector() * ProjectileSpeed;

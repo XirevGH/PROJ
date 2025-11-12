@@ -43,7 +43,16 @@ void UGA_CastProjectile::SpawnProjectile()
 	FVector SpawnLocation = Avatar->GetActorLocation() + Avatar->GetActorForwardVector() * 200.f;
 	FRotator SpawnRotation = Avatar->GetActorRotation();
 
-	ProjectileActor = World->SpawnActor<AProjectile>(ProjectileActorClass, SpawnLocation, SpawnRotation);
+	if (GetOwningActorFromActorInfo()->HasAuthority())  // only server
+	{
+		ProjectileActor = World->SpawnActor<AProjectile>(ProjectileActorClass, SpawnLocation, SpawnRotation);
+		if (ProjectileActor)
+		{
+			ProjectileActor->SetReplicates(true);
+			ProjectileActor->SetReplicateMovement(true);
+		}
+	}
+	
 
 	if (ProjectileActor)
 	{
