@@ -39,6 +39,12 @@ class PROJ_API UGA_CastProjectile : public UBaseGameplayAbility
 
 	UFUNCTION(BlueprintCallable)
 	void Cast();
+
+	UFUNCTION(BlueprintCallable)
+	void SpawnProjectile();
+
+	
+	
 	private:
 	UPROPERTY()
 	FGameplayAbilityTargetDataHandle CurrentTargetData;
