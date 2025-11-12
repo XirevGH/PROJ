@@ -16,13 +16,4 @@ class PROJ_API UAdvancedGameInstance : public UAdvancedFriendsGameInstance
 
 public:
 	UAdvancedGameInstance(const FObjectInitializer& ObjectInitializer);
-
-protected:
-	virtual void Init() override;
-
-	UFUNCTION(BlueprintImplementableEvent, Category = "AdvancedFriends")
-	void OnDestroySessionComplete(FName SessionName, bool bSuccess);
-
-private:
-	FOnDestroySessionCompleteDelegate OnDestroySessionCompleteDelegate;
 };
