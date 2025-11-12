@@ -55,7 +55,7 @@ public:
 	// custom handle to join directly from steam ui "Join Game"
 	FDelegateHandle OnJoinSessionCompleteDelegateHandle;
 	// custom Steam UI Join User function #Self invite#
-	void OnSessionUserInviteAccepted(const bool bWasSuccessful, const int32 ControllerId, FUniqueNetIdPtr UserId, const FOnlineSessionSearchResult& InviteResult);
+	virtual void OnSessionUserInviteAccepted(const bool bWasSuccessful, const int32 ControllerId, FUniqueNetIdPtr UserId, const FOnlineSessionSearchResult& InviteResult);
 	// custom Steam UI function to client travel #Self invite#
 	void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
 

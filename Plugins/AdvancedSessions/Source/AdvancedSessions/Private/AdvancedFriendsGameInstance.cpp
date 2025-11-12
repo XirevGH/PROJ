@@ -28,18 +28,18 @@ void UAdvancedFriendsGameInstance::OnSessionUserInviteAccepted(const bool bWasSu
 		SessionInterface->ClearOnJoinSessionCompleteDelegate_Handle(OnJoinSessionCompleteDelegateHandle);
 		OnJoinSessionCompleteDelegateHandle = SessionInterface->AddOnJoinSessionCompleteDelegate_Handle(
 		FOnJoinSessionCompleteDelegate::CreateUObject(this, &UAdvancedFriendsGameInstance::OnJoinSessionComplete));
-
+	
 		// Temp for 5.5, they aren't filling in the struct correctly
 		if (!InviteResult.Session.SessionSettings.bIsDedicated)
 		{
 			FOnlineSessionSearchResult ModResult = InviteResult;
 			ModResult.Session.SessionSettings.bUsesPresence = true;
 			ModResult.Session.SessionSettings.bUseLobbiesIfAvailable = true;
-			SessionInterface->JoinSession(0, NAME_GameSession, ModResult);
+			// SessionInterface->JoinSession(0, NAME_GameSession, ModResult);
 		}
 		else
 		{
-			SessionInterface->JoinSession(0, NAME_GameSession, InviteResult);
+			// SessionInterface->JoinSession(0, NAME_GameSession, InviteResult);
 		}
 	}
 	UE_LOG(AdvancedFriendsInterfaceLog, Log, TEXT("Called Join Session for Steam Friends List UI InviteResults: %s, UserId: %s"), *InviteResult.GetSessionIdStr(), *UserId->ToString());
