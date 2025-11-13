@@ -4,25 +4,28 @@
 
 #include "CoreMinimal.h"
 #include "BaseGameplayAbility.h"
-#include "GA_Basic_Attack.generated.h"
+#include "BaseAttack.generated.h"
 
+class AWeapon;
 class UAbilityTask_PlayMontageAndWait;
 /**
  * 
  */
 UCLASS()
-class PROJ_API UGA_Basic_Attack : public UBaseGameplayAbility
+class PROJ_API UBaseAttack : public UBaseGameplayAbility
 {
 	GENERATED_BODY()
 
 	public:
-	UGA_Basic_Attack();
+	UBaseAttack();
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Ability|Animation")
 	UAnimMontage* MyMontage;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	AActor* WeaponActor;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Ability| Weapon")
+	AWeapon* EquippedWeapon;
+	
+	bool bIsHitscanActive = false;
 
 protected:
 	virtual  void ActivateAbility(const FGameplayAbilitySpecHandle Handle,
@@ -30,12 +33,17 @@ protected:
 		const FGameplayAbilityActivationInfo ActivationInfo,
 		const FGameplayEventData* TriggerEventData) override;
 	
+	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle,
+		const FGameplayAbilityActorInfo* ActorInfo,
+		const FGameplayAbilityActivationInfo ActivationInfo,
+		bool bReplicatedEndAbility,
+		bool bWasCancelled) override;
 
 	UFUNCTION()
-	void OnHitscanStart();
+	void OnHitscanStart(FGameplayEventData Payload);
 
 	UFUNCTION()
-	void OnHitscanEnd();
+	void OnHitscanEnd(FGameplayEventData Payload);
 	
 	UFUNCTION(BlueprintImplementableEvent)
 	void OntargetReady(const FGameplayAbilityTargetDataHandle& TargetData);
@@ -51,4 +59,7 @@ protected:
 
 	UFUNCTION()
 	void OnMontageCancelled();
+	
+	UFUNCTION()
+	AWeapon* GetEquippedWeapon() const;
 };
