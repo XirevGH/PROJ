@@ -8,8 +8,10 @@
 #include "InputActionValue.h"
 #include "GameplayAbilitySystem/BasePlayerState.h"
 #include "GameplayAbilitySystem/AttributeSets/CharacterAttributeSet.h"
+#include "Net/UnrealNetwork.h"
 #include "BaseCharacter.generated.h"
 
+class AWeapon;
 struct FOnAttributeChangeData;
 class UBaseAbilitySystemComponent;
 class UCharacterAttributeSet;
@@ -48,12 +50,6 @@ public:
 	UCharacterMovementComponent* MovementComponent;
 	
 	UPROPERTY(EditAnywhere)
-	UCameraComponent* Camera;
-
-	UPROPERTY(EditAnywhere)
-	USpringArmComponent* SpringArm;
-
-	UPROPERTY(EditAnywhere)
 	USkeletalMeshComponent* SkeletalMesh;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, category = "Enhanced Input")
@@ -88,6 +84,18 @@ public:
 	
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = "GAS")
 	TArray<TSubclassOf<class UBaseGameplayAbility>> DefaultAbilities;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Weapon")
+	TSubclassOf<AWeapon> WeaponClass;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Replicated, Category="Weapon")
+	AWeapon* EquippedWeapon;
+	
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+	{
+		Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+		DOREPLIFETIME(ABaseCharacter, EquippedWeapon);
+	}
 
 protected:
 	virtual void BeginPlay() override;

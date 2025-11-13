@@ -15,6 +15,7 @@
 #include "Library/BaseAbilitySystemLibrary.h"
 #include "./PROJ.h"
 #include "./PROJ/GameplayAbilitySystem/GameplayAbilities/BaseGameplayAbility.h"
+#include "Weapon/Weapon.h"
 
 
 ABaseCharacter::ABaseCharacter()
@@ -23,15 +24,6 @@ ABaseCharacter::ABaseCharacter()
 	bReplicates = true;
 	GetCharacterMovement()->MaxWalkSpeed = 600.f;
 	GetCharacterMovement()->bOrientRotationToMovement = true;
-	//SpringArm
-	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
-	SpringArm->SetupAttachment(RootComponent);  
-	SpringArm->TargetArmLength = 450.f;
-	SpringArm->bUsePawnControlRotation = true;
-	//Camera
-	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
-	Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
-	Camera->bUsePawnControlRotation = false;
 	
 }
 
@@ -45,6 +37,17 @@ void ABaseCharacter::BeginPlay()
 			ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer()))
 		{
 			Subsystem->AddMappingContext(PlayerInputContext, 0);
+		}
+	}
+	
+	if (WeaponClass)
+	{
+		EquippedWeapon = GetWorld()->SpawnActor<AWeapon>(WeaponClass);
+		if (EquippedWeapon)
+		{
+			EquippedWeapon->LocationOffset = FVector(0.f, 0.f, 0.f);
+			EquippedWeapon->RotationOffset = FRotator(-90, 0.f, 90.f);
+			EquippedWeapon->AttachToCharacter(this, FName("WeaponSocket"));
 		}
 	}
 }
