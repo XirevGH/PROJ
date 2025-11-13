@@ -22,11 +22,17 @@ void UGA_CastProjectile::ActivateAbility(const FGameplayAbilitySpecHandle Handle
 void UGA_CastProjectile::OnProjectileHit(const FHitResult& Hit)
 {
 	NewTargetData = new FGameplayAbilityTargetData_SingleTargetHit(Hit);
-	UE_LOG(LogTemp, Warning, TEXT("Spawned Hit: %s"), *Hit.GetActor()->GetName());
+	//UE_LOG(LogTemp, Warning, TEXT("Spawned Hit: %s"), *Hit.GetActor()->GetName());
 	CurrentTargetData.Add(NewTargetData);
 }
 
 void UGA_CastProjectile::Cast()
+{
+	SpawnProjectile();
+	
+}
+
+void UGA_CastProjectile::SpawnProjectile()
 {
 	AActor* Avatar = GetAvatarActorFromActorInfo();
 	if (!Avatar) return;
@@ -34,19 +40,22 @@ void UGA_CastProjectile::Cast()
 	UWorld* World = Avatar->GetWorld();
 	if (!World) return;
 
-	FVector SpawnLocation = Avatar->GetActorLocation() + Avatar->GetActorForwardVector() * 100.f;
+	FVector SpawnLocation = Avatar->GetActorLocation() + Avatar->GetActorForwardVector() * 200.f;
 	FRotator SpawnRotation = Avatar->GetActorRotation();
 
-	 ProjectileActor = World->SpawnActor<AProjectile>(ProjectileActorClass, SpawnLocation, SpawnRotation);
+	ProjectileActor = World->SpawnActor<AProjectile>(ProjectileActorClass, SpawnLocation, SpawnRotation);
 
 	if (ProjectileActor)
 	{
-		//ProjectileActor->IgnoreCaster(Avatar);
-		//UE_LOG(LogTemp, Warning, TEXT("Spawned projectile: %s"), *ProjectileActor->GetName());
 		ProjectileActor->OnProjectileHitDelegate.AddDynamic(this, &UGA_CastProjectile::OnProjectileHit);
+		ProjectileActor->Caster = Avatar;
+		ProjectileActor->CastedAbility = this;
+		ProjectileActor->CasterASC = GetAbilitySystemComponentFromActorInfo();
+		ProjectileActor->Effects = DefaultEffects;
 	}
 	else
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Failed to spawn projectile"));
 	}
+	
 }
