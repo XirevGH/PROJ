@@ -1,8 +1,8 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
+#include "GA_Basic_Attack.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
-#include "GA_Basic_Attack.h"
 
 UGA_Basic_Attack::UGA_Basic_Attack()
 {
@@ -14,7 +14,7 @@ void UGA_Basic_Attack::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	const FGameplayEventData* TriggerEventData)
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
-	ActorInfo->AvatarActor->GetComponentByClass()
+	//ActorInfo->AvatarActor->GetComponentByClass()
 	if (!MyMontage)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("MyMontage is null"));
@@ -46,7 +46,7 @@ void UGA_Basic_Attack::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 			  false,
 			  false
 		  );
-
+		/*
 		WaitEventTask->EventReceived.AddDynamic(this, &UGA_Basic_Attack::OnHitscanStart);
 		WaitEventTask->ReadyForActivation();
 
@@ -60,7 +60,7 @@ void UGA_Basic_Attack::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 		);
 		WaitEndTask->EventReceived.AddDynamic(this, &UGA_Basic_Attack::OnHitscanEnd);
 		WaitEndTask->ReadyForActivation();
-		
+		*/
 	}
 	
 }
