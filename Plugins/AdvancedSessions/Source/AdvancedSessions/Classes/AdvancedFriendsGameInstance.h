@@ -44,6 +44,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AdvancedVoiceInterface)
 	bool bEnableTalkingStatusDelegate;
 
+	// If true we will auto travel to a game session when an invite is received.
+	// This can get in the way of Beacon Sessions, you may want to disable it.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AdvancedFriendsInterface)
+	bool bAutoTravelOnAcceptedUserInviteReceived = true;
+
 	//virtual void PostLoad() override;
 	virtual void Shutdown() override;
 	virtual void Init() override;
@@ -55,7 +60,7 @@ public:
 	// custom handle to join directly from steam ui "Join Game"
 	FDelegateHandle OnJoinSessionCompleteDelegateHandle;
 	// custom Steam UI Join User function #Self invite#
-	virtual void OnSessionUserInviteAccepted(const bool bWasSuccessful, const int32 ControllerId, FUniqueNetIdPtr UserId, const FOnlineSessionSearchResult& InviteResult);
+	void OnSessionUserInviteAccepted(const bool bWasSuccessful, const int32 ControllerId, FUniqueNetIdPtr UserId, const FOnlineSessionSearchResult& InviteResult);
 	// custom Steam UI function to client travel #Self invite#
 	void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
 
