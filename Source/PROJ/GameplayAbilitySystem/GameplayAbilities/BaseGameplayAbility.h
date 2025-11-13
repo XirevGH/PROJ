@@ -16,9 +16,13 @@ class PROJ_API UBaseGameplayAbility : public UGameplayAbility
 	GENERATED_BODY()
 public:
 
+	virtual void ApplyCooldown(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) const override;
+
+	static FGameplayTag GetCooldownTagFromInputID(const EAbilityInputID InputID);
+	
+	
 	UPROPERTY(EditDefaultsOnly, Category = "Custom Values| Input")
 	FGameplayTag InputTag;
-	
 	
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category =  "Ability")
 	EAbilityInputID AbilityInputID{ EAbilityInputID::None };
@@ -28,4 +32,7 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Damage")
 	float BaseDamage = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Cooldown")
+	float Cooldown = 0;
 };

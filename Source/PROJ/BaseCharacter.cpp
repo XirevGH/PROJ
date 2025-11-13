@@ -111,22 +111,22 @@ void ABaseCharacter::OnManaAttributeChanged(const FOnAttributeChangeData& Data)
 
 void ABaseCharacter::OnPrimaryAbility(const FInputActionValue& Value)
 {
-	SendAbilityLocalInput(Value, static_cast<int32>(EAbilityInputID::PrimaryAbility));
+	SendAbilityLocalInput(Value, static_cast<int32>(EAbilityInputID::Primary));
 }
 
 void ABaseCharacter::OnSecondaryAbility(const FInputActionValue& Value)
 {
-	SendAbilityLocalInput(Value, static_cast<int32>(EAbilityInputID::SecondaryAbility));
+	SendAbilityLocalInput(Value, static_cast<int32>(EAbilityInputID::Secondary));
 }
 
 void ABaseCharacter::OnMovementAbility(const FInputActionValue& Value)
 {
-	SendAbilityLocalInput(Value, static_cast<int32>(EAbilityInputID::MovementAbility));
+	SendAbilityLocalInput(Value, static_cast<int32>(EAbilityInputID::Movement));
 }
 
 void ABaseCharacter::OnUtilityAbility(const FInputActionValue& Value)
 {
-	SendAbilityLocalInput(Value, static_cast<int32>(EAbilityInputID::UtilityAbility));
+	SendAbilityLocalInput(Value, static_cast<int32>(EAbilityInputID::Utility));
 }
 
 void ABaseCharacter::SendAbilityLocalInput(const FInputActionValue& Value, int32 InputID) const

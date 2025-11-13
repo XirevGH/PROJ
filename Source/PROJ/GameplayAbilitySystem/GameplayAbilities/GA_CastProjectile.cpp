@@ -46,8 +46,11 @@ void UGA_CastProjectile::SpawnProjectile()
 	UWorld* World = Avatar->GetWorld();
 	if (!World) return;
 
-	FVector SpawnLocation = Avatar->GetActorLocation() + Avatar->GetActorForwardVector() * 200.f;
-	FRotator SpawnRotation = Avatar->GetActorRotation();
+	// can have more precise position if needed
+	SpawnLocation = Avatar->GetActorLocation() + Avatar->GetActorForwardVector() * 100.f;
+
+	// can change to camera rotation
+	SpawnRotation = Avatar->GetActorRotation();
 
 	if (GetOwningActorFromActorInfo()->HasAuthority())  // only server
 	{
