@@ -31,8 +31,8 @@ void AProjectile::BeginPlay()
 	ProjectileMovement->bRotationFollowsVelocity = true;
 	ProjectileMovement->ProjectileGravityScale = 0.f;
 	ProjectileMovement->SetIsReplicated(true);
-	SetReplicates(true);  
-	SetReplicateMovement(false);
+	//SetReplicates(true);  
+	//SetReplicateMovement(false);
 	
 	CollisionComp->SetNotifyRigidBodyCollision(true);
 	ProjectileMovement->Velocity = GetActorForwardVector() * ProjectileSpeed;
@@ -55,14 +55,26 @@ void AProjectile::DestroySelf()
 	Destroy();
 }
 
-void AProjectile::IgnoreCaster() const
+bool AProjectile::ApplyEffectToTarget(const AActor* Target)
 {
-	Mesh->IgnoreActorWhenMoving(Caster, true);
-	CollisionComp->IgnoreActorWhenMoving(Caster, true);
+	UAbilitySystemComponent* TargetASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Target);
+	if (HasAuthority() && TargetASC)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Target ASC is from: %s"), *TargetASC->GetAvatarActor()->GetName());
+		for (auto& EffectClass : Effects)
+		{
+			FGameplayEffectSpecHandle SpecHandle = CasterASC->MakeOutgoingSpec(EffectClass, CastedAbility->GetAbilityLevel(), CasterASC->MakeEffectContext());
+			SpecHandle.Data->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(FName("Data.Damage")), CastedAbility->BaseDamage);
+			TargetASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+		}
+		return true;
+	}
+	UE_LOG(LogTemp, Warning, TEXT("No target ASC, Effect(s) not applied"));
+	return false;
 }
 
 void AProjectile::OnProjectileHit(UPrimitiveComponent* HitComp, AActor* OtherActor,
-	UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
+                                  UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
 	if (OtherActor == Caster)
 	{
@@ -101,21 +113,7 @@ void AProjectile::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActo
 	}
 	if (CasterASC && CastedAbility)
 	{
-		UAbilitySystemComponent* TargetASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(OtherActor);
-		if (HasAuthority() && TargetASC)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Target ASC is from: %s"), *TargetASC->GetAvatarActor()->GetName());
-			for (auto& EffectClass : Effects)
-			{
-				FGameplayEffectSpecHandle SpecHandle = CasterASC->MakeOutgoingSpec(EffectClass, CastedAbility->GetAbilityLevel(), CasterASC->MakeEffectContext());
-				SpecHandle.Data->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(FName("Data.Damage")), CastedAbility->BaseDamage);
-				TargetASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
-			}
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("No target ASC"));
-		}
+		ApplyEffectToTarget(OtherActor);
 	}
 	
 	//UE_LOG(LogTemp, Warning, TEXT("Hit %s via OnBeginOverlap"), *OtherActor->GetActorNameOrLabel());

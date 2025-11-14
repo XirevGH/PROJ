@@ -10,8 +10,9 @@ enum class EAbilityInputID : uint8
 	None,
 	Confirm,
 	Cancel,
-	PrimaryAbility,
-	SecondaryAbility,
-	MovementAbility,
-	UtilityAbility
+	Primary,
+	Secondary,
+	Movement,
+	Utility,
+	Ultimate
 };
