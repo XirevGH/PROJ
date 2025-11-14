@@ -13,41 +13,9 @@ void UGA_Cast_AOE::ActivateAbility(const FGameplayAbilitySpecHandle Handle, cons
                                    const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
-
-
-	UE_LOG(LogTemp, Warning, TEXT("Ability is activated"));
-	UAbilityTask_WaitTargetData* Task =
-		UAbilityTask_WaitTargetData::WaitTargetData(
-		this,
-		TEXT("WaitTargetData"),
-		EGameplayTargetingConfirmation::UserConfirmed,
-		IndicatorActorClass
-		);
-	AGameplayAbilityTargetActor* DecalObj = GetWorld()->SpawnActor<AGameplayAbilityTargetActor>(IndicatorActorClass, GetAvatarActorFromActorInfo()->GetActorLocation(), GetAvatarActorFromActorInfo()->GetActorRotation() );
-	if (DecalObj)
-	{
-		
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Failed to spawn DecalObj"));
-	}
-	Task->ValidData.AddDynamic(this, &UGA_Cast_AOE::OnTargetDataReceived);
-	Task->Cancelled.AddDynamic(this, &UGA_Cast_AOE::OnTargetDataCancelled);
-
-	Task->ReadyForActivation();
-
+	
 }
 
-void UGA_Cast_AOE::InitializeTargetActor(class AGameplayAbilityTargetActor* SpawnedActor) const
-{
-	UE_LOG(LogTemp, Warning, TEXT("SpawnedActor is %s"), *SpawnedActor->GetName());
-	if (AGATA_GroundTrace_Indicator* TA = Cast<AGATA_GroundTrace_Indicator>(SpawnedActor))
-	{
-		TA->Decal->DecalSize = FVector(Radius, Radius, 1.0f);
-		
-	}
-}
 
 void UGA_Cast_AOE::OnTargetDataReceived(const FGameplayAbilityTargetDataHandle& Data)
 {
