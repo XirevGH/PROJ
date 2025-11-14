@@ -18,7 +18,7 @@ public:
 
 	virtual void ApplyCooldown(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) const override;
 
-	static FGameplayTag GetCooldownTagFromInputID(const EAbilityInputID InputID);
+	static FGameplayTag GetCooldownTagFromInputID(const FGameplayTag InputTag);
 	
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Custom Values| Input")

@@ -25,27 +25,26 @@ void UBaseGameplayAbility::ApplyCooldown(const FGameplayAbilitySpecHandle Handle
 	Spec->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(TEXT("Data.Cooldown.Duration")), Cooldown);
 	UE_LOG(LogTemp, Warning, TEXT("Apply Cooldown to %s "), *ActorInfo->AvatarActor->GetName());
 	
-	const FGameplayTag& CooldownTag = GetCooldownTagFromInputID(AbilityInputID); // e.g., Cooldown.Slot.Primary
+	const FGameplayTag& CooldownTag = GetCooldownTagFromInputID(InputTag); // e.g., Cooldown.Slot.Primary
 	Spec->DynamicGrantedTags.AddTag(CooldownTag);
 	
 	ApplyGameplayEffectSpecToOwner(Handle, ActorInfo, ActivationInfo, SpecHandle);
 }
 
-FGameplayTag UBaseGameplayAbility::GetCooldownTagFromInputID(const EAbilityInputID InputID) 
+FGameplayTag UBaseGameplayAbility::GetCooldownTagFromInputID(const FGameplayTag InputTag) 
 {
-	switch (InputID)
+	FString TagString = InputTag.ToString();
+	TArray<FString> Parts;
+	TagString.ParseIntoArray(Parts, TEXT("."), true);
+
+	if (Parts.Num() == 0)
 	{
-	case EAbilityInputID::Primary:
-		return FGameplayTag::RequestGameplayTag(TEXT("Cooldown.Ability.Primary"));
-	case EAbilityInputID::Secondary:
-		return FGameplayTag::RequestGameplayTag(TEXT("Cooldown.Ability.Secondary"));
-	case EAbilityInputID::Movement:
-		return FGameplayTag::RequestGameplayTag(TEXT("Cooldown.Ability.Movement"));
-	case EAbilityInputID::Utility:
-		return FGameplayTag::RequestGameplayTag(TEXT("Cooldown.Ability.Utility"));
-	case EAbilityInputID::Ultimate:
-		return FGameplayTag::RequestGameplayTag(TEXT("Cooldown.Ability.Ultimate"));
-	default:
-		return FGameplayTag(); // empty tag
+		return FGameplayTag();
 	}
+
+	FString Last = Parts.Last(); // "Primary", "Secondary", etc.
+
+	FString CooldownTagString = FString::Printf(TEXT("Cooldown.Ability.%s"), *Last);
+
+	return FGameplayTag::RequestGameplayTag(FName(*CooldownTagString), false);
 }

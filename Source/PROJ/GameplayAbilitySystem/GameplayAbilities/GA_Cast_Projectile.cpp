@@ -22,7 +22,7 @@ void UGA_Cast_Projectile::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 	}
 	
 	Cast();
-	//EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
+	EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 }
 
 void UGA_Cast_Projectile::OnProjectileHit(const FHitResult& Hit)
