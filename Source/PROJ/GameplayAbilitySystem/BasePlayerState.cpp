@@ -16,6 +16,7 @@ ABasePlayerState::ABasePlayerState()
 	BaseAttributeSet = CreateDefaultSubobject<UCharacterAttributeSet>(TEXT("AttributeSet"));
 
 	bReplicates = true;
+	
 }
 
 void ABasePlayerState::BeginPlay()
