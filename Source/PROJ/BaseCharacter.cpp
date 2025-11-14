@@ -193,6 +193,14 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		EnhancedInput->BindAction(SecondaryAbilityAction, ETriggerEvent::Triggered, this, &ABaseCharacter::OnSecondaryAbility);
 		EnhancedInput->BindAction(MovementAbilityAction, ETriggerEvent::Triggered, this, &ABaseCharacter::OnMovementAbility);
 		EnhancedInput->BindAction(UtilityAbilityAction, ETriggerEvent::Triggered, this, &ABaseCharacter::OnUtilityAbility);
+
+		
+		if (BaseAbilitySystemComp.IsValid())
+		{
+			//EnhancedInput->BindAction(ConfirmAbilityAction, ETriggerEvent::Triggered, this &ABaseCharacter::LocalInputConfirm);
+			//EnhancedInput->BindAction(ConfirmAbilityAction, ETriggerEvent::Triggered, BaseAbilitySystemComp.Get(), &UAbilitySystemComponent::LocalInputConfirm);
+			//EnhancedInput->BindAction(CancelAbilityAction, ETriggerEvent::Triggered, BaseAbilitySystemComp.Get(), &UAbilitySystemComponent::LocalInputCancel);
+		}
 	}
 }
 

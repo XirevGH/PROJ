@@ -79,6 +79,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, category = "Enhanced Input")
 	UInputAction* UtilityAbilityAction;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, category = "Enhanced Input")
+	UInputAction* ConfirmAbilityAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, category = "Enhanced Input")
+	UInputAction* CancelAbilityAction;
+
 	UPROPERTY(EditAnywhere ,BlueprintReadWrite, Category = "GAS")
 	TArray<TSubclassOf<class UGameplayEffect>> DefaultEffects;
 	

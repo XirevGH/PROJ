@@ -1,16 +1,16 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "GA_CastProjectile.h"
+#include "GA_Cast_Projectile.h"
 #include "AbilitySystemComponent.h"
 #include "PROJ/Projectiles/Projectile.h"
 
-UGA_CastProjectile::UGA_CastProjectile()
+UGA_Cast_Projectile::UGA_Cast_Projectile()
 {
 	ProjectileActor = nullptr;
 }
 
-void UGA_CastProjectile::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
+void UGA_Cast_Projectile::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
 	const FGameplayEventData* TriggerEventData)
 {
@@ -22,23 +22,23 @@ void UGA_CastProjectile::ActivateAbility(const FGameplayAbilitySpecHandle Handle
 	}
 	
 	Cast();
-	EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
+	//EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 }
 
-void UGA_CastProjectile::OnProjectileHit(const FHitResult& Hit)
+void UGA_Cast_Projectile::OnProjectileHit(const FHitResult& Hit)
 {
 	NewTargetData = new FGameplayAbilityTargetData_SingleTargetHit(Hit);
 	//UE_LOG(LogTemp, Warning, TEXT("Spawned Hit: %s"), *Hit.GetActor()->GetName());
 	CurrentTargetData.Add(NewTargetData);
 }
 
-void UGA_CastProjectile::Cast()
+void UGA_Cast_Projectile::Cast()
 {
 	SpawnProjectile();
 	
 }
 
-void UGA_CastProjectile::SpawnProjectile()
+void UGA_Cast_Projectile::SpawnProjectile()
 {
 	AActor* Avatar = GetAvatarActorFromActorInfo();
 	if (!Avatar) return;
@@ -59,7 +59,7 @@ void UGA_CastProjectile::SpawnProjectile()
 		{
 			ProjectileActor->SetReplicates(true);
 			ProjectileActor->SetReplicateMovement(true);
-			ProjectileActor->OnProjectileHitDelegate.AddDynamic(this, &UGA_CastProjectile::OnProjectileHit);
+			ProjectileActor->OnProjectileHitDelegate.AddDynamic(this, &UGA_Cast_Projectile::OnProjectileHit);
 			ProjectileActor->Caster = Avatar;
 			ProjectileActor->CastedAbility = this;
 			ProjectileActor->CasterASC = GetAbilitySystemComponentFromActorInfo();

@@ -4,14 +4,14 @@
 
 #include "CoreMinimal.h"
 #include "BaseGameplayAbility.h"
-#include "GA_CastProjectile.generated.h"
+#include "GA_Cast_Projectile.generated.h"
 
 /**
  * 
  */
 class AProjectile;
 UCLASS()
-class PROJ_API UGA_CastProjectile : public UBaseGameplayAbility
+class PROJ_API UGA_Cast_Projectile : public UBaseGameplayAbility
 {
 	GENERATED_BODY()
 	public:
@@ -27,7 +27,7 @@ class PROJ_API UGA_CastProjectile : public UBaseGameplayAbility
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	TSubclassOf<AProjectile> ProjectileActorClass;
 	
-	UGA_CastProjectile();
+	UGA_Cast_Projectile();
 
 	protected:
 	
@@ -49,8 +49,6 @@ class PROJ_API UGA_CastProjectile : public UBaseGameplayAbility
 	UFUNCTION(BlueprintCallable)
 	void SpawnProjectile();
 
-	
-	
 	private:
 	UPROPERTY()
 	FGameplayAbilityTargetDataHandle CurrentTargetData;
