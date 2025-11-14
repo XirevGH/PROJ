@@ -8,7 +8,7 @@
 
 class ABaseCharacter;
 class UCapsuleComponent;
-
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponHit, const TArray<FHitResult>&, HitResults);
 UCLASS()
 class PROJ_API AWeapon : public AActor
 {
@@ -48,6 +48,11 @@ public:
 	
 	FTimerHandle HitScanTimerHandle;
 	
+	UPROPERTY(BlueprintAssignable)
+	FOnWeaponHit OnWeaponHit;
+	
+	UFUNCTION(Server, Reliable)
+	void ServerHitScan();
 	
 	void AttachToCharacter(class ACharacter* NewOwner, FName SocketName = NAME_None);
 	UFUNCTION(BlueprintCallable)

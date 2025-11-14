@@ -7,6 +7,7 @@
 AWeapon::AWeapon()
 {
 	PrimaryActorTick.bCanEverTick = false;
+	bReplicates = true;
 	
 	RootComponent = CreateDefaultSubobject<USceneComponent>("RootComponent");
 	
@@ -31,6 +32,11 @@ AWeapon::AWeapon()
 	LocationOffset = FVector::ZeroVector;
 	RotationOffset = FRotator::ZeroRotator;
 
+}
+
+void AWeapon::ServerHitScan_Implementation()
+{
+	HitScan();
 }
 
 void AWeapon::AttachToCharacter(class ACharacter* NewOwner, FName InSocketName)
@@ -63,23 +69,18 @@ void AWeapon::HitScan()
 	HitResults,
 	Start,
 	End,
-	ECC_Visibility, // Replace with your collision channel
+	ECC_Pawn,
 	TraceParams);
 	
 	if (bHit)
 	{
-		for (auto& Hit : HitResults)
-		{
-			if (AActor* HitActor = Hit.GetActor())
-			UE_LOG(LogTemp, Warning, TEXT("Hit Actor: %s"), *HitActor->GetName());
-		}
+		OnWeaponHit.Broadcast(HitResults);
 	}
 	DrawDebugLine(GetWorld(), Start, End, FColor::Green, false, 2.f, 0, 2.f);
 	for (auto& Hit : HitResults)
 	{
 		DrawDebugSphere(GetWorld(), Hit.ImpactPoint, 5.f, 8, FColor::Red, false, 2.f);
 	}
-
 }
 
 void AWeapon::HitScanStart(float Interval)
@@ -87,15 +88,21 @@ void AWeapon::HitScanStart(float Interval)
 	if(bIsHitscanActive) return;
 	
 	bIsHitscanActive = true;
-	
+
+	if (HasAuthority())
+	{
 	HitScan();
-	
 	GetWorld()->GetTimerManager().SetTimer(
 		HitScanTimerHandle,
 		this,
 		&AWeapon::HitScan,
 		Interval,
 		true);
+	}
+	else
+	{
+		ServerHitScan_Implementation();
+	}
 }
 
 void AWeapon::HitScanEnd()
