@@ -15,6 +15,7 @@
 #include "Library/BaseAbilitySystemLibrary.h"
 #include "./PROJ.h"
 #include "./PROJ/GameplayAbilitySystem/GameplayAbilities/BaseGameplayAbility.h"
+#include "Weapon/Weapon.h"
 
 
 ABaseCharacter::ABaseCharacter()
@@ -23,15 +24,6 @@ ABaseCharacter::ABaseCharacter()
 	bReplicates = true;
 	GetCharacterMovement()->MaxWalkSpeed = 600.f;
 	GetCharacterMovement()->bOrientRotationToMovement = true;
-	//SpringArm
-	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
-	SpringArm->SetupAttachment(RootComponent);  
-	SpringArm->TargetArmLength = 450.f;
-	SpringArm->bUsePawnControlRotation = true;
-	//Camera
-	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
-	Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
-	Camera->bUsePawnControlRotation = false;
 	
 }
 
@@ -45,6 +37,17 @@ void ABaseCharacter::BeginPlay()
 			ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer()))
 		{
 			Subsystem->AddMappingContext(PlayerInputContext, 0);
+		}
+	}
+	
+	if (WeaponClass)
+	{
+		EquippedWeapon = GetWorld()->SpawnActor<AWeapon>(WeaponClass);
+		if (EquippedWeapon)
+		{
+			EquippedWeapon->LocationOffset = FVector(0.f, 0.f, 0.f);
+			EquippedWeapon->RotationOffset = FRotator(-90, 0.f, 90.f);
+			EquippedWeapon->AttachToCharacter(this, FName("WeaponSocket"));
 		}
 	}
 }
@@ -111,22 +114,22 @@ void ABaseCharacter::OnManaAttributeChanged(const FOnAttributeChangeData& Data)
 
 void ABaseCharacter::OnPrimaryAbility(const FInputActionValue& Value)
 {
-	SendAbilityLocalInput(Value, static_cast<int32>(EAbilityInputID::PrimaryAbility));
+	SendAbilityLocalInput(Value, static_cast<int32>(EAbilityInputID::Primary));
 }
 
 void ABaseCharacter::OnSecondaryAbility(const FInputActionValue& Value)
 {
-	SendAbilityLocalInput(Value, static_cast<int32>(EAbilityInputID::SecondaryAbility));
+	SendAbilityLocalInput(Value, static_cast<int32>(EAbilityInputID::Secondary));
 }
 
 void ABaseCharacter::OnMovementAbility(const FInputActionValue& Value)
 {
-	SendAbilityLocalInput(Value, static_cast<int32>(EAbilityInputID::MovementAbility));
+	SendAbilityLocalInput(Value, static_cast<int32>(EAbilityInputID::Movement));
 }
 
 void ABaseCharacter::OnUtilityAbility(const FInputActionValue& Value)
 {
-	SendAbilityLocalInput(Value, static_cast<int32>(EAbilityInputID::UtilityAbility));
+	SendAbilityLocalInput(Value, static_cast<int32>(EAbilityInputID::Utility));
 }
 
 void ABaseCharacter::SendAbilityLocalInput(const FInputActionValue& Value, int32 InputID) const
@@ -190,6 +193,14 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		EnhancedInput->BindAction(SecondaryAbilityAction, ETriggerEvent::Triggered, this, &ABaseCharacter::OnSecondaryAbility);
 		EnhancedInput->BindAction(MovementAbilityAction, ETriggerEvent::Triggered, this, &ABaseCharacter::OnMovementAbility);
 		EnhancedInput->BindAction(UtilityAbilityAction, ETriggerEvent::Triggered, this, &ABaseCharacter::OnUtilityAbility);
+
+		
+		if (BaseAbilitySystemComp.IsValid())
+		{
+			//EnhancedInput->BindAction(ConfirmAbilityAction, ETriggerEvent::Triggered, this &ABaseCharacter::LocalInputConfirm);
+			EnhancedInput->BindAction(ConfirmAbilityAction, ETriggerEvent::Triggered, BaseAbilitySystemComp.Get(), &UBaseAbilitySystemComponent::LocalInputConfirm);
+			EnhancedInput->BindAction(CancelAbilityAction, ETriggerEvent::Triggered, BaseAbilitySystemComp.Get(), &UBaseAbilitySystemComponent::LocalInputCancel);
+		}
 	}
 }
 
