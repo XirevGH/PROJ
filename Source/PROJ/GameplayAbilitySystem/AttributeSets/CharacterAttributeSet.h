@@ -33,11 +33,11 @@ public:
 	FGameplayAttributeData MaxHealth;
 	ATTRIBUTE_ACCESSORS(UCharacterAttributeSet, MaxHealth)
 
-	UPROPERTY(BlueprintReadOnly, Category = "Attribute", ReplicatedUsing = OnRep_MaxHealth)
+	UPROPERTY(BlueprintReadOnly, Category = "Attribute", ReplicatedUsing = OnRep_CurrentMoveSpeed)
 	FGameplayAttributeData CurrentMoveSpeed;
 	ATTRIBUTE_ACCESSORS(UCharacterAttributeSet, CurrentMoveSpeed)
 
-	UPROPERTY(BlueprintReadOnly, Category = "Attribute", ReplicatedUsing = OnRep_CurrentHealth)
+	UPROPERTY(BlueprintReadOnly, Category = "Attribute", ReplicatedUsing = OnRep_MaxMoveSpeed)
 	FGameplayAttributeData MaxMoveSpeed;
 	ATTRIBUTE_ACCESSORS(UCharacterAttributeSet, MaxMoveSpeed)
 	

@@ -22,7 +22,7 @@ ABaseCharacter::ABaseCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
 	bReplicates = true;
-	GetCharacterMovement()->MaxWalkSpeed = 600.f;
+	//GetCharacterMovement()->MaxWalkSpeed = 600.f;
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	
 }
@@ -82,7 +82,6 @@ void ABaseCharacter::PossessedBy(AController* NewController)
 
 	//Ska denna vara här?
 	InitializeAbilities();
-	BindCallbacksToDependencies();
 	OnCharacterInitialized();
 }
 
@@ -95,9 +94,9 @@ void ABaseCharacter::OnRep_PlayerState()
 		BasePlayerState = GetPlayerState<ABasePlayerState>();
 	}
 	
-	//InitAbilitySystemComponent();
-	//InitAbilityActorInfo();
-	//InitializeAbilities();
+	InitAbilitySystemComponent();
+	InitAbilityActorInfo();
+	InitializeAbilities();
 	
 	OnCharacterInitialized();
 }
@@ -221,7 +220,8 @@ void ABaseCharacter::InitAbilityActorInfo()
 		if (BaseAbilitySystemComp.IsValid())
 		{
 			BaseAbilitySystemComp->InitAbilityActorInfo(BasePlayerState, this);
-			
+
+			BindCallbacksToDependencies();
 			if (HasAuthority())
 			{
 				InitClassDefaults();

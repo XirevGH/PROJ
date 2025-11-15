@@ -55,7 +55,7 @@ void UCharacterAttributeSet::PostGameplayEffectExecute(const struct FGameplayEff
 	if (Data.EvaluatedData.Attribute == GetCurrentHealthAttribute())
 	{
 		SetCurrentHealth(FMath::Clamp(GetCurrentHealth(),0.f,GetMaxHealth()));
-	//UE_LOG(LogTemp, Warning, TEXT("Speed Attribute is now: %f"), GetCurrentHealth());
+		UE_LOG(LogTemp, Warning, TEXT("HEalth Attribute is now: %f"), GetCurrentHealth());
 	}
 
 	if (Data.EvaluatedData.Attribute == GetCurrentMoveSpeedAttribute())
