@@ -2,7 +2,6 @@
 
 #include "CoreMinimal.h"
 #include "AdvancedFriendsGameInstance.h"
-#include "AdvancedFriendsGameInstance.h"
 #include "AdvancedGameInstance.generated.h"
 
 /**
