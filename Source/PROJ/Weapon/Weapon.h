@@ -6,7 +6,6 @@
 #include "GameFramework/Actor.h"
 #include "Weapon.generated.h"
 
-class UGameplayEffect;
 class ABaseCharacter;
 class UCapsuleComponent;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponHit, const TArray<FHitResult>&, HitResults);
@@ -49,12 +48,6 @@ public:
 	
 	FTimerHandle HitScanTimerHandle;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Weapon|Damage")
-	TSubclassOf<UGameplayEffect> DamageEffectClass;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="HitActors")
-	TArray<AActor*> HitActors;
-	
 	UPROPERTY(BlueprintAssignable)
 	FOnWeaponHit OnWeaponHit;
 	
@@ -64,9 +57,7 @@ public:
 	void AttachToCharacter(class ACharacter* NewOwner, FName SocketName = NAME_None);
 	UFUNCTION(BlueprintCallable)
 	void HitScan();
-	UFUNCTION(BlueprintCallable)
-	void HitScanStart(float Interval, TSubclassOf<UGameplayEffect> DamageEffect);
-	UFUNCTION(BlueprintCallable)
+	void HitScanStart(float Interval = 1.f/30.f);
 	void HitScanEnd();
 protected:
 	
