@@ -15,14 +15,8 @@ class PROJ_API UGA_CastProjectile : public UBaseGameplayAbility
 {
 	GENERATED_BODY()
 	public:
-	UPROPERTY()
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	AProjectile* ProjectileActor;
-
-	//Can change to socket later if needed
-	UPROPERTY()
-	FVector SpawnLocation;
-	UPROPERTY()
-	FRotator SpawnRotation;
 
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	TSubclassOf<AProjectile> ProjectileActorClass;
