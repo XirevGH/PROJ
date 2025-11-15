@@ -24,6 +24,9 @@ class PROJ_API UBaseAttack : public UBaseGameplayAbility
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Ability| Weapon")
 	AWeapon* EquippedWeapon;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Weapon|Damage")
+	TSubclassOf<UGameplayEffect> DamageEffectClass;
 	
 	UPROPERTY()
 	TSet<AActor*> HitActors;
@@ -31,26 +34,19 @@ class PROJ_API UBaseAttack : public UBaseGameplayAbility
 	bool bIsHitscanActive = false;
 
 protected:
-	virtual  void ActivateAbility(const FGameplayAbilitySpecHandle Handle,
+	/*virtual  void ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 		const FGameplayAbilityActorInfo* ActorInfo,
 		const FGameplayAbilityActivationInfo ActivationInfo,
-		const FGameplayEventData* TriggerEventData) override;
-	UFUNCTION()
-	void OnWeaponHitReceived(const TArray<FHitResult>& HitResults);
+		const FGameplayEventData* TriggerEventData) override;*/
 	void ApplyDamage(AActor* Target);
 
-	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle,
+	/*virtual void EndAbility(const FGameplayAbilitySpecHandle Handle,
 	                        const FGameplayAbilityActorInfo* ActorInfo,
 	                        const FGameplayAbilityActivationInfo ActivationInfo,
 	                        bool bReplicatedEndAbility,
-	                        bool bWasCancelled) override;
-
-	UFUNCTION()
-	void OnHitscanStart(FGameplayEventData Payload);
-
-	UFUNCTION()
-	void OnHitscanEnd(FGameplayEventData Payload);
+	                        bool bWasCancelled) override;*/
 	
+/*	
 	UFUNCTION(BlueprintImplementableEvent)
 	void OntargetReady(const FGameplayAbilityTargetDataHandle& TargetData);
 	
@@ -61,5 +57,5 @@ protected:
 	void OnMontageInterrupted();
 
 	UFUNCTION()
-	void OnMontageCancelled();
+	void OnMontageCancelled();*/
 };

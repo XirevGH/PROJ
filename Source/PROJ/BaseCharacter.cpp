@@ -42,7 +42,11 @@ void ABaseCharacter::BeginPlay()
 	
 	if (WeaponClass)
 	{
-		EquippedWeapon = GetWorld()->SpawnActor<AWeapon>(WeaponClass);
+		FActorSpawnParameters Params;
+		Params.Owner = this;
+		Params.Instigator = this;
+		
+		EquippedWeapon = GetWorld()->SpawnActor<AWeapon>(WeaponClass,Params);
 		if (EquippedWeapon)
 		{
 			EquippedWeapon->LocationOffset = FVector(0.f, 0.f, 0.f);
