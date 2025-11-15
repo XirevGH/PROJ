@@ -51,20 +51,23 @@ void UCharacterAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty
 void UCharacterAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data)
 {
 	Super::PostGameplayEffectExecute(Data);
-	UE_LOG(LogTemp, Warning, TEXT("Health Attribute is now: %f"), GetCurrentHealth());
+	
 	if (Data.EvaluatedData.Attribute == GetCurrentHealthAttribute())
 	{
 		SetCurrentHealth(FMath::Clamp(GetCurrentHealth(),0.f,GetMaxHealth()));
+	//UE_LOG(LogTemp, Warning, TEXT("Speed Attribute is now: %f"), GetCurrentHealth());
 	}
 
 	if (Data.EvaluatedData.Attribute == GetCurrentMoveSpeedAttribute())
 	{
 		SetCurrentMoveSpeed(FMath::Clamp(GetCurrentMoveSpeed(),0.f,GetMaxMoveSpeed()));
+		UE_LOG(LogTemp, Warning, TEXT("Speed Attribute is now: %f"), GetCurrentMoveSpeed());
 	}
 	
 	if (Data.EvaluatedData.Attribute == GetManaAttribute())
 	{
 		SetMana(FMath::Clamp(GetMana(),0.f,GetMaxMana()));
 	}
+	
 }
 
