@@ -1,8 +1,6 @@
 
 
 #include "Weapon.h"
-
-#include "AbilitySystemGlobals.h"
 #include "Components/CapsuleComponent.h"
 #include "PROJ/BaseCharacter.h"
 
@@ -10,16 +8,13 @@ AWeapon::AWeapon()
 {
 	PrimaryActorTick.bCanEverTick = false;
 	
-	bReplicates = true;
-	
 	RootComponent = CreateDefaultSubobject<USceneComponent>("RootComponent");
 	
 	Mesh = CreateDefaultSubobject<UStaticMeshComponent>("Mesh");
 	Mesh->SetupAttachment(RootComponent);
+	
 	Mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	Mesh->SetCollisionResponseToAllChannels(ECR_Ignore);
-	Mesh->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
-	Mesh->SetIsReplicated(true);
 	
 	StartTrace = CreateDefaultSubobject<USceneComponent>("StartTrace");
 	StartTrace->SetupAttachment(RootComponent);
@@ -38,11 +33,6 @@ AWeapon::AWeapon()
 
 }
 
-void AWeapon::ServerHitScan_Implementation()
-{
-	HitScan();
-}
-
 void AWeapon::AttachToCharacter(class ACharacter* NewOwner, FName InSocketName)
 {
 	WeaponOwner = Cast<ABaseCharacter>(NewOwner);
@@ -56,7 +46,6 @@ void AWeapon::AttachToCharacter(class ACharacter* NewOwner, FName InSocketName)
 	Mesh->SetRelativeRotation(RotationOffset);
 	
 }
-
 
 void AWeapon::HitScan()
 {
@@ -74,74 +63,39 @@ void AWeapon::HitScan()
 	HitResults,
 	Start,
 	End,
-	ECC_Pawn,
+	ECC_Visibility, // Replace with your collision channel
 	TraceParams);
 	
 	if (bHit)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Hit count: %d"), HitResults.Num());
-		for (FHitResult Hit : HitResults)
+		for (auto& Hit : HitResults)
 		{
-			AActor* HitActor = Hit.GetActor();
-			if (!HitActor) continue;
-			if (HitActors.Contains(HitActor)) continue;
-			
-			HitActors.AddUnique(HitActor);
-
-			UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(HitActor);
-			
-			UE_LOG(LogTemp, Warning, TEXT("Authority: %d (%s)"),
-			GetOwner()->HasAuthority(),
-			*GetOwner()->GetName());
-			if (IsValid(ASC) && IsValid(DamageEffectClass))
-			{
-				FGameplayEffectContextHandle EffectContext = ASC->MakeEffectContext();
-				EffectContext.AddSourceObject(this);
-
-				FGameplayEffectSpecHandle SpecHandle =
-					ASC->MakeOutgoingSpec(DamageEffectClass, 1.f, EffectContext);
-
-				if (SpecHandle.IsValid())
-				{
-					UE_LOG(LogTemp, Warning, TEXT("SpecHandle valid"));
-					ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
-					UE_LOG(LogTemp, Warning, TEXT("Target hit: %s"), *ASC->GetOwner()->GetName());
-				}
-			}
+			if (AActor* HitActor = Hit.GetActor())
+			UE_LOG(LogTemp, Warning, TEXT("Hit Actor: %s"), *HitActor->GetName());
 		}
 	}
-	
 	DrawDebugLine(GetWorld(), Start, End, FColor::Green, false, 2.f, 0, 2.f);
-	
 	for (auto& Hit : HitResults)
 	{
 		DrawDebugSphere(GetWorld(), Hit.ImpactPoint, 5.f, 8, FColor::Red, false, 2.f);
 	}
+
 }
 
-void AWeapon::HitScanStart(float Interval, TSubclassOf<UGameplayEffect> DamageEffect)
+void AWeapon::HitScanStart(float Interval)
 {
 	if(bIsHitscanActive) return;
 	
 	bIsHitscanActive = true;
-
-	DamageEffectClass = DamageEffect;
 	
-	if (HasAuthority())
-	{
-		HitActors.Empty();
-		
-		HitScan();
-		GetWorld()->GetTimerManager().SetTimer(
+	HitScan();
+	
+	GetWorld()->GetTimerManager().SetTimer(
 		HitScanTimerHandle,
 		this,
 		&AWeapon::HitScan,
-		Interval,true);
-	}
-	else
-	{
-		ServerHitScan_Implementation();
-	}
+		Interval,
+		true);
 }
 
 void AWeapon::HitScanEnd()
@@ -149,7 +103,7 @@ void AWeapon::HitScanEnd()
 	if (!bIsHitscanActive) return;
 
 	bIsHitscanActive = false;
-	HitActors.Empty();
+	
 	GetWorld()->GetTimerManager().ClearTimer(HitScanTimerHandle);
 }
 

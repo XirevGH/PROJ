@@ -17,7 +17,7 @@ void UBaseAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 	
-	ABaseCharacter* Player = Cast<ABaseCharacter>(GetAvatarActorFromActorInfo());
+	ABaseCharacter* Player = Cast<ABaseCharacter>(ActorInfo->OwnerActor.Get());
 	if (Player)
 	{
 		AWeapon* CurrentWeapon = Player->EquippedWeapon;
@@ -28,20 +28,19 @@ void UBaseAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 			return;
 		}
 		EquippedWeapon = CurrentWeapon;
-		if (ActorInfo->OwnerActor->HasAuthority() || ActorInfo->IsLocallyControlled())
-		{
-			if (EquippedWeapon)
-				EquippedWeapon->OnWeaponHit.AddDynamic(this, &UBaseAttack::OnWeaponHitReceived);
-		}
 	}
+	
+	
 	if (!MyMontage)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("MyMontage is null"));
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 		return;
 	}
-	//Montage start
-	auto* MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
+	if (ActorInfo && ActorInfo->OwnerActor.Get() && ActorInfo->OwnerActor->HasAuthority())
+	{
+		//Montage start
+		auto* MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
 	this,
 	TEXT("MyMontageTask"),
 	MyMontage,
@@ -49,14 +48,13 @@ void UBaseAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	NAME_None,
 	true);
 	
-	MontageTask->OnCompleted.AddDynamic(this, &UBaseAttack::OnMontageCompleted);
-	MontageTask->OnInterrupted.AddDynamic(this, &UBaseAttack::OnMontageInterrupted);
-	MontageTask->OnCancelled.AddDynamic(this, &UBaseAttack::OnMontageCancelled);
+		MontageTask->OnCompleted.AddDynamic(this, &UBaseAttack::OnMontageCompleted);
+		MontageTask->OnInterrupted.AddDynamic(this, &UBaseAttack::OnMontageInterrupted);
+		MontageTask->OnCancelled.AddDynamic(this, &UBaseAttack::OnMontageCancelled);
 
-	MontageTask->ReadyForActivation();
+		MontageTask->ReadyForActivation();
 		
-	if (ActorInfo->OwnerActor->HasAuthority())
-	{
+		
 		// Wait for start
 		auto* WaitEventTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(
 			  this,
@@ -65,6 +63,7 @@ void UBaseAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 			  false,
 			  false
 		  );
+		
 		WaitEventTask->EventReceived.AddDynamic(this, &UBaseAttack::OnHitscanStart);
 		WaitEventTask->ReadyForActivation();
 
@@ -78,61 +77,71 @@ void UBaseAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 		);
 		WaitEndTask->EventReceived.AddDynamic(this, &UBaseAttack::OnHitscanEnd);
 		WaitEndTask->ReadyForActivation();
+		
 	}
-}
-
-void UBaseAttack::OnWeaponHitReceived(const TArray<FHitResult>& HitResults)
-{
-	for (auto& Hit : HitResults)
-	{
-		if (AActor* HitActor = Hit.GetActor())
-		{
-			if (!HitActors.Contains(HitActor))
-			{
-				HitActors.Add(HitActor);
-
-				UE_LOG(LogTemp, Warning, TEXT("Ability hit actor: %s"), *HitActor->GetName());
-
-				// Apply damage once
-				ApplyDamage(HitActor);
-			}
-		}
-	}
-}
-
-void UBaseAttack::ApplyDamage(AActor* Target)
-{
 	
 }
-void UBaseAttack::OnHitscanStart(FGameplayEventData Payload)
+
+void UBaseAttack::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
+	const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicatedEndAbility, bool bWasCancelled)
 {
-	if (EquippedWeapon)
+	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicatedEndAbility, bWasCancelled);
+	
+	AWeapon* CurrentWeapon = GetEquippedWeapon();
+	if (CurrentWeapon)
 	{
-		EquippedWeapon->HitScanStart();
-		UE_LOG(LogTemp, Warning, TEXT("Attack scan start"));
+		CurrentWeapon->HitScanEnd();
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Curren weapon null in HitScanStart"));
+		UE_LOG(LogTemp, Warning, TEXT("EndAbility called but weapon is null!"));
+	}
+}
+
+void UBaseAttack::OnHitscanStart(FGameplayEventData Payload)
+{
+	AWeapon* CurrentWeapon = GetEquippedWeapon();
+	if (CurrentWeapon)
+	{
+	CurrentWeapon->HitScanStart(1.f/30.f);
+	UE_LOG(LogTemp, Warning, TEXT("Attack scan start"));
+	}
+	else
+	{
+	UE_LOG(LogTemp, Warning, TEXT("Curren weapon null in HitScanStart"));
 	}
 }
 
 void UBaseAttack::OnHitscanEnd(FGameplayEventData Payload)
 {
-	
-	if (EquippedWeapon)
+	AWeapon* CurrentWeapon = GetEquippedWeapon();
+	if (CurrentWeapon)
 	{
-		EquippedWeapon->HitScanEnd();
-		UE_LOG(LogTemp, Warning, TEXT("Attack scan ended"));
+	EquippedWeapon->HitScanEnd();
+	UE_LOG(LogTemp, Warning, TEXT("Attack scan ended"));
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Curren weapon null in HitScanEnd"));
+	UE_LOG(LogTemp, Warning, TEXT("Curren weapon null in HitScanEnd"));
 	}
+}
+AWeapon* UBaseAttack::GetEquippedWeapon() const
+{
+	if (const ABaseCharacter* Player = Cast<ABaseCharacter>(GetOwningActorFromActorInfo()))
+	{
+		return Player->EquippedWeapon;
+	}
+	return nullptr;
+}
+
+void UBaseAttack::Attack()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Attack"));
 }
 
 void UBaseAttack::OnMontageCompleted()
 {
+	Attack();
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }
 
@@ -148,15 +157,3 @@ void UBaseAttack::OnMontageCancelled()
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }
 
-void UBaseAttack::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
-	const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicatedEndAbility, bool bWasCancelled)
-{
-	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicatedEndAbility, bWasCancelled);
-	
-	if (EquippedWeapon)
-	{
-		EquippedWeapon->OnWeaponHit.RemoveDynamic(this, &UBaseAttack::OnWeaponHitReceived);
-	}
-	EquippedWeapon = nullptr;
-	HitActors.Empty();
-}

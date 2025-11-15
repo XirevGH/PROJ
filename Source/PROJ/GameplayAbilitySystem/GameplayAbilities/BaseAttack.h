@@ -25,9 +25,6 @@ class PROJ_API UBaseAttack : public UBaseGameplayAbility
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Ability| Weapon")
 	AWeapon* EquippedWeapon;
 	
-	UPROPERTY()
-	TSet<AActor*> HitActors;
-	
 	bool bIsHitscanActive = false;
 
 protected:
@@ -35,15 +32,12 @@ protected:
 		const FGameplayAbilityActorInfo* ActorInfo,
 		const FGameplayAbilityActivationInfo ActivationInfo,
 		const FGameplayEventData* TriggerEventData) override;
-	UFUNCTION()
-	void OnWeaponHitReceived(const TArray<FHitResult>& HitResults);
-	void ApplyDamage(AActor* Target);
-
+	
 	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle,
-	                        const FGameplayAbilityActorInfo* ActorInfo,
-	                        const FGameplayAbilityActivationInfo ActivationInfo,
-	                        bool bReplicatedEndAbility,
-	                        bool bWasCancelled) override;
+		const FGameplayAbilityActorInfo* ActorInfo,
+		const FGameplayAbilityActivationInfo ActivationInfo,
+		bool bReplicatedEndAbility,
+		bool bWasCancelled) override;
 
 	UFUNCTION()
 	void OnHitscanStart(FGameplayEventData Payload);
@@ -53,7 +47,10 @@ protected:
 	
 	UFUNCTION(BlueprintImplementableEvent)
 	void OntargetReady(const FGameplayAbilityTargetDataHandle& TargetData);
-	
+
+	UFUNCTION(BlueprintCallable)
+	void Attack();
+
 	UFUNCTION()
 	void OnMontageCompleted();
 
@@ -62,4 +59,7 @@ protected:
 
 	UFUNCTION()
 	void OnMontageCancelled();
+	
+	UFUNCTION()
+	AWeapon* GetEquippedWeapon() const;
 };
