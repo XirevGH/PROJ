@@ -24,14 +24,22 @@ class PROJ_API UCharacterAttributeSet : public UAttributeSet
 	GENERATED_BODY()
 	
 public:
+
+	UPROPERTY(BlueprintReadOnly, Category = "Attribute", ReplicatedUsing = OnRep_CurrentHealth)
+	FGameplayAttributeData CurrentHealth;
+	ATTRIBUTE_ACCESSORS(UCharacterAttributeSet, CurrentHealth)
 	
 	UPROPERTY(BlueprintReadOnly, Category = "Attribute", ReplicatedUsing = OnRep_MaxHealth)
 	FGameplayAttributeData MaxHealth;
 	ATTRIBUTE_ACCESSORS(UCharacterAttributeSet, MaxHealth)
 
+	UPROPERTY(BlueprintReadOnly, Category = "Attribute", ReplicatedUsing = OnRep_MaxHealth)
+	FGameplayAttributeData CurrentMoveSpeed;
+	ATTRIBUTE_ACCESSORS(UCharacterAttributeSet, CurrentMoveSpeed)
+
 	UPROPERTY(BlueprintReadOnly, Category = "Attribute", ReplicatedUsing = OnRep_CurrentHealth)
-	FGameplayAttributeData CurrentHealth;
-	ATTRIBUTE_ACCESSORS(UCharacterAttributeSet, CurrentHealth)
+	FGameplayAttributeData MaxMoveSpeed;
+	ATTRIBUTE_ACCESSORS(UCharacterAttributeSet, MaxMoveSpeed)
 	
 
 	UPROPERTY(BlueprintReadOnly, Category = "Attribute", ReplicatedUsing = OnRep_MaxMana)
@@ -46,9 +54,17 @@ public:
 	virtual void PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data) override;
 	
 	UFUNCTION()
-	void OnRep_MaxHealth(const FGameplayAttributeData& OldValue) const;
-	UFUNCTION()
 	void OnRep_CurrentHealth(const FGameplayAttributeData& OldValue) const;
+
+	UFUNCTION()
+	void OnRep_MaxHealth(const FGameplayAttributeData& OldValue) const;
+
+	UFUNCTION()
+	void OnRep_CurrentMoveSpeed(const FGameplayAttributeData& OldValue) const;
+
+	UFUNCTION()
+	void OnRep_MaxMoveSpeed(const FGameplayAttributeData& OldValue) const;
+
 
 	UFUNCTION()
 	void OnRep_MaxMana(const FGameplayAttributeData& OldValue) const;
