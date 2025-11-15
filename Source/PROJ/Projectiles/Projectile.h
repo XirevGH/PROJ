@@ -65,10 +65,10 @@ public:
 
 	UFUNCTION()
 	void DestroySelf();
-
+	
 	UFUNCTION()
-	void IgnoreCaster() const;
-
+	bool ApplyEffectToTarget(const AActor* Target);
+	
 	UFUNCTION()
 	void OnProjectileHit(
 		UPrimitiveComponent* HitComp,
