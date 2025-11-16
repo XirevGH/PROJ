@@ -80,7 +80,8 @@ private:
 	
 	void FindCompatibleMatchSessions();
 	void OnFindMatchSessionsCompleted(bool bSuccess);
-	void OnFindOpenPublicSessionsCompleted(bool bSuccess);
+	UFUNCTION()
+	void OnFindOpenPublicSessionsCompleted(const bool bSuccess);
 	void UpdateSessionSettings(FOnlineSessionSettings* NewSessionSettings) const;
 	FOnlineSessionSettings* GetSessionSettings() const;
 
