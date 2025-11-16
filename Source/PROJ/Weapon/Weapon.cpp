@@ -1,12 +1,19 @@
 
 
 #include "Weapon.h"
+#include "AbilitySystemComponent.h"
+#include "GameplayEffect.h"
+#include "GameplayEffectTypes.h"
+#include "AbilitySystemGlobals.h"
 #include "Components/CapsuleComponent.h"
 #include "PROJ/BaseCharacter.h"
+#include "PROJ/GameplayAbilitySystem/GameplayAbilities/BaseAttack.h"
+#include "PROJ/GameplayAbilitySystem/GameplayAbilities/BaseGameplayAbility.h"
 
 AWeapon::AWeapon()
 {
 	PrimaryActorTick.bCanEverTick = false;
+	bReplicates = true;
 	
 	RootComponent = CreateDefaultSubobject<USceneComponent>("RootComponent");
 	
@@ -33,17 +40,60 @@ AWeapon::AWeapon()
 
 }
 
-void AWeapon::AttachToCharacter(class ACharacter* NewOwner, FName InSocketName)
+void AWeapon::ApplyEffectToTarget(AActor* Target)
+{
+	if (!HasAuthority() || !Target) return;
+	
+	UAbilitySystemComponent* TargetASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Target);
+	if (!TargetASC) return;
+
+	UAbilitySystemComponent* OwnerASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GetOwner());
+	if (!OwnerASC) return;
+
+	if (!Ability)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Weapon has no Ability assigned!"));
+		return;
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("Applying effects to target: %s"), *Target->GetName());
+	
+	for (auto& EffectClass : Effects)
+	{
+		if (!EffectClass)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("EffectClass is null!"));
+			continue;
+		}
+		
+		if (!EffectClass) continue;
+		FGameplayEffectContextHandle EffectContext = OwnerASC->MakeEffectContext();
+		FGameplayEffectSpecHandle SpecHandle = OwnerASC->MakeOutgoingSpec(EffectClass,1.f, EffectContext);
+
+		if (SpecHandle.IsValid())
+		{
+			FGameplayTag DamageTag = FGameplayTag::RequestGameplayTag(FName("Data.Damage"));
+			SpecHandle.Data->SetSetByCallerMagnitude(DamageTag,Ability->BaseDamage);
+
+			TargetASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+		}
+		
+	}
+}
+
+void AWeapon::AttachToCharacter(ACharacter* NewOwner, FName InSocketName)
 {
 	WeaponOwner = Cast<ABaseCharacter>(NewOwner);
 	if (WeaponOwner && Mesh)
+		
+	Mesh->SetRelativeLocation(LocationOffset);
+	Mesh->SetRelativeRotation(RotationOffset);
+	
 	AttachToComponent(
 		WeaponOwner->GetMesh(),
 		FAttachmentTransformRules::KeepRelativeTransform,
 		InSocketName);
 	
-	Mesh->SetRelativeLocation(LocationOffset);
-	Mesh->SetRelativeRotation(RotationOffset);
 	
 }
 
@@ -63,15 +113,18 @@ void AWeapon::HitScan()
 	HitResults,
 	Start,
 	End,
-	ECC_Visibility, // Replace with your collision channel
+	ECC_Pawn,
 	TraceParams);
 	
 	if (bHit)
 	{
 		for (auto& Hit : HitResults)
 		{
-			if (AActor* HitActor = Hit.GetActor())
+			AActor* HitActor = Hit.GetActor();
+			if (HitActor)
 			UE_LOG(LogTemp, Warning, TEXT("Hit Actor: %s"), *HitActor->GetName());
+			ApplyEffectToTarget(HitActor);
+			
 		}
 	}
 	DrawDebugLine(GetWorld(), Start, End, FColor::Green, false, 2.f, 0, 2.f);

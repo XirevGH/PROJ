@@ -6,6 +6,9 @@
 #include "GameFramework/Actor.h"
 #include "Weapon.generated.h"
 
+class UBaseAttack;
+class UBaseGameplayAbility;
+class UGameplayEffect;
 class ABaseCharacter;
 class UCapsuleComponent;
 
@@ -41,18 +44,27 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Attachment")
 	FRotator RotationOffset;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Ability")
+	UBaseAttack* Ability;
 	
 	bool bIsHitscanActive;
 	
 	float HitScanInterval = 1.f/30.f;
 	
 	FTimerHandle HitScanTimerHandle;
-	
+
+	UPROPERTY(EditDefaultsOnly, Category="Effects")
+	TArray<TSubclassOf<UGameplayEffect>> Effects;
+	UFUNCTION()
+	void ApplyEffectToTarget(AActor* Target);
 	
 	void AttachToCharacter(class ACharacter* NewOwner, FName SocketName = NAME_None);
 	UFUNCTION(BlueprintCallable)
 	void HitScan();
+	UFUNCTION()
 	void HitScanStart(float Interval = 1.f/30.f);
+	UFUNCTION()
 	void HitScanEnd();
 protected:
 	
