@@ -2,7 +2,10 @@
 
 #include "CoreMinimal.h"
 #include "AdvancedFriendsGameInstance.h"
+#include "FCustomBlueprintSessionResult.h"
 #include "AdvancedGameInstance.generated.h"
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnOpenPublicSessionsFound, const TArray<FCustomBlueprintSessionResult>&, Sessions);
 
 /**
  * 
@@ -46,6 +49,14 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category = "GameSession")
 	void OnMatchSessionFound(const FBlueprintSessionResult& FoundMatchSession);
 
+	// Find sessions "lobbies" open for joining
+	// Should bind custom event in blueprint to OnOpenPublicSessionsFound to get the array of sessions
+	UFUNCTION(BlueprintCallable, Category = "GameSession")
+	void FindOpenPublicSessions();
+
+	UPROPERTY(BlueprintAssignable, Category = "GameSession")
+	FOnOpenPublicSessionsFound OnOpenPublicSessionsFound;
+
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GameSession")
 	FString IsSearchingForMatchKey;
@@ -65,10 +76,14 @@ protected:
 private:
 	int32 MaxSearchResults;
 	TSharedPtr<FOnlineSessionSearch> MatchSearch;
+	TSharedPtr<FOnlineSessionSearch> OpenPublicSearch;
 	
 	void FindCompatibleMatchSessions();
 	void OnFindMatchSessionsCompleted(bool bSuccess);
-	
-	FOnlineSessionSettings* GetSessionSettings() const;
+	void OnFindOpenPublicSessionsCompleted(bool bSuccess);
 	void UpdateSessionSettings(FOnlineSessionSettings* NewSessionSettings) const;
+	FOnlineSessionSettings* GetSessionSettings() const;
+
+	FDelegateHandle OpenPublicSessionsDelegateHandle;
+	FDelegateHandle MatchSessionsDelegateHandle;
 };

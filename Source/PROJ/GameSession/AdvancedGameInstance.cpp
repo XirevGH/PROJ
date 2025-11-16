@@ -1,5 +1,7 @@
 ﻿#include "AdvancedGameInstance.h"
 
+#include "Online/OnlineSessionNames.h"
+
 UAdvancedGameInstance::UAdvancedGameInstance(const FObjectInitializer& ObjectInitializer) :
 	Super(ObjectInitializer),
 	IsSearchingForMatchKey("IsSearchingForMatch"),
@@ -7,7 +9,7 @@ UAdvancedGameInstance::UAdvancedGameInstance(const FObjectInitializer& ObjectIni
 	CustomSessionNameKey("CustomSessionName"),
 	UniqueTeamID("None"),
 	bIsTeamLeader(false),
-	MaxSearchResults(100)
+	MaxSearchResults(10)
 {
 	bAutoTravelOnAcceptedUserInviteReceived = false;
 }
@@ -77,16 +79,86 @@ FString UAdvancedGameInstance::GetCustomSessionName() const
 
 void UAdvancedGameInstance::StartMatchmakingSearch()
 {
+	UE_LOG(LogTemp, Warning, TEXT("IsSearchingForMatch: %hhd"), GetIsSearchingForMatch());
 	if (GetIsSearchingForMatch())
 	{
+		UE_LOG(LogTemp, Warning, TEXT("StartMatchmakingSearch"));
 		FindCompatibleMatchSessions();	
 	}
 }
 
-void UAdvancedGameInstance::FindCompatibleMatchSessions()
+void UAdvancedGameInstance::FindOpenPublicSessions()
 {
+	UE_LOG(LogTemp, Warning, TEXT("Called FindOpenPublicSessions"));
+	
 	IOnlineSessionPtr SessionInterface = Online::GetSessionInterface(GetWorld());
 	if (!SessionInterface.IsValid()) return;
+
+	if (OpenPublicSessionsDelegateHandle.IsValid())
+	{
+		SessionInterface->ClearOnFindSessionsCompleteDelegate_Handle(OpenPublicSessionsDelegateHandle);
+	}
+
+	OpenPublicSearch = MakeShareable(new FOnlineSessionSearch());
+	OpenPublicSearch->bIsLanQuery = false;
+	OpenPublicSearch->MaxSearchResults = MaxSearchResults;
+	
+	OpenPublicSessionsDelegateHandle = SessionInterface->AddOnFindSessionsCompleteDelegate_Handle(
+		FOnFindSessionsCompleteDelegate::CreateUObject(
+			this, &UAdvancedGameInstance::OnFindOpenPublicSessionsCompleted));
+	
+	SessionInterface->FindSessions(0, OpenPublicSearch.ToSharedRef());
+}
+
+void UAdvancedGameInstance::OnFindOpenPublicSessionsCompleted(bool bSuccess)
+{
+	IOnlineSessionPtr SessionInterface = Online::GetSessionInterface(GetWorld());
+	if (SessionInterface.IsValid() && OpenPublicSessionsDelegateHandle.IsValid())
+	{
+		SessionInterface->ClearOnFindSessionsCompleteDelegate_Handle(OpenPublicSessionsDelegateHandle);
+		OpenPublicSessionsDelegateHandle.Reset();
+	}
+
+	if (!bSuccess || !OpenPublicSearch.IsValid())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("FindOpenPublicSessions failed."));
+		return;
+	}
+
+	TArray<FCustomBlueprintSessionResult> SessionResults;
+
+	for (const FOnlineSessionSearchResult& Result : OpenPublicSearch->SearchResults)
+	{
+		const int32 OpenPublicConnections = Result.Session.NumOpenPublicConnections;
+		const int32 MaxPublicConnections = Result.Session.SessionSettings.NumPublicConnections;
+		if (MaxPublicConnections - OpenPublicConnections < MaxPublicConnections / 2)
+		{
+			FCustomBlueprintSessionResult BlueprintSessionResult;
+			BlueprintSessionResult.SessionResult.OnlineResult = Result;
+			if (Result.Session.OwningUserId.IsValid())
+			{
+				BlueprintSessionResult.HostId.SetUniqueNetId(Result.Session.OwningUserId);
+			}
+			SessionResults.Add(BlueprintSessionResult);
+		}
+	}
+	OpenPublicSearch.Reset();
+	OnOpenPublicSessionsFound.Broadcast(SessionResults);
+
+	UE_LOG(LogTemp, Warning, TEXT("FindOpenPublicSessionsCompleted"));
+}
+
+void UAdvancedGameInstance::FindCompatibleMatchSessions()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Called FindCompatibleMatchSessions"));
+	
+	IOnlineSessionPtr SessionInterface = Online::GetSessionInterface(GetWorld());
+	if (!SessionInterface.IsValid()) return;
+	
+	if (MatchSessionsDelegateHandle.IsValid())
+	{
+		SessionInterface->ClearOnFindSessionsCompleteDelegate_Handle(MatchSessionsDelegateHandle);
+	}
 
 	MatchSearch = MakeShareable(new FOnlineSessionSearch());
 	MatchSearch->MaxSearchResults = MaxSearchResults;
@@ -94,14 +166,21 @@ void UAdvancedGameInstance::FindCompatibleMatchSessions()
 	MatchSearch->QuerySettings.Set(FName(IsSearchingForMatchKey), true, EOnlineComparisonOp::Equals);
 	MatchSearch->QuerySettings.Set(FName(SelectedGameModeKey), GetSelectedGameMode(), EOnlineComparisonOp::Equals);
 	
-	SessionInterface->AddOnFindSessionsCompleteDelegate_Handle(
+	MatchSessionsDelegateHandle = SessionInterface->AddOnFindSessionsCompleteDelegate_Handle(
 		FOnFindSessionsCompleteDelegate::CreateUObject(
-			this, &ThisClass::OnFindMatchSessionsCompleted));
+			this, &UAdvancedGameInstance::OnFindMatchSessionsCompleted));
+	
 	SessionInterface->FindSessions(0, MatchSearch.ToSharedRef());
 }
 
 void UAdvancedGameInstance::OnFindMatchSessionsCompleted(bool bSuccess)
 {
+	IOnlineSessionPtr SessionInterface = Online::GetSessionInterface(GetWorld());
+	if (SessionInterface.IsValid() && MatchSessionsDelegateHandle.IsValid())
+	{
+		SessionInterface->ClearOnFindSessionsCompleteDelegate_Handle(MatchSessionsDelegateHandle);
+		MatchSessionsDelegateHandle.Reset();
+	}
 	if (!bSuccess)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("FindSessions failed"))
@@ -124,14 +203,29 @@ void UAdvancedGameInstance::OnFindMatchSessionsCompleted(bool bSuccess)
 	const int32 RandomIndex = FMath::RandRange(0, MatchSearch->SearchResults.Num() - 1);
 	FBlueprintSessionResult BlueprintSessionResult;
 	BlueprintSessionResult.OnlineResult = MatchSearch->SearchResults[RandomIndex];
-	
+
+	MatchSearch.Reset();
 	OnMatchSessionFound(BlueprintSessionResult);
+
+	UE_LOG(LogTemp, Warning, TEXT("FindMatchSessionsCompleted"));
 }
 
 FOnlineSessionSettings* UAdvancedGameInstance::GetSessionSettings() const
 {
 	IOnlineSessionPtr SessionInterface = Online::GetSessionInterface(GetWorld());
 	if (!SessionInterface.IsValid()) return nullptr;
+	if (!SessionInterface->GetSessionSettings(NAME_GameSession))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Session settings: false"));
+	}
+	if (!SessionInterface->GetNamedSession(NAME_GameSession))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("GetNamedSession(NAME_GameSession) = false"));
+	}else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("GetNamedSession(NAME_GameSession) = true"));
+	}
+	
 	return SessionInterface->GetSessionSettings(NAME_GameSession);
 }
 
