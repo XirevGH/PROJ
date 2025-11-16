@@ -4,39 +4,25 @@
 #include "GA_Cast_AOE.h"
 #include "Abilities/Tasks/AbilityTask_WaitTargetData.h"
 #include "Abilities/GameplayAbilityTargetActor.h"
+#include "Components/DecalComponent.h"
+#include "PROJ/GameplayAbilitySystem/Indicators/GATA_GroundTrace_Indicator.h"
+
+#include "GameFramework/PlayerController.h"
 
 void UGA_Cast_AOE::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
-	const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
+                                   const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
+	
+}
 
 
-  /*
-  UAbilityTask_WaitTargetData* Task =
-		UAbilityTask_WaitTargetData::WaitTargetData(
-			this,
-			TEXT("WaitTargetData"),
-			EGameplayTargetingConfirmation::Instant,
-			TargetActorClass
-		);
+void UGA_Cast_AOE::OnTargetDataReceived(const FGameplayAbilityTargetDataHandle& Data)
+{
+	UE_LOG(LogTemp, Warning, TEXT("OnTargetDataReceived"));
+}
 
-	Task->CollisionRadius = CollisionRadius;
-	Task->CollisionHeight = CollisionHeight;
-	Task->MaxRange = MaxRange;
-
-	Task->TraceProfile.Name = TEXT("ProjectileTrace");
-	Task->bTraceAffectsAimPitch = true;
-	Task->bDebug = bDebug;
-
-	Task->StartLocation = StartLocationInfo;
-	Task->Filter = FilterHandle;
-	Task->ReticleParams = ReticleParams;
-	Task->ReticleClass = ReticleClass;
-
-	Task->ValidData.AddDynamic(this, &UGA_CastProjectile::OnTargetDataReceived);
-	Task->Cancelled.AddDynamic(this, &UGA_CastProjectile::OnTargetDataCancelled);
-
-	Task->ReadyForActivation();
-	*/
-
+void UGA_Cast_AOE::OnTargetDataCancelled(const FGameplayAbilityTargetDataHandle& Data)
+{
+	UE_LOG(LogTemp, Warning, TEXT("OnTargetDataCancelled"));
 }

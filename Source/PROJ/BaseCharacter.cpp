@@ -22,7 +22,7 @@ ABaseCharacter::ABaseCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
 	bReplicates = true;
-	GetCharacterMovement()->MaxWalkSpeed = 600.f;
+	//GetCharacterMovement()->MaxWalkSpeed = 600.f;
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	
 }
@@ -42,7 +42,11 @@ void ABaseCharacter::BeginPlay()
 	
 	if (WeaponClass)
 	{
-		EquippedWeapon = GetWorld()->SpawnActor<AWeapon>(WeaponClass);
+		FActorSpawnParameters Params;
+		Params.Owner = this;
+		Params.Instigator = this;
+		
+		EquippedWeapon = GetWorld()->SpawnActor<AWeapon>(WeaponClass,Params);
 		if (EquippedWeapon)
 		{
 			EquippedWeapon->LocationOffset = FVector(0.f, 0.f, 0.f);
@@ -82,7 +86,6 @@ void ABaseCharacter::PossessedBy(AController* NewController)
 
 	//Ska denna vara här?
 	InitializeAbilities();
-
 	OnCharacterInitialized();
 }
 
@@ -104,12 +107,18 @@ void ABaseCharacter::OnRep_PlayerState()
 
 void ABaseCharacter::OnHealthAttributeChanged(const FOnAttributeChangeData& Data)
 {
-	OnHealthChanged(Data.OldValue, BaseAttributes->GetMaxHealth());
+	OnHealthChanged(Data.NewValue, BaseAttributes->GetMaxHealth());
+}
+
+void ABaseCharacter::OnMoveSpeedAttributeChanged(const FOnAttributeChangeData& Data)
+{
+	UE_LOG(LogTemp, Warning, TEXT("Movespeed set to %f"), Data.NewValue);
+	OnMoveSpeedChanged(Data.NewValue, BaseAttributes->GetMaxMoveSpeed());
 }
 
 void ABaseCharacter::OnManaAttributeChanged(const FOnAttributeChangeData& Data)
 {
-	OnManaChanged(Data.OldValue, BaseAttributes->GetMaxMana());
+	OnManaChanged(Data.NewValue, BaseAttributes->GetMaxMana());
 }
 
 void ABaseCharacter::OnPrimaryAbility(const FInputActionValue& Value)
@@ -215,8 +224,8 @@ void ABaseCharacter::InitAbilityActorInfo()
 		if (BaseAbilitySystemComp.IsValid())
 		{
 			BaseAbilitySystemComp->InitAbilityActorInfo(BasePlayerState, this);
-			BindCallbacksToDependencies();
 
+			BindCallbacksToDependencies();
 			if (HasAuthority())
 			{
 				InitClassDefaults();
@@ -256,6 +265,10 @@ void ABaseCharacter::BindCallbacksToDependencies()
 		BaseAbilitySystemComp->GetGameplayAttributeValueChangeDelegate(
 			BaseAttributes->GetManaAttribute()).
 			AddUObject(this, &ABaseCharacter::OnManaAttributeChanged);
+
+		BaseAbilitySystemComp->GetGameplayAttributeValueChangeDelegate(
+		BaseAttributes->GetCurrentMoveSpeedAttribute()).
+		AddUObject(this, &ABaseCharacter::OnMoveSpeedAttributeChanged);
 	}
 }
 
@@ -265,6 +278,7 @@ void ABaseCharacter::BroadcastInitialValues()
 	{
 		OnHealthChanged(BaseAttributes->GetCurrentHealth(), BaseAttributes->GetMaxHealth());
 		OnManaChanged(BaseAttributes->GetMana(), BaseAttributes->GetMaxMana());
+		OnMoveSpeedChanged(BaseAttributes->GetCurrentMoveSpeed(), BaseAttributes->GetMaxMoveSpeed());
 	}
 }
 

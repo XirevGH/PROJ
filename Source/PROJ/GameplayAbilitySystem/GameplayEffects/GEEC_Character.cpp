@@ -67,6 +67,8 @@ void UGEEC_Character::Execute_Implementation(const FGameplayEffectCustomExecutio
     // You can add modifiers here (critical hits, buffs, etc.)
     float FinalDamage = Damage * FMath::FRandRange(0.95f, 1.05);
 
+
+	
 	UE_LOG(LogTemp, Warning, TEXT("Deal Damage by %f"), FinalDamage);
     // Apply the damage as negative health
     if (FinalDamage > 0.0f)

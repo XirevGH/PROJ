@@ -40,6 +40,12 @@ void UGA_Cast_Projectile::Cast()
 
 void UGA_Cast_Projectile::SpawnProjectile()
 {
+
+	if (!GetOwningActorFromActorInfo()->HasAuthority())  // only server
+	{
+		return;
+	}
+	
 	AActor* Avatar = GetAvatarActorFromActorInfo();
 	if (!Avatar) return;
 
@@ -52,28 +58,20 @@ void UGA_Cast_Projectile::SpawnProjectile()
 	// can change to camera rotation
 	SpawnRotation = Avatar->GetActorRotation();
 
-	if (GetOwningActorFromActorInfo()->HasAuthority())  // only server
+		
+	ProjectileActor = World->SpawnActor<AProjectile>(ProjectileActorClass, SpawnLocation, SpawnRotation);
+	if (ProjectileActor)
 	{
-		ProjectileActor = World->SpawnActor<AProjectile>(ProjectileActorClass, SpawnLocation, SpawnRotation);
-		if (ProjectileActor)
-		{
-			ProjectileActor->SetReplicates(true);
-			ProjectileActor->SetReplicateMovement(true);
-			ProjectileActor->OnProjectileHitDelegate.AddDynamic(this, &UGA_Cast_Projectile::OnProjectileHit);
-			ProjectileActor->Caster = Avatar;
-			ProjectileActor->CastedAbility = this;
-			ProjectileActor->CasterASC = GetAbilitySystemComponentFromActorInfo();
-			ProjectileActor->Effects = DefaultEffects;
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Failed to spawn projectile"));
-		
-		}
+		ProjectileActor->SetReplicates(true);
+		ProjectileActor->SetReplicateMovement(true);
+		ProjectileActor->OnProjectileHitDelegate.AddDynamic(this, &UGA_Cast_Projectile::OnProjectileHit);
+		ProjectileActor->Caster = Avatar;
+		ProjectileActor->CastedAbility = this;
+		ProjectileActor->CasterASC = GetAbilitySystemComponentFromActorInfo();
+		ProjectileActor->Effects = DefaultEffects;
 	}
-	
-
-	
-		
-	
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Failed to spawn projectile"));
+	}
 }

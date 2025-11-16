@@ -43,6 +43,10 @@ public:
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "GAS")
 	void OnHealthChanged(float CurrentHealth, float MaxHealth);
+	
+	UFUNCTION(BlueprintImplementableEvent, Category = "GAS")
+	void OnMoveSpeedChanged(float CurrentMoveSpeed, float MaxMoveSpeed);
+	
 	UFUNCTION(BlueprintImplementableEvent, Category = "GAS")
 	void OnManaChanged(float CurrentMana, float MaxMana);
 	
@@ -119,6 +123,7 @@ protected:
 	ABasePlayerState* BasePlayerState;
 	
 	virtual void OnHealthAttributeChanged(const FOnAttributeChangeData& Data);
+	virtual void OnMoveSpeedAttributeChanged(const FOnAttributeChangeData& Data);
 	virtual void OnManaAttributeChanged(const FOnAttributeChangeData& Data);
 	
 	void OnPrimaryAbility(const FInputActionValue& Value);
