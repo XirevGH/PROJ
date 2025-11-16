@@ -61,8 +61,8 @@ void UBaseAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 		}
 		
 		
-		if (ActorInfo && ActorInfo->OwnerActor.Get() && ActorInfo->OwnerActor->HasAuthority())
-		{
+		//if (ActorInfo && ActorInfo->OwnerActor.Get() && ActorInfo->OwnerActor->HasAuthority())
+		//{
 			if (StartTask)
 			{
 				StartTask->EndTask();
@@ -80,25 +80,25 @@ void UBaseAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 				  this,
 				  FGameplayTag::RequestGameplayTag(FName("Event.HitScan.Start")),
 				  nullptr,
-				  false,
+				  true,
 				  false
 			  );
 		
-			StartTask->ReadyForActivation();
 			StartTask->EventReceived.AddDynamic(this, &UBaseAttack::OnHitscanStart);
+			StartTask->ReadyForActivation();
 
 			// Wait for end
 			EndTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(
 				this,
 				FGameplayTag::RequestGameplayTag(FName("Event.HitScan.End")),
 				nullptr,
-				false,
+				true,
 				false
 			);
 			EndTask->EventReceived.AddDynamic(this, &UBaseAttack::OnHitscanEnd);
 			EndTask->ReadyForActivation();
 		
-		}
+		//}
 	}
 }
 
@@ -128,26 +128,31 @@ void UBaseAttack::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGam
 
 void UBaseAttack::OnHitscanStart(FGameplayEventData Payload)
 {
-	if (!HasAuthority(&CurrentActivationInfo)) return;
-	
 	if (EquippedWeapon && !bIsHitscanActive)
 	{
-	bIsHitscanActive = true;
-	EquippedWeapon->HitScanStart(1.f/30.f);
-		
-		if (HasAuthority(&CurrentActivationInfo))
+		bIsHitscanActive = true;
+
+		if (!EquippedWeapon->HasAuthority())
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Attack scan start"));
+			EquippedWeapon->Server_HitScanStart(1.f/30.f);
+		}
+		else
+		{
+			EquippedWeapon->HitScanStart(1.f/30.f);
 		}
 	}
 	else
-	{
-		bool bHasAuthority = HasAuthority(&CurrentActivationInfo);
-		UE_LOG(LogTemp, Warning, TEXT("Curren weapon null in HitScanStart: %s, %hs,%s"),
-			*EquippedWeapon->GetOwner()->GetName(),
-			bIsHitscanActive ? "true" : "false",
-			bHasAuthority ? TEXT("true") : TEXT("false"));
-	}
+		{
+			bool bHasAuthority = HasAuthority(&CurrentActivationInfo);
+			UE_LOG(LogTemp, Warning, TEXT("Curren weapon null in HitScanStart: %s, %hs,%s"),
+				*EquippedWeapon->GetOwner()->GetName(),
+				bIsHitscanActive ? "true" : "false",
+				bHasAuthority ? TEXT("true") : TEXT("false"));
+		}
+	UE_LOG(LogTemp, Warning, TEXT("OnHitscanStart called. Authority: %s, bIsHitscanActive: %s, EquippedWeapon: %s"),
+	HasAuthority(&CurrentActivationInfo) ? TEXT("SERVER") : TEXT("CLIENT"),
+	bIsHitscanActive ? TEXT("true") : TEXT("false"),
+	EquippedWeapon ? *EquippedWeapon->GetName() : TEXT("null"));
 }
 
 void UBaseAttack::OnHitscanEnd(FGameplayEventData Payload)
@@ -164,6 +169,11 @@ void UBaseAttack::OnHitscanEnd(FGameplayEventData Payload)
 	{
 	UE_LOG(LogTemp, Warning, TEXT("Curren weapon null in HitScanEnd"));
 	}
+}
+
+void UBaseAttack::Server_StartHitscan_Implementation()
+{
+	OnHitscanStart(FGameplayEventData());
 }
 
 void UBaseAttack::OnMontageCompleted()

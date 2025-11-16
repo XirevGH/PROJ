@@ -47,6 +47,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Ability")
 	UBaseAttack* Ability;
+
+	UPROPERTY()
+	TSet<AActor*> Targets;
 	
 	bool bIsHitscanActive;
 	
@@ -66,6 +69,8 @@ public:
 	void HitScanStart(float Interval = 1.f/30.f);
 	UFUNCTION()
 	void HitScanEnd();
+	UFUNCTION(Server, Reliable)
+	void Server_HitScanStart(float Interval = 0.03f);
 protected:
 	
 	virtual void BeginPlay() override;

@@ -99,6 +99,13 @@ void AWeapon::AttachToCharacter(ACharacter* NewOwner, FName InSocketName)
 
 void AWeapon::HitScan()
 {
+	UE_LOG(LogTemp, Verbose, TEXT("HitScan() tick on %s by %s. Targets currently: %d"),
+	*GetName(),
+	HasAuthority() ? TEXT("SERVER") : TEXT("CLIENT"),
+	Targets.Num());
+	
+	if (!HasAuthority()) return;
+	
 	if (!StartTrace || !EndTrace) return;
 	
 	FVector const Start = StartTrace->GetComponentLocation();
@@ -121,10 +128,13 @@ void AWeapon::HitScan()
 		for (auto& Hit : HitResults)
 		{
 			AActor* HitActor = Hit.GetActor();
-			if (HitActor)
-			UE_LOG(LogTemp, Warning, TEXT("Hit Actor: %s"), *HitActor->GetName());
-			ApplyEffectToTarget(HitActor);
+			if (!HitActor) continue;
 			
+			if (!Targets.Contains(HitActor))
+			{
+				Targets.Add(HitActor);
+				ApplyEffectToTarget(HitActor);
+			}
 		}
 	}
 	DrawDebugLine(GetWorld(), Start, End, FColor::Green, false, 2.f, 0, 2.f);
@@ -137,8 +147,16 @@ void AWeapon::HitScan()
 
 void AWeapon::HitScanStart(float Interval)
 {
+	UE_LOG(LogTemp, Warning, TEXT("HitScanStart called on %s. HasAuthority(): %s. TimerActive: %s"),
+	*GetName(),
+	HasAuthority() ? TEXT("SERVER") : TEXT("CLIENT"),
+	GetWorld()->GetTimerManager().IsTimerActive(HitScanTimerHandle) ? TEXT("true") : TEXT("false"));
+	
+	if (!HasAuthority()) return;
+	
 	if(bIsHitscanActive) return;
 	
+	Targets.Empty();
 	bIsHitscanActive = true;
 	
 	HitScan();
@@ -153,11 +171,21 @@ void AWeapon::HitScanStart(float Interval)
 
 void AWeapon::HitScanEnd()
 {
+	if (!HasAuthority()) return;
+	
 	if (!bIsHitscanActive) return;
 
-	bIsHitscanActive = false;
+	if (!bIsHitscanActive && !GetWorld()->GetTimerManager().IsTimerActive(HitScanTimerHandle)) return;
 	
+	bIsHitscanActive = false;
+	Targets.Empty();
 	GetWorld()->GetTimerManager().ClearTimer(HitScanTimerHandle);
+}
+
+void AWeapon::Server_HitScanStart_Implementation(float DeltaTime)
+{
+	HitScanStart(DeltaTime);
+
 }
 
 void AWeapon::BeginPlay()
