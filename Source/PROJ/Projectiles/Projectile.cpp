@@ -81,7 +81,11 @@ void AProjectile::OnProjectileHit_Implementation(UPrimitiveComponent* HitComp, A
 		UE_LOG(LogTemp, Warning, TEXT("Do nothing because hit Caster"));
 		return;
 	}
-
+	if (OtherActor->IsA(StaticClass()))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Do nothing because hit same type of projectile"));
+		return;
+	}
 	if(Cast<AActor>(OtherActor) != nullptr )
 	{
 		OnProjectileHitDelegate.Broadcast(Hit);
