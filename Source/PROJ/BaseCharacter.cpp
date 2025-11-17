@@ -52,6 +52,7 @@ void ABaseCharacter::BeginPlay()
 			EquippedWeapon->LocationOffset = FVector(0.f, 0.f, 0.f);
 			EquippedWeapon->RotationOffset = FRotator(-90, 0.f, 90.f);
 			EquippedWeapon->AttachToCharacter(this, FName("WeaponSocket"));
+			this->EquippedWeapon = EquippedWeapon;
 		}
 	}
 }

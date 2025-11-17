@@ -6,6 +6,7 @@
 #include "BaseGameplayAbility.h"
 #include "BaseAttack.generated.h"
 
+class UAbilityTask_WaitGameplayEvent;
 class AWeapon;
 class UAbilityTask_PlayMontageAndWait;
 /**
@@ -24,6 +25,12 @@ class PROJ_API UBaseAttack : public UBaseGameplayAbility
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Ability| Weapon")
 	AWeapon* EquippedWeapon;
+
+	UPROPERTY()
+	UAbilityTask_WaitGameplayEvent* StartTask;
+
+	UPROPERTY()
+	UAbilityTask_WaitGameplayEvent* EndTask;
 	
 	bool bIsHitscanActive = false;
 
@@ -47,10 +54,7 @@ protected:
 	
 	UFUNCTION(BlueprintImplementableEvent)
 	void OntargetReady(const FGameplayAbilityTargetDataHandle& TargetData);
-
-	UFUNCTION(BlueprintCallable)
-	void Attack();
-
+	
 	UFUNCTION()
 	void OnMontageCompleted();
 
@@ -59,7 +63,4 @@ protected:
 
 	UFUNCTION()
 	void OnMontageCancelled();
-	
-	UFUNCTION()
-	AWeapon* GetEquippedWeapon() const;
 };
