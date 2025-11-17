@@ -36,13 +36,6 @@ class PROJ_API UGA_Cast_Projectile : public UBaseGameplayAbility
 		const FGameplayAbilityActivationInfo ActivationInfo,
 		const FGameplayEventData* TriggerEventData) override;
 	
-
-	UFUNCTION(BlueprintImplementableEvent)
-	void OntargetReady(const FGameplayAbilityTargetDataHandle& TargetData);
-
-	UFUNCTION()
-	void OnProjectileHit(const FHitResult& Hit);
-
 	UFUNCTION(BlueprintCallable)
 	void Cast();
 

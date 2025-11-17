@@ -5,8 +5,23 @@
 
 #include "PROJ/GameplayAbilitySystem/GameplayEffects/GE_BaseCooldown.h"
 
+
+
+void UBaseGameplayAbility::OnGiveAbility(const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec)
+{
+	Super::OnGiveAbility(ActorInfo, Spec);
+
+	FGameplayTag CooldownTag = GetCooldownTagFromInputID(InputTag);
+
+	ActivationBlockedTags.AddTag(CooldownTag);
+
+	UE_LOG(LogTemp, Warning, TEXT("InputTag  is  %s "), *InputTag.ToString());
+	UE_LOG(LogTemp, Warning, TEXT("GetCooldownTagFromInputID Tag is  %s "), *GetCooldownTagFromInputID(InputTag).ToString());
+	UE_LOG(LogTemp, Warning, TEXT("ActivationBlockedTags is  %s "), *ActivationBlockedTags.GetByIndex(1).ToString());
+}
+
 void UBaseGameplayAbility::ApplyCooldown(const FGameplayAbilitySpecHandle Handle,
-	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) const
+                                         const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) const
 {
 	Super::ApplyCooldown(Handle, ActorInfo, ActivationInfo);
 
@@ -23,12 +38,13 @@ void UBaseGameplayAbility::ApplyCooldown(const FGameplayAbilitySpecHandle Handle
 		return;
 	
 	Spec->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(TEXT("Data.Cooldown.Duration")), Cooldown);
-	UE_LOG(LogTemp, Warning, TEXT("Apply Cooldown to %s "), *ActorInfo->AvatarActor->GetName());
+	//UE_LOG(LogTemp, Warning, TEXT("Apply Cooldown to %s "), *ActorInfo->AvatarActor->GetName());
 	
 	const FGameplayTag& CooldownTag = GetCooldownTagFromInputID(InputTag); // e.g., Cooldown.Slot.Primary
 	Spec->DynamicGrantedTags.AddTag(CooldownTag);
-	
 	ApplyGameplayEffectSpecToOwner(Handle, ActorInfo, ActivationInfo, SpecHandle);
+	//UE_LOG(LogTemp, Warning, TEXT("Apply Cooldown is valid: %s"),
+	//	ApplyGameplayEffectSpecToOwner(Handle, ActorInfo, ActivationInfo, SpecHandle).IsValid() ? TEXT("True") :TEXT("False"));
 }
 
 FGameplayTag UBaseGameplayAbility::GetCooldownTagFromInputID(const FGameplayTag InputTag) 
