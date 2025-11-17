@@ -25,12 +25,6 @@ void UGA_Cast_Projectile::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 	EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 }
 
-void UGA_Cast_Projectile::OnProjectileHit(const FHitResult& Hit)
-{
-	NewTargetData = new FGameplayAbilityTargetData_SingleTargetHit(Hit);
-	//UE_LOG(LogTemp, Warning, TEXT("Spawned Hit: %s"), *Hit.GetActor()->GetName());
-	CurrentTargetData.Add(NewTargetData);
-}
 
 void UGA_Cast_Projectile::Cast()
 {
@@ -51,9 +45,11 @@ void UGA_Cast_Projectile::SpawnProjectile()
 
 	UWorld* World = Avatar->GetWorld();
 	if (!World) return;
-
-	// can have more precise position if needed
-	SpawnLocation = Avatar->GetActorLocation() + Avatar->GetActorForwardVector() * 100.f;
+	
+	float HeightOffset = 30.f; // whatever you want
+	SpawnLocation = Avatar->GetActorLocation()
+		+ Avatar->GetActorForwardVector() * 100.f
+		+ FVector(0.f, 0.f, HeightOffset);
 
 	// can change to camera rotation
 	SpawnRotation = Avatar->GetActorRotation();
@@ -64,7 +60,6 @@ void UGA_Cast_Projectile::SpawnProjectile()
 	{
 		ProjectileActor->SetReplicates(true);
 		ProjectileActor->SetReplicateMovement(true);
-		ProjectileActor->OnProjectileHitDelegate.AddDynamic(this, &UGA_Cast_Projectile::OnProjectileHit);
 		ProjectileActor->Caster = Avatar;
 		ProjectileActor->CastedAbility = this;
 		ProjectileActor->CasterASC = GetAbilitySystemComponentFromActorInfo();
