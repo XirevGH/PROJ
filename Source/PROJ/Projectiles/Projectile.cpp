@@ -37,7 +37,7 @@ void AProjectile::BeginPlay()
 	CollisionComp->SetNotifyRigidBodyCollision(true);
 	ProjectileMovement->Velocity = GetActorForwardVector() * ProjectileSpeed;
 	CollisionComp->SetGenerateOverlapEvents(true);
-	
+	CollisionComp->SetCollisionProfileName(TEXT("Projectile"));
 	CollisionComp->OnComponentBeginOverlap.AddDynamic(this, &AProjectile::OnBeginOverlap);
 	CollisionComp->OnComponentHit.AddDynamic(this, &AProjectile::OnProjectileHit);
 	
@@ -73,7 +73,7 @@ bool AProjectile::ApplyEffectToTarget(const AActor* Target)
 	return false;
 }
 
-void AProjectile::OnProjectileHit(UPrimitiveComponent* HitComp, AActor* OtherActor,
+void AProjectile::OnProjectileHit_Implementation(UPrimitiveComponent* HitComp, AActor* OtherActor,
                                   UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
 	if (OtherActor == Caster)
@@ -81,18 +81,22 @@ void AProjectile::OnProjectileHit(UPrimitiveComponent* HitComp, AActor* OtherAct
 		UE_LOG(LogTemp, Warning, TEXT("Do nothing because hit Caster"));
 		return;
 	}
-
+	if (OtherActor->IsA(StaticClass()))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Do nothing because hit same type of projectile"));
+		return;
+	}
 	if(Cast<AActor>(OtherActor) != nullptr )
 	{
 		OnProjectileHitDelegate.Broadcast(Hit);
 	}
 	UE_LOG(LogTemp, Warning, TEXT("Hit %s via OnHit"), *OtherActor->GetActorNameOrLabel());
 	
-	Destroy();
+	//Destroy();
 }
 
 
-void AProjectile::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+void AProjectile::OnBeginOverlap_Implementation(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (OtherActor == Caster)
@@ -101,7 +105,7 @@ void AProjectile::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActo
 		return;
 	}
 
-	if (OtherActor->IsA(this->GetClass()))
+	if (OtherActor->IsA(StaticClass()))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Do nothing because hit same type of projectile"));
 		return;
@@ -118,7 +122,7 @@ void AProjectile::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActo
 	
 	//UE_LOG(LogTemp, Warning, TEXT("Hit %s via OnBeginOverlap"), *OtherActor->GetActorNameOrLabel());
 	
-	Destroy();
+	//Destroy();
 	
 }
 
