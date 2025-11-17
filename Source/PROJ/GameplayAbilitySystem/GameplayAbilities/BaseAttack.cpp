@@ -60,7 +60,6 @@ void UBaseAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 			}
 		}
 		
-		
 		if (ActorInfo && ActorInfo->OwnerActor.Get() && ActorInfo->OwnerActor->HasAuthority())
 		{
 			if (StartTask)
@@ -68,13 +67,11 @@ void UBaseAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 				StartTask->EndTask();
 				StartTask = nullptr;
 			}
-
 			if (EndTask)
 			{
 				EndTask->EndTask();
 				EndTask = nullptr;
 			}
-		
 			// Wait for start
 			StartTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(
 				  this,
