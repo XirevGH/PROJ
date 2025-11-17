@@ -40,14 +40,21 @@ public:
 	USceneComponent* EndTrace;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Attachment")
-	FVector LocationOffset;
+	FVector LocationOffset = FVector(-9.f, 1.f, 8.f);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Attachment")
-	FRotator RotationOffset;
+	FRotator RotationOffset = FRotator(180.f, -90.f, 90.f);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Ability")
 	UBaseAttack* Ability;
 
+	virtual void OnRep_Owner() override;
+
+	virtual void OnRep_AttachmentReplication() override;
+
+	FTimerHandle AttachTimerHandle;
+
+	
 	UPROPERTY()
 	TSet<AActor*> Targets;
 	
@@ -72,7 +79,8 @@ public:
 	UFUNCTION(Server, Reliable)
 	void Server_HitScanStart(float Interval = 0.03f);
 protected:
-	
+	void AttachWeapon();
+	void AttachWeaponDelayed();
 	virtual void BeginPlay() override;
 	
 

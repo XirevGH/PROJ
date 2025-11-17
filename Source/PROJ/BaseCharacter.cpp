@@ -27,6 +27,26 @@ ABaseCharacter::ABaseCharacter()
 	
 }
 
+void ABaseCharacter::SpawnDefaultWeapon()
+{
+	if (WeaponClass)
+	{
+		FActorSpawnParameters Params;
+		Params.Owner = this;
+		Params.Instigator = this;
+		Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+		
+		EquippedWeapon = GetWorld()->SpawnActor<AWeapon>(WeaponClass,Params);
+		if (EquippedWeapon)
+		{
+			EquippedWeapon->LocationOffset = FVector(-9.f, 1.f, 8.f);
+			EquippedWeapon->RotationOffset = FRotator(180.f, -90.f, 90.f);
+			EquippedWeapon->AttachToCharacter(this, FName("WeaponSocket"));
+			this->EquippedWeapon = EquippedWeapon;
+		}
+	}
+}
+
 void ABaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
@@ -37,22 +57,6 @@ void ABaseCharacter::BeginPlay()
 			ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer()))
 		{
 			Subsystem->AddMappingContext(PlayerInputContext, 0);
-		}
-	}
-	
-	if (WeaponClass)
-	{
-		FActorSpawnParameters Params;
-		Params.Owner = this;
-		Params.Instigator = this;
-		
-		EquippedWeapon = GetWorld()->SpawnActor<AWeapon>(WeaponClass,Params);
-		if (EquippedWeapon)
-		{
-			EquippedWeapon->LocationOffset = FVector(0.f, 0.f, 0.f);
-			EquippedWeapon->RotationOffset = FRotator(-90, 0.f, 90.f);
-			EquippedWeapon->AttachToCharacter(this, FName("WeaponSocket"));
-			this->EquippedWeapon = EquippedWeapon;
 		}
 	}
 }
@@ -88,6 +92,7 @@ void ABaseCharacter::PossessedBy(AController* NewController)
 	//Ska denna vara här?
 	InitializeAbilities();
 	OnCharacterInitialized();
+	SpawnDefaultWeapon();
 }
 
 void ABaseCharacter::OnRep_PlayerState()

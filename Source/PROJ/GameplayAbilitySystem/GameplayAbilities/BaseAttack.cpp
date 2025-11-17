@@ -61,8 +61,8 @@ void UBaseAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 		}
 		
 		
-		//if (ActorInfo && ActorInfo->OwnerActor.Get() && ActorInfo->OwnerActor->HasAuthority())
-		//{
+		if (ActorInfo && ActorInfo->OwnerActor.Get() && ActorInfo->OwnerActor->HasAuthority())
+		{
 			if (StartTask)
 			{
 				StartTask->EndTask();
@@ -98,7 +98,7 @@ void UBaseAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 			EndTask->EventReceived.AddDynamic(this, &UBaseAttack::OnHitscanEnd);
 			EndTask->ReadyForActivation();
 		
-		//}
+		}
 	}
 }
 
@@ -128,9 +128,9 @@ void UBaseAttack::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGam
 
 void UBaseAttack::OnHitscanStart(FGameplayEventData Payload)
 {
-	if (EquippedWeapon && !bIsHitscanActive)
+	if (EquippedWeapon && !EquippedWeapon->bIsHitscanActive)
 	{
-		bIsHitscanActive = true;
+		//bIsHitscanActive = true;
 
 		if (!EquippedWeapon->HasAuthority())
 		{
@@ -169,11 +169,6 @@ void UBaseAttack::OnHitscanEnd(FGameplayEventData Payload)
 	{
 	UE_LOG(LogTemp, Warning, TEXT("Curren weapon null in HitScanEnd"));
 	}
-}
-
-void UBaseAttack::Server_StartHitscan_Implementation()
-{
-	OnHitscanStart(FGameplayEventData());
 }
 
 void UBaseAttack::OnMontageCompleted()

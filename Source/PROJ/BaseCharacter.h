@@ -32,7 +32,8 @@ class PROJ_API ABaseCharacter : public ACharacter, public IAbilitySystemInterfac
 	
 public:
 	ABaseCharacter();
-	
+	void SpawnDefaultWeapon();
+
 	virtual void Tick(float DeltaTime) override;
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
