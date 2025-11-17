@@ -7,10 +7,10 @@ public class PROJ : ModuleRules
 	public PROJ(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
-	
+		
 		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine","GameplayAbilities","GameplayTasks","GameplayTags", "InputCore", "EnhancedInput", "OnlineSubsystem", "OnlineSubsystemUtils"});
 
-		PrivateDependencyModuleNames.AddRange(new string[] { "AdvancedSessions" });
+		PrivateDependencyModuleNames.AddRange(new string[] { "AdvancedSessions", "AdvancedSteamSessions" });
 
 		// Uncomment if you are using Slate UI
 		// PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });

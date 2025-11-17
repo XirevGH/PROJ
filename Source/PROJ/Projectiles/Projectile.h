@@ -56,8 +56,10 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 	UBaseGameplayAbility *CastedAbility;
 	
-	UPROPERTY(EditDefaultsOnly, Category="Effects")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Effects")
 	TArray<TSubclassOf<UGameplayEffect>> Effects;
+
+	TArray<ACharacter*> OverlapCharacters;
 
 
 	// Called every frame
@@ -66,18 +68,24 @@ public:
 	UFUNCTION()
 	void DestroySelf();
 	
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	bool ApplyEffectToTarget(const AActor* Target);
 	
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void OnProjectileHit(
 		UPrimitiveComponent* HitComp,
 		AActor* OtherActor,
 		UPrimitiveComponent* OtherComp,
 		FVector NormalImpulse,
 		const FHitResult& Hit);
+	virtual void OnProjectileHit_Implementation(
+		UPrimitiveComponent* HitComp,
+		AActor* OtherActor,
+		UPrimitiveComponent* OtherComp,
+		FVector NormalImpulse,
+		const FHitResult& Hit);
 	
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void OnBeginOverlap(
 	   UPrimitiveComponent* OverlappedComponent,
 	   AActor* OtherActor,
@@ -85,6 +93,12 @@ public:
 	   int32 OtherBodyIndex,
 	   bool bFromSweep,
 	   const FHitResult& SweepResult);
-	
+	virtual void OnBeginOverlap_Implementation(
+	UPrimitiveComponent* OverlappedComponent,
+	AActor* OtherActor,
+	UPrimitiveComponent* OtherComp,
+	int32 OtherBodyIndex,
+	bool bFromSweep,
+	const FHitResult& SweepResult);
 };
 

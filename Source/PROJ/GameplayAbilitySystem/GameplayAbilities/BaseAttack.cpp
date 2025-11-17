@@ -17,30 +17,15 @@ void UBaseAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 	
-	ABaseCharacter* Player = Cast<ABaseCharacter>(ActorInfo->OwnerActor.Get());
-	if (Player)
-	{
-		AWeapon* CurrentWeapon = Player->EquippedWeapon;
-		if (!CurrentWeapon)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("No equipped weapon found! Ability will end."));
-			EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
-			return;
-		}
-		EquippedWeapon = CurrentWeapon;
-	}
-	
-	
 	if (!MyMontage)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("MyMontage is null"));
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 		return;
 	}
-	if (ActorInfo && ActorInfo->OwnerActor.Get() && ActorInfo->OwnerActor->HasAuthority())
-	{
-		//Montage start
-		auto* MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
+	
+	//Montage start
+	auto* MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
 	this,
 	TEXT("MyMontageTask"),
 	MyMontage,
@@ -53,95 +38,136 @@ void UBaseAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 		MontageTask->OnCancelled.AddDynamic(this, &UBaseAttack::OnMontageCancelled);
 
 		MontageTask->ReadyForActivation();
-		
-		
-		// Wait for start
-		auto* WaitEventTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(
-			  this,
-			  FGameplayTag::RequestGameplayTag(FName("Event.HitScan.Start")),
-			  nullptr,
-			  false,
-			  false
-		  );
-		
-		WaitEventTask->EventReceived.AddDynamic(this, &UBaseAttack::OnHitscanStart);
-		WaitEventTask->ReadyForActivation();
-
-		// Wait for end
-		auto* WaitEndTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(
-			this,
-			FGameplayTag::RequestGameplayTag(FName("Event.HitScan.End")),
-			nullptr,
-			false,
-			false
-		);
-		WaitEndTask->EventReceived.AddDynamic(this, &UBaseAttack::OnHitscanEnd);
-		WaitEndTask->ReadyForActivation();
-		
-	}
+	if (HasAuthority(&ActivationInfo))
+	{
+		if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
+		{
+			EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+			return;
+		}
 	
+		ABaseCharacter* Player = Cast<ABaseCharacter>(GetAvatarActorFromActorInfo());
+		if (Player)
+		{
+			EquippedWeapon = Player->EquippedWeapon;
+			EquippedWeapon->Ability = this;
+	
+			if (!EquippedWeapon)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("No equipped weapon found! Ability will end."));
+				EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
+				return;
+			}
+		}
+		
+		
+		if (ActorInfo && ActorInfo->OwnerActor.Get() && ActorInfo->OwnerActor->HasAuthority())
+		{
+			if (StartTask)
+			{
+				StartTask->EndTask();
+				StartTask = nullptr;
+			}
+
+			if (EndTask)
+			{
+				EndTask->EndTask();
+				EndTask = nullptr;
+			}
+		
+			// Wait for start
+			StartTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(
+				  this,
+				  FGameplayTag::RequestGameplayTag(FName("Event.HitScan.Start")),
+				  nullptr,
+				  false,
+				  false
+			  );
+		
+			StartTask->ReadyForActivation();
+			StartTask->EventReceived.AddDynamic(this, &UBaseAttack::OnHitscanStart);
+
+			// Wait for end
+			EndTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(
+				this,
+				FGameplayTag::RequestGameplayTag(FName("Event.HitScan.End")),
+				nullptr,
+				false,
+				false
+			);
+			EndTask->EventReceived.AddDynamic(this, &UBaseAttack::OnHitscanEnd);
+			EndTask->ReadyForActivation();
+		
+		}
+	}
 }
 
 void UBaseAttack::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
 	const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicatedEndAbility, bool bWasCancelled)
 {
-	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicatedEndAbility, bWasCancelled);
+	if (HasAuthority(&ActivationInfo))
+	{
+		if (StartTask)
+			StartTask->EndTask();
+		if (EndTask)
+			EndTask->EndTask();
 	
-	AWeapon* CurrentWeapon = GetEquippedWeapon();
-	if (CurrentWeapon)
-	{
-		CurrentWeapon->HitScanEnd();
+		if (EquippedWeapon)
+		{
+			EquippedWeapon->HitScanEnd();
+			bIsHitscanActive = false;
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("EndAbility called but weapon is null!"));
+		}
+	
 	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("EndAbility called but weapon is null!"));
-	}
+	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicatedEndAbility, bWasCancelled);
 }
 
 void UBaseAttack::OnHitscanStart(FGameplayEventData Payload)
 {
-	AWeapon* CurrentWeapon = GetEquippedWeapon();
-	if (CurrentWeapon)
+	if (!HasAuthority(&CurrentActivationInfo)) return;
+	
+	if (EquippedWeapon && !bIsHitscanActive)
 	{
-	CurrentWeapon->HitScanStart(1.f/30.f);
-	UE_LOG(LogTemp, Warning, TEXT("Attack scan start"));
+	bIsHitscanActive = true;
+	EquippedWeapon->HitScanStart(1.f/30.f);
+		
+		if (HasAuthority(&CurrentActivationInfo))
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Attack scan start"));
+		}
 	}
 	else
 	{
-	UE_LOG(LogTemp, Warning, TEXT("Curren weapon null in HitScanStart"));
+		bool bHasAuthority = HasAuthority(&CurrentActivationInfo);
+		UE_LOG(LogTemp, Warning, TEXT("Curren weapon null in HitScanStart: %s, %hs,%s"),
+			*EquippedWeapon->GetOwner()->GetName(),
+			bIsHitscanActive ? "true" : "false",
+			bHasAuthority ? TEXT("true") : TEXT("false"));
 	}
 }
 
 void UBaseAttack::OnHitscanEnd(FGameplayEventData Payload)
 {
-	AWeapon* CurrentWeapon = GetEquippedWeapon();
-	if (CurrentWeapon)
+	if (!HasAuthority(&CurrentActivationInfo)) return;
+	
+	if (EquippedWeapon && bIsHitscanActive)
 	{
-	EquippedWeapon->HitScanEnd();
-	UE_LOG(LogTemp, Warning, TEXT("Attack scan ended"));
+		EquippedWeapon->HitScanEnd();
+		bIsHitscanActive = false;
+		UE_LOG(LogTemp, Warning, TEXT("Attack scan end"));
 	}
 	else
 	{
 	UE_LOG(LogTemp, Warning, TEXT("Curren weapon null in HitScanEnd"));
 	}
 }
-AWeapon* UBaseAttack::GetEquippedWeapon() const
-{
-	if (const ABaseCharacter* Player = Cast<ABaseCharacter>(GetOwningActorFromActorInfo()))
-	{
-		return Player->EquippedWeapon;
-	}
-	return nullptr;
-}
-
-void UBaseAttack::Attack()
-{
-	UE_LOG(LogTemp, Warning, TEXT("Attack"));
-}
 
 void UBaseAttack::OnMontageCompleted()
 {
-	Attack();
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }
 
