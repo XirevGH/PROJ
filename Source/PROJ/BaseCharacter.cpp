@@ -41,7 +41,7 @@ void ABaseCharacter::SpawnDefaultWeapon()
 		{
 			EquippedWeapon->LocationOffset = FVector(-9.f, 1.f, 8.f);
 			EquippedWeapon->RotationOffset = FRotator(180.f, -90.f, 90.f);
-			EquippedWeapon->AttachToCharacter(this, FName("WeaponSocket"));
+			EquippedWeapon->AttachWeapon();			
 			this->EquippedWeapon = EquippedWeapon;
 		}
 	}

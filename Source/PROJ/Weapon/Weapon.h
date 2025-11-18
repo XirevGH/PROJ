@@ -69,7 +69,6 @@ public:
 	UFUNCTION()
 	void ApplyEffectToTarget(AActor* Target);
 	
-	void AttachToCharacter(class ACharacter* NewOwner, FName SocketName = NAME_None);
 	UFUNCTION(BlueprintCallable)
 	void HitScan();
 	UFUNCTION()
@@ -78,8 +77,8 @@ public:
 	void HitScanEnd();
 	UFUNCTION(Server, Reliable)
 	void Server_HitScanStart(float Interval = 0.03f);
-protected:
 	void AttachWeapon();
+protected:
 	void AttachWeaponDelayed();
 	virtual void BeginPlay() override;
 	
