@@ -88,9 +88,6 @@ void ABaseCharacter::PossessedBy(AController* NewController)
 	
 	InitAbilitySystemComponent();
 	InitAbilityActorInfo();
-
-	//Ska denna vara här?
-	InitializeAbilities();
 	OnCharacterInitialized();
 	SpawnDefaultWeapon();
 }
@@ -106,7 +103,6 @@ void ABaseCharacter::OnRep_PlayerState()
 	
 	InitAbilitySystemComponent();
 	InitAbilityActorInfo();
-	InitializeAbilities();
 	
 	OnCharacterInitialized();
 }
@@ -159,33 +155,6 @@ void ABaseCharacter::SendAbilityLocalInput(const FInputActionValue& Value, int32
 	else
 	{
 		BaseAbilitySystemComp->AbilityLocalInputReleased(InputID);
-	}
-}
-/*
-void ABaseCharacter::InitializeEffects()
-{
-	if (!AbilitySystemComponent.IsValid())
-		return;
-	FGameplayEffectContextHandle EffectContext = AbilitySystemComponent->MakeEffectContext();
-	EffectContext.AddSourceObject(this);
-
-	for (TSubclassOf<UGameplayEffect>& Effect : DefaultEffects)
-	{
-		FGameplayEffectSpecHandle SpecHandle = AbilitySystemComponent->MakeOutgoingSpec(Effect, 1, EffectContext);
-		if (SpecHandle.IsValid())
-		{
-			FActiveGameplayEffectHandle GEHandle = AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
-		}
-	}
-}
-*/
-void ABaseCharacter::InitializeAbilities()
-{
-	if (!HasAuthority() || !BaseAbilitySystemComp.IsValid())
-		return;
-	for (TSubclassOf<UBaseGameplayAbility>& Ability : DefaultAbilities)
-	{
-		FGameplayAbilitySpecHandle SpecHandle = BaseAbilitySystemComp->GiveAbility(FGameplayAbilitySpec(Ability, 1, static_cast<int32>(Ability.GetDefaultObject()->AbilityInputID), this));
 	}
 }
 

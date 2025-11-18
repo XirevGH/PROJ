@@ -13,7 +13,9 @@ void UBaseAbilitySystemComponent::AddCharacterAbilities(const TArray<TSubclassOf
 		if (const UBaseGameplayAbility* BaseAbility = Cast<UBaseGameplayAbility>(AbilitySpec.Ability))
 		{
 			AbilitySpec.GetDynamicSpecSourceTags().AddTag(BaseAbility->InputTag);
-			GiveAbility(AbilitySpec);
+			FGameplayAbilitySpecHandle Handle = GiveAbility(AbilitySpec);
+
+			GrantedAbilityHandles.Add(Handle);
 		}
 	}
 }
@@ -68,6 +70,40 @@ TArray<FGameplayAbilitySpec> UBaseAbilitySystemComponent::GetActivatableAbilityS
 		Specs.Add(Spec);
 	}
 	return Specs;
+}
+
+UBaseGameplayAbility* UBaseAbilitySystemComponent::GetGameplayAbilityByInputTag(FGameplayTag InputTag)
+{
+	FGameplayAbilitySpecHandle Handle = GetAbilitySpecHandleByTag(InputTag);
+	if (!Handle.IsValid()) return nullptr;
+
+	const FGameplayAbilitySpec* Spec = FindAbilitySpecFromHandle(Handle);
+	if (!Spec) return nullptr;
+
+	return Cast<UBaseGameplayAbility>(Spec->Ability);
+}
+
+FGameplayAbilitySpecHandle UBaseAbilitySystemComponent::GetSpecHandleFromInputTag(FGameplayTag InputTag)
+{
+	return GetAbilitySpecHandleByTag(InputTag);
+}
+
+TArray<FGameplayAbilitySpecHandle> UBaseAbilitySystemComponent::GetAllAbilitySpecHandles() const
+{
+	TArray<FGameplayAbilitySpecHandle> SpecHandles;
+	for (const auto& Spec : GetActivatableAbilities())
+	{
+		SpecHandles.Add(Spec.Handle);
+	}
+	return SpecHandles;
+}
+
+FGameplayTag UBaseAbilitySystemComponent::GetInputTagFromHandle(FGameplayAbilitySpecHandle Handle) const
+{
+	const FGameplayAbilitySpec* Spec = FindAbilitySpecFromHandle(Handle);
+	if (!Spec) return FGameplayTag();
+
+	return Spec->GetDynamicSpecSourceTags().First();
 }
 
 void UBaseAbilitySystemComponent::AbilityInputPressed(const FGameplayTag& InputTag)

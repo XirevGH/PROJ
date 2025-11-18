@@ -137,8 +137,6 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, category = "GAS")
 	TWeakObjectPtr<class UAbilitySystemComponent> AbilitySystemComponent;
 private:
-	//void InitializeEffects();
-	void InitializeAbilities();
 
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = true))
 	TWeakObjectPtr<UBaseAbilitySystemComponent> BaseAbilitySystemComp;

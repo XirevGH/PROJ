@@ -33,10 +33,7 @@ public:
 	
 	UFUNCTION(BlueprintPure)
 	UCharacterAttributeSet* GetCharacterAttributeSet() const;
-
-	UFUNCTION()
-	void GiveDefaultAbilities(const TArray<TSubclassOf<UGameplayAbility>>& Abilities);
-
+	
 	void InitializeASC(class AActor* Avatar);
 
 	
