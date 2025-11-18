@@ -83,7 +83,7 @@ void AProjectile::OnProjectileHit_Implementation(UPrimitiveComponent* HitComp, A
 	}
 	if (OtherActor->IsA(StaticClass()))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Do nothing because hit same type of projectile"));
+		UE_LOG(LogTemp, Warning, TEXT("Do nothing because hit projectile"));
 		return;
 	}
 	if(Cast<AActor>(OtherActor) != nullptr )
@@ -107,7 +107,7 @@ void AProjectile::OnBeginOverlap_Implementation(UPrimitiveComponent* OverlappedC
 
 	if (OtherActor->IsA(StaticClass()))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Do nothing because hit same type of projectile"));
+		UE_LOG(LogTemp, Warning, TEXT("Do nothing because hit projectile"));
 		return;
 	}
 	
@@ -115,10 +115,9 @@ void AProjectile::OnBeginOverlap_Implementation(UPrimitiveComponent* OverlappedC
 	{
 		OnProjectileHitDelegate.Broadcast(SweepResult);
 	}
-	if (CasterASC && CastedAbility)
-	{
-		ApplyEffectToTarget(OtherActor);
-	}
+	
+		//ApplyEffectToTarget(OtherActor);
+	
 	
 	//UE_LOG(LogTemp, Warning, TEXT("Hit %s via OnBeginOverlap"), *OtherActor->GetActorNameOrLabel());
 	
