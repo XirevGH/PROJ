@@ -31,7 +31,6 @@ void UBaseAbilitySystemComponent::AddCharacterPassives(const TArray<TSubclassOf<
 
 void UBaseAbilitySystemComponent::InitializeDefaultAttributes(const TSubclassOf<UGameplayEffect>& AttributeEffect)
 {
-	checkf(AttributeEffect, TEXT("No valid attributes for this character %s"), *GetAvatarActor()->GetName())
 	
 	const FGameplayEffectContextHandle ContextHandle = MakeEffectContext();
 	const FGameplayEffectSpecHandle SpecHandle = MakeOutgoingSpec(AttributeEffect, 1.f,ContextHandle);
