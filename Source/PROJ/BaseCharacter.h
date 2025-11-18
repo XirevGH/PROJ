@@ -39,6 +39,7 @@ public:
 	/* Movement*/
 	void InputMove(const FInputActionValue& Value);
 	void InputLook(const FInputActionValue& Value);
+	void InputRotateCharacter(const FInputActionValue& Value);
 	void Jump() override;
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "GAS")
@@ -154,6 +155,8 @@ private:
 
 	UFUNCTION(BlueprintCallable)
 	void BroadcastInitialValues();
+
+	bool RMBHeld;
 };
 
 

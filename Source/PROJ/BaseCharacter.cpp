@@ -312,6 +312,12 @@ void ABaseCharacter::InputLook(const FInputActionValue& Value)
 	AddControllerPitchInput(LookAxisValue.Y * 1.f);
 }
 
+void ABaseCharacter::InputRotateCharacter(const FInputActionValue& Value)
+{
+	RMBHeld = true;
+	const FRotator Rotation = Controller->GetControlRotation();
+	const FRotator YawRotation(0, Rotation.Yaw, 0);
+}
 void ABaseCharacter::Jump()
 {
 	Super::Jump();
