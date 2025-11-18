@@ -36,6 +36,40 @@ void UBaseAbilitySystemComponent::InitializeDefaultAttributes(const TSubclassOf<
 	ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
 }
 
+FGameplayAbilitySpecHandle UBaseAbilitySystemComponent::GetAbilitySpecHandleByTag(FGameplayTag InputTag) 
+{
+	if (!InputTag.IsValid()) return FGameplayAbilitySpecHandle();
+
+	ABILITYLIST_SCOPE_LOCK();
+
+	for (const FGameplayAbilitySpec& Spec : GetActivatableAbilities())
+	{
+		if (Spec.GetDynamicSpecSourceTags().HasTagExact(InputTag))
+		{
+			return Spec.Handle;
+		}
+	}
+	return FGameplayAbilitySpecHandle();
+}
+
+FGameplayAbilitySpec UBaseAbilitySystemComponent::GetAbilitySpecByHandle(FGameplayAbilitySpecHandle Handle) const
+{
+	return *FindAbilitySpecFromHandle(Handle);
+}
+
+TArray<FGameplayAbilitySpec> UBaseAbilitySystemComponent::GetActivatableAbilitySpecs()
+{
+	TArray<FGameplayAbilitySpec> Specs;
+
+	ABILITYLIST_SCOPE_LOCK();
+
+	for (const FGameplayAbilitySpec& Spec : GetActivatableAbilities())
+	{
+		Specs.Add(Spec);
+	}
+	return Specs;
+}
+
 void UBaseAbilitySystemComponent::AbilityInputPressed(const FGameplayTag& InputTag)
 {
 	if (!InputTag.IsValid()) return;
