@@ -33,9 +33,6 @@ public:
 	TSubclassOf<UGE_BaseCooldown> CooldownGameplayEffect;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability|Cooldown")
-	float CooldownDuration = 3.0f;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability|Cooldown")
 	TSubclassOf<UGameplayEffect> CooldownEffect;
 	
 	virtual void ActivateAbility(

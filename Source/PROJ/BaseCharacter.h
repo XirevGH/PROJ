@@ -11,6 +11,7 @@
 #include "Net/UnrealNetwork.h"
 #include "BaseCharacter.generated.h"
 
+class UCooldownTagManagerComponent;
 class AWeapon;
 struct FOnAttributeChangeData;
 class UBaseAbilitySystemComponent;
@@ -32,7 +33,8 @@ class PROJ_API ABaseCharacter : public ACharacter, public IAbilitySystemInterfac
 	
 public:
 	ABaseCharacter();
-	
+	void SpawnDefaultWeapon();
+
 	virtual void Tick(float DeltaTime) override;
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
@@ -120,10 +122,10 @@ public:
 		Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 		DOREPLIFETIME(ABaseCharacter, EquippedWeapon);
 	}
-
+	UFUNCTION(BlueprintCallable, Category = "GAS")
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 protected:
 	virtual void BeginPlay() override;
-	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
 	void InitAbilitySystemComponent();
 
@@ -150,8 +152,6 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, category = "GAS")
 	TWeakObjectPtr<class UAbilitySystemComponent> AbilitySystemComponent;
 private:
-	//void InitializeEffects();
-	void InitializeAbilities();
 
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = true))
 	TWeakObjectPtr<UBaseAbilitySystemComponent> BaseAbilitySystemComp;
@@ -161,6 +161,8 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Custom Values|Character Info")
 	FGameplayTag CharacterTag;
+
+	
 	
 	void InitAbilityActorInfo();
 	void InitClassDefaults() const;
