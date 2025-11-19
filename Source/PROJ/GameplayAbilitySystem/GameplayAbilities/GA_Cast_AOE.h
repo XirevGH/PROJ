@@ -10,34 +10,50 @@
 /**
  * 
  */
+class AIndicator;
+
 UCLASS()
 class PROJ_API UGA_Cast_AOE : public UBaseGameplayAbility
 {
 	GENERATED_BODY()
 	
 public:
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	TSubclassOf<class AGameplayAbilityTargetActor> IndicatorActorClass;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<AIndicator> IndicatorClass;
 
-
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	UPROPERTY()
+	AIndicator* Indicator;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float Range;
 
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float Radius;
 
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float Height;
+
+	UPROPERTY(BlueprintReadOnly)
+	FVector SpawnLocation;
 	
 protected:
+
+	FGameplayAbilitySpecHandle CachedHandle;
+	const FGameplayAbilityActorInfo* CachedActorInfo;
+	FGameplayAbilityActivationInfo CachedActivationInfo;
+
 	
 	virtual  void ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 		const FGameplayAbilityActorInfo* ActorInfo,
 		const FGameplayAbilityActivationInfo ActivationInfo,
 		const FGameplayEventData* TriggerEventData) override;
+	
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	void OnCancel();
+	virtual void OnCancel_Implementation();
 
-	UFUNCTION()
-	void OnTargetDataReceived(const FGameplayAbilityTargetDataHandle& Data);
-	UFUNCTION()
-	void OnTargetDataCancelled(const FGameplayAbilityTargetDataHandle& Data);
+	
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	void OnConfirm();
+	virtual void OnConfirm_Implementation();
 };
