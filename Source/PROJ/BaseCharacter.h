@@ -116,9 +116,6 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Replicated, Category="Weapon")
 	AWeapon* EquippedWeapon;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Custom Values|TagManager")
-	UCooldownTagManagerComponent* CooldownTagManager;
 	
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 	{

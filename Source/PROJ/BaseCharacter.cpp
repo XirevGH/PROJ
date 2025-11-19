@@ -1,7 +1,5 @@
 
 #include "BaseCharacter.h"
-#include "Camera/CameraComponent.h"
-#include "GameFramework/SpringArmComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "AbilitySystemComponent.h"
@@ -14,7 +12,6 @@
 #include "GameplayAbilitySystem/AttributeSets/CharacterAttributeSet.h"
 #include "Library/BaseAbilitySystemLibrary.h"
 #include "./PROJ.h"
-#include "CharacterComponents/CooldownTagManagerComponent.h"
 #include "./PROJ/GameplayAbilitySystem/GameplayAbilities/BaseGameplayAbility.h"
 #include "Weapon/Weapon.h"
 
@@ -32,9 +29,6 @@ ABaseCharacter::ABaseCharacter()
 	bUseControllerRotationYaw = false; // THIS IS THE MASTER SWITCH
 	bUseControllerRotationRoll = false;
 	LockedMovementDirection = FRotator::ZeroRotator;
-
-	CooldownTagManager = CreateDefaultSubobject<UCooldownTagManagerComponent>(TEXT("CooldownTagManager"));
-	
 }
 
 void ABaseCharacter::SpawnDefaultWeapon()
@@ -98,11 +92,6 @@ void ABaseCharacter::PossessedBy(AController* NewController)
 	
 	InitAbilitySystemComponent();
 	InitAbilityActorInfo();
-	
-	if (CooldownTagManager && BaseAbilitySystemComp.IsValid())
-	{
-		CooldownTagManager->Initialize(BaseAbilitySystemComp.Get());
-	}
 	
 	OnCharacterInitialized();
 	SpawnDefaultWeapon();
@@ -228,11 +217,6 @@ void ABaseCharacter::InitAbilityActorInfo()
 			if (HasAuthority())
 			{
 				InitClassDefaults();
-			}
-
-			if (CooldownTagManager)
-			{
-				CooldownTagManager->Initialize(BaseAbilitySystemComp.Get());
 			}
 		}
 	}
