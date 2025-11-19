@@ -57,15 +57,6 @@ void ABaseCharacter::SpawnDefaultWeapon()
 void ABaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-
-	if (APlayerController* PC = Cast<APlayerController>(GetController()))
-	{
-		if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
-			ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer()))
-		{
-			Subsystem->AddMappingContext(PlayerInputContext, 0);
-		}
-	}
 }
 
 UAbilitySystemComponent* ABaseCharacter::GetAbilitySystemComponent() const
@@ -92,6 +83,15 @@ void ABaseCharacter::PossessedBy(AController* NewController)
 	{
 		BasePlayerState = GetPlayerState<ABasePlayerState>();
 	}
+
+	if (APlayerController* PC = Cast<APlayerController>(GetController()))
+	{
+		if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
+			ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer()))
+		{
+			Subsystem->AddMappingContext(PlayerInputContext, 0);
+		}
+	}
 	
 	InitAbilitySystemComponent();
 	InitAbilityActorInfo();
@@ -106,6 +106,15 @@ void ABaseCharacter::OnRep_PlayerState()
 	if (!BasePlayerState)
 	{
 		BasePlayerState = GetPlayerState<ABasePlayerState>();
+	}
+
+	if (APlayerController* PC = Cast<APlayerController>(GetController()))
+	{
+		if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
+			ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer()))
+		{
+			Subsystem->AddMappingContext(PlayerInputContext, 0);
+		}
 	}
 	
 	InitAbilitySystemComponent();
