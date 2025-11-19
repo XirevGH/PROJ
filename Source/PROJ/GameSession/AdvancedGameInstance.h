@@ -5,7 +5,7 @@
 #include "FCustomBlueprintSessionResult.h"
 #include "AdvancedGameInstance.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnOpenPublicSessionsFound, const TArray<FCustomBlueprintSessionResult>&, Sessions);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnOpenPublicSessionsFound, const TArray<FCustomBlueprintSessionResult>, Sessions);
 
 /**
  * 
@@ -47,7 +47,7 @@ public:
 
 	// After a compatible match has been found, call destroy session and join session on success.
 	UFUNCTION(BlueprintImplementableEvent, Category = "GameSession")
-	void OnMatchSessionFound(const FBlueprintSessionResult& FoundMatchSession);
+	void OnMatchSessionFound(const FBlueprintSessionResult FoundMatchSession);
 
 	// Find sessions "lobbies" open for joining
 	// Should bind custom event in blueprint to OnOpenPublicSessionsFound to get the array of sessions
