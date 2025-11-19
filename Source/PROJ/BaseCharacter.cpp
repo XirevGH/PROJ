@@ -23,7 +23,14 @@ ABaseCharacter::ABaseCharacter()
 	PrimaryActorTick.bCanEverTick = true;
 	bReplicates = true;
 	//GetCharacterMovement()->MaxWalkSpeed = 600.f;
-	GetCharacterMovement()->bOrientRotationToMovement = true;
+	GetCharacterMovement()->bOrientRotationToMovement = false;
+
+	
+	bIsFreeLooking = false;
+	bUseControllerRotationPitch = false;
+	bUseControllerRotationYaw = false; // THIS IS THE MASTER SWITCH
+	bUseControllerRotationRoll = false;
+	LockedMovementDirection = FRotator::ZeroRotator;
 	
 }
 
@@ -171,7 +178,15 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		EnhancedInput->BindAction(JumpAction, ETriggerEvent::Started, this, &ABaseCharacter::Jump);
 		EnhancedInput->BindAction(JumpAction, ETriggerEvent::Completed, this, &ABaseCharacter::StopJumping);
 		EnhancedInput->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ABaseCharacter::InputMove);
+
 		EnhancedInput->BindAction(LookAction, ETriggerEvent::Triggered, this, &ABaseCharacter::InputLook);
+		
+		EnhancedInput->BindAction(RotateCameraAction, ETriggerEvent::Started, this, &ABaseCharacter::InputRotateCameraStarted);
+		EnhancedInput->BindAction(RotateCameraAction, ETriggerEvent::Completed, this, &ABaseCharacter::InputRotateCameraCompleted);
+		
+		EnhancedInput->BindAction(RotateCharacterAction, ETriggerEvent::Started, this, &ABaseCharacter::InputRotateCharacterStarted);
+		EnhancedInput->BindAction(RotateCharacterAction, ETriggerEvent::Triggered, this, &ABaseCharacter::InputRotateCharacterTriggered);
+		EnhancedInput->BindAction(RotateCharacterAction, ETriggerEvent::Completed, this, &ABaseCharacter::InputRotateCharacterCompleted);
 
 		EnhancedInput->BindAction(PrimaryAbilityAction, ETriggerEvent::Triggered, this, &ABaseCharacter::OnPrimaryAbility);
 		EnhancedInput->BindAction(SecondaryAbilityAction, ETriggerEvent::Triggered, this, &ABaseCharacter::OnSecondaryAbility);
@@ -260,35 +275,61 @@ void ABaseCharacter::BroadcastInitialValues()
 void ABaseCharacter::InputMove(const FInputActionValue& Value)
 {
 	FVector2D MoveAxis = Value.Get<FVector2D>();
-	if (Controller)
+	if ((Controller != nullptr) && (MoveAxis.X != 0.0f || MoveAxis.Y != 0.0f))
 	{
-		const FRotator Rotation = Controller->GetControlRotation();
-		const FRotator YawRotation(0, Rotation.Yaw, 0);
+		const FRotator BaseRotation = bUseControllerRotationYaw ? GetController()->GetControlRotation() : GetActorRotation();
 
-		// Forward/Backward
-		const FVector ForwardDir = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-		AddMovementInput(ForwardDir, MoveAxis.Y);
+		const FRotator YawRotation(0, BaseRotation.Yaw, 0);
 
-		// Right/Left
-		const FVector RightDir = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
-		AddMovementInput(RightDir, MoveAxis.X);
+		// Get world-space forward and right vectors from our chosen base rotation
+		const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+
+		// Add the movement input
+		AddMovementInput(ForwardDirection, MoveAxis.Y);
+		AddMovementInput(RightDirection, MoveAxis.X);
 	}
 }
 void ABaseCharacter::InputLook(const FInputActionValue& Value)
 {
-	const FVector2D LookAxisValue = Value.Get<FVector2D>();
-	if (!GetController())
+	const FVector2D LookVector = Value.Get<FVector2D>();
+	if (Controller != nullptr)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("No Controller!"));
-		return;
+		AddControllerYawInput(LookVector.X);
+		AddControllerPitchInput(LookVector.Y);
 	}
-	AddControllerYawInput(LookAxisValue.X * 1.f);
-	AddControllerPitchInput(LookAxisValue.Y * 1.f);
+}
+
+inline void ABaseCharacter::InputRotateCameraStarted(const FInputActionValue& Value)
+{
+	bIsFreeLooking = true;
+	LockedMovementRotation = GetActorRotation();
+	GetCharacterMovement()->bOrientRotationToMovement = false;
+}
+
+inline void ABaseCharacter::InputRotateCameraCompleted(const FInputActionValue& Value)
+{
+	bIsFreeLooking = false;
+	// GetCharacterMovement()->bOrientRotationToMovement = true;
+}
+
+void ABaseCharacter::InputRotateCharacterStarted(const FInputActionValue& Value)
+{
+	bUseControllerRotationYaw = true;
+}
+
+void ABaseCharacter::InputRotateCharacterCompleted(const FInputActionValue& Value)
+{
+	bUseControllerRotationYaw = false;
+}
+
+void ABaseCharacter::InputRotateCharacterTriggered(const FInputActionValue& Value)
+{
+	UE_LOG(LogTemp, Display, TEXT("InputRotateCharacterOngoing"));
+	LockedMovementRotation = GetActorRotation();
 }
 
 void ABaseCharacter::Jump()
 {
 	Super::Jump();
 }
-
-

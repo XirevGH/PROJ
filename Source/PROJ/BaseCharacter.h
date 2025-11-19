@@ -40,6 +40,14 @@ public:
 	/* Movement*/
 	void InputMove(const FInputActionValue& Value);
 	void InputLook(const FInputActionValue& Value);
+	
+	void InputRotateCharacterStarted(const FInputActionValue& Value);
+	void InputRotateCharacterCompleted(const FInputActionValue& Value);
+	
+	void InputRotateCameraStarted(const FInputActionValue& Value);
+	void InputRotateCameraCompleted(const FInputActionValue& Value);
+	void InputRotateCharacterTriggered(const FInputActionValue& Value);
+	
 	void Jump() override;
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "GAS")
@@ -62,6 +70,12 @@ public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, category = "Enhanced Input")
 	UInputAction* LookAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, category = "Enhanced Input")
+	UInputAction* RotateCameraAction;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, category = "Enhanced Input")
+	UInputAction* RotateCharacterAction;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, category = "Enhanced Input")
 	UInputAction* JumpAction;
@@ -153,6 +167,9 @@ private:
 
 	UFUNCTION(BlueprintCallable)
 	void BroadcastInitialValues();
+
+	
+	bool bIsFreeLooking;
+	FRotator LockedMovementRotation;
+	FRotator LockedMovementDirection;
 };
-
-
