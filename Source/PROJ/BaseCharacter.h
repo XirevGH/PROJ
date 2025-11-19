@@ -151,6 +151,13 @@ protected:
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, category = "GAS")
 	TWeakObjectPtr<class UAbilitySystemComponent> AbilitySystemComponent;
+
+	UFUNCTION(Server, Reliable)
+	void Server_SetFreeLooking(bool bNewFreeLooking);
+
+	UFUNCTION(Server, Reliable)
+	void Server_SetUseControllerRotationYaw(bool bNewUseControllerRotationYaw);
+	
 private:
 
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = true))

@@ -172,6 +172,20 @@ void ABaseCharacter::SendAbilityLocalInput(const FInputActionValue& Value, int32
 	}
 }
 
+void ABaseCharacter::Server_SetFreeLooking_Implementation(bool bNewFreeLooking)
+{
+	bIsFreeLooking = bNewFreeLooking;
+	if (bIsFreeLooking)
+	{
+		GetCharacterMovement()->bOrientRotationToMovement = false;
+	}
+}
+
+void ABaseCharacter::Server_SetUseControllerRotationYaw_Implementation(bool bNewUseControllerRotationYaw)
+{
+	bUseControllerRotationYaw = bNewUseControllerRotationYaw;
+}
+
 void ABaseCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
@@ -312,22 +326,25 @@ inline void ABaseCharacter::InputRotateCameraStarted(const FInputActionValue& Va
 	bIsFreeLooking = true;
 	LockedMovementRotation = GetActorRotation();
 	GetCharacterMovement()->bOrientRotationToMovement = false;
+	Server_SetFreeLooking(true);
 }
 
 inline void ABaseCharacter::InputRotateCameraCompleted(const FInputActionValue& Value)
 {
 	bIsFreeLooking = false;
-	// GetCharacterMovement()->bOrientRotationToMovement = true;
+	Server_SetFreeLooking(false);
 }
 
 void ABaseCharacter::InputRotateCharacterStarted(const FInputActionValue& Value)
 {
 	bUseControllerRotationYaw = true;
+	Server_SetUseControllerRotationYaw(true);
 }
 
 void ABaseCharacter::InputRotateCharacterCompleted(const FInputActionValue& Value)
 {
 	bUseControllerRotationYaw = false;
+	Server_SetUseControllerRotationYaw(false);
 }
 
 void ABaseCharacter::InputRotateCharacterTriggered(const FInputActionValue& Value)
