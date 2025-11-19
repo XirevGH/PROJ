@@ -2,7 +2,8 @@
 
 
 #include "BaseGameplayAbility.h"
-
+#include "AbilitySystemComponent.h"
+#include "AbilitySystemGlobals.h"
 #include "PROJ/GameplayAbilitySystem/GameplayEffects/GE_BaseCooldown.h"
 
 
@@ -14,10 +15,7 @@ void UBaseGameplayAbility::OnGiveAbility(const FGameplayAbilityActorInfo* ActorI
 	FGameplayTag CooldownTag = GetCooldownTagFromInputID(InputTag);
 
 	ActivationBlockedTags.AddTag(CooldownTag);
-
-	UE_LOG(LogTemp, Warning, TEXT("InputTag  is  %s "), *InputTag.ToString());
-	UE_LOG(LogTemp, Warning, TEXT("GetCooldownTagFromInputID Tag is  %s "), *GetCooldownTagFromInputID(InputTag).ToString());
-	UE_LOG(LogTemp, Warning, TEXT("ActivationBlockedTags is  %s "), *ActivationBlockedTags.GetByIndex(1).ToString());
+	
 }
 
 void UBaseGameplayAbility::ApplyCooldown(const FGameplayAbilitySpecHandle Handle,
@@ -46,6 +44,42 @@ void UBaseGameplayAbility::ApplyCooldown(const FGameplayAbilitySpecHandle Handle
 	ApplyGameplayEffectSpecToOwner(Handle, ActorInfo, ActivationInfo, SpecHandle);
 	//UE_LOG(LogTemp, Warning, TEXT("Apply Cooldown is valid: %s"),
 	//	ApplyGameplayEffectSpecToOwner(Handle, ActorInfo, ActivationInfo, SpecHandle).IsValid() ? TEXT("True") :TEXT("False"));
+}
+
+TArray<FGameplayEffectSpecHandle> UBaseGameplayAbility::MakeEffectSpecsHandles(
+	const TArray<TSubclassOf<UGameplayEffect>>& InEffects)
+{
+	TArray<FGameplayEffectSpecHandle> Specs;
+
+	 UAbilitySystemComponent* CasterASC = GetAbilitySystemComponentFromActorInfo();
+	if (!GetAbilitySystemComponentFromActorInfo()) return Specs;
+
+	for (TSubclassOf<UGameplayEffect> EffectClass : InEffects)
+	{
+		if (!EffectClass) continue;
+
+		FGameplayEffectContextHandle EffectContext = CasterASC->MakeEffectContext();
+		FGameplayEffectSpecHandle SpecHandle = CasterASC->MakeOutgoingSpec(EffectClass, GetAbilityLevel(), EffectContext);
+
+		if (!SpecHandle.IsValid()) continue;
+
+		FGameplayEffectSpec* Spec = SpecHandle.Data.Get();
+
+		// Apply runtime values for SetByCaller tags
+		TArray<FGameplayTag> Tags;
+		//Spec->GetAllSetByCallerTags(Tags);
+		for (const FGameplayTag& Tag : Tags)
+		{
+			if (SetByCallerValues.Contains(Tag))
+			{
+				Spec->SetSetByCallerMagnitude(Tag, SetByCallerValues[Tag]);
+			}
+		}
+
+		Specs.Add(SpecHandle);
+	}
+
+	return Specs;
 }
 
 FGameplayTag UBaseGameplayAbility::GetCooldownTagFromInputID(const FGameplayTag InputTag) 

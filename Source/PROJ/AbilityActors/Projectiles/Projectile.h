@@ -4,14 +4,14 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "PROJ/AbilityActors/AbilityActor.h"
 #include "Projectile.generated.h"
 
-class UGameplayEffect;
-class UBaseGameplayAbility;
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnProjectileHit, const FHitResult&, Hit);
 
 UCLASS()
-class PROJ_API AProjectile : public AActor
+class PROJ_API AProjectile : public AAbilityActor
 {
 	GENERATED_BODY()
 
@@ -44,21 +44,7 @@ public:
 	
 	UPROPERTY(BlueprintAssignable)
 	FOnProjectileHit OnProjectileHitDelegate;
-
-	// The actor that fired this projectile
-	UPROPERTY(BlueprintReadOnly)
-	AActor* Caster;
-
-	// The caster's AbilitySystemComponent
-	UPROPERTY(BlueprintReadOnly)
-	class UAbilitySystemComponent* CasterASC;
 	
-	UPROPERTY(BlueprintReadOnly)
-	UBaseGameplayAbility *CastedAbility;
-	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Effects")
-	TArray<TSubclassOf<UGameplayEffect>> Effects;
-
 	TArray<ACharacter*> OverlapCharacters;
 
 
@@ -68,8 +54,7 @@ public:
 	UFUNCTION()
 	void DestroySelf();
 	
-	UFUNCTION(BlueprintCallable)
-	bool ApplyEffectToTarget(const AActor* Target);
+	
 	
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void OnProjectileHit(

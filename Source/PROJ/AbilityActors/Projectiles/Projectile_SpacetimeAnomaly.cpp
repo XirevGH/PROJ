@@ -16,7 +16,7 @@ void AProjectile_SpacetimeAnomaly::BeginPlay()
 {
 	Super::BeginPlay();
 	
-}§	
+}
 
 // Called every frame
 void AProjectile_SpacetimeAnomaly::Tick(float DeltaTime)

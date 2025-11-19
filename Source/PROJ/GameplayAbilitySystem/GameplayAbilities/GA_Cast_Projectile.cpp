@@ -3,7 +3,7 @@
 
 #include "GA_Cast_Projectile.h"
 #include "AbilitySystemComponent.h"
-#include "PROJ/Projectiles/Projectile.h"
+#include "PROJ/AbilityActors/Projectiles/Projectile.h"
 
 UGA_Cast_Projectile::UGA_Cast_Projectile()
 {
@@ -63,7 +63,7 @@ void UGA_Cast_Projectile::SpawnProjectile()
 		ProjectileActor->Caster = Avatar;
 		ProjectileActor->CastedAbility = this;
 		ProjectileActor->CasterASC = GetAbilitySystemComponentFromActorInfo();
-		ProjectileActor->Effects = DefaultEffects;
+		//ProjectileActor->EffectSpecHandles = DefaultEffects;
 	}
 	else
 	{
