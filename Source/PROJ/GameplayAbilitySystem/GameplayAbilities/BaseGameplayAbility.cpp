@@ -36,25 +36,22 @@ void UBaseGameplayAbility::ApplyCooldown(const FGameplayAbilitySpecHandle Handle
 		return;
 	
 	Spec->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(TEXT("Data.Cooldown.Duration")), Cooldown);
-	//UE_LOG(LogTemp, Warning, TEXT("Apply Cooldown to %s "), *ActorInfo->AvatarActor->GetName());
 	
 	const FGameplayTag& CooldownTag = GetCooldownTagFromInputID(InputTag); // e.g., Cooldown.Slot.Primary
 	
 	Spec->DynamicGrantedTags.AddTag(CooldownTag);
 	ApplyGameplayEffectSpecToOwner(Handle, ActorInfo, ActivationInfo, SpecHandle);
-	//UE_LOG(LogTemp, Warning, TEXT("Apply Cooldown is valid: %s"),
-	//	ApplyGameplayEffectSpecToOwner(Handle, ActorInfo, ActivationInfo, SpecHandle).IsValid() ? TEXT("True") :TEXT("False"));
+
 }
 
-TArray<FGameplayEffectSpecHandle> UBaseGameplayAbility::MakeEffectSpecsHandles(
-	const TArray<TSubclassOf<UGameplayEffect>>& InEffects)
+TArray<FGameplayEffectSpecHandle> UBaseGameplayAbility::MakeEffectSpecsHandles()
 {
 	TArray<FGameplayEffectSpecHandle> Specs;
 
-	 UAbilitySystemComponent* CasterASC = GetAbilitySystemComponentFromActorInfo();
-	if (!GetAbilitySystemComponentFromActorInfo()) return Specs;
+	UAbilitySystemComponent* CasterASC = GetAbilitySystemComponentFromActorInfo();
+	if (!CasterASC) return Specs;
 
-	for (TSubclassOf<UGameplayEffect> EffectClass : InEffects)
+	for (TSubclassOf<UGameplayEffect> EffectClass : Effects)
 	{
 		if (!EffectClass) continue;
 
@@ -64,16 +61,12 @@ TArray<FGameplayEffectSpecHandle> UBaseGameplayAbility::MakeEffectSpecsHandles(
 		if (!SpecHandle.IsValid()) continue;
 
 		FGameplayEffectSpec* Spec = SpecHandle.Data.Get();
+		if (!Spec) continue;
 
-		// Apply runtime values for SetByCaller tags
-		TArray<FGameplayTag> Tags;
-		//Spec->GetAllSetByCallerTags(Tags);
-		for (const FGameplayTag& Tag : Tags)
+		// Apply values from member variable
+		for (const TPair<FGameplayTag, float>& Pair : SetByCallerValues)
 		{
-			if (SetByCallerValues.Contains(Tag))
-			{
-				Spec->SetSetByCallerMagnitude(Tag, SetByCallerValues[Tag]);
-			}
+			Spec->SetSetByCallerMagnitude(Pair.Key, Pair.Value);
 		}
 
 		Specs.Add(SpecHandle);
