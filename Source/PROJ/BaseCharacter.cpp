@@ -34,23 +34,36 @@ ABaseCharacter::ABaseCharacter()
 	
 }
 
-void ABaseCharacter::BeginPlay()
+void ABaseCharacter::SpawnDefaultWeapon()
 {
-	Super::BeginPlay();
-	
 	if (WeaponClass)
 	{
 		FActorSpawnParameters Params;
 		Params.Owner = this;
 		Params.Instigator = this;
+		Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 		
 		EquippedWeapon = GetWorld()->SpawnActor<AWeapon>(WeaponClass,Params);
 		if (EquippedWeapon)
 		{
-			EquippedWeapon->LocationOffset = FVector(0.f, 0.f, 0.f);
-			EquippedWeapon->RotationOffset = FRotator(-90, 0.f, 90.f);
-			EquippedWeapon->AttachToCharacter(this, FName("WeaponSocket"));
+			EquippedWeapon->LocationOffset = FVector(-9.f, 1.f, 8.f);
+			EquippedWeapon->RotationOffset = FRotator(180.f, -90.f, 90.f);
+			EquippedWeapon->AttachWeapon();			
 			this->EquippedWeapon = EquippedWeapon;
+		}
+	}
+}
+
+void ABaseCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+
+	if (APlayerController* PC = Cast<APlayerController>(GetController()))
+	{
+		if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
+			ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer()))
+		{
+			Subsystem->AddMappingContext(PlayerInputContext, 0);
 		}
 	}
 }
@@ -79,22 +92,11 @@ void ABaseCharacter::PossessedBy(AController* NewController)
 	{
 		BasePlayerState = GetPlayerState<ABasePlayerState>();
 	}
-
-	if (APlayerController* PC = Cast<APlayerController>(GetController()))
-	{
-		if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
-			ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer()))
-		{
-			Subsystem->AddMappingContext(PlayerInputContext, 0);
-		}
-	}
 	
 	InitAbilitySystemComponent();
 	InitAbilityActorInfo();
-
-	//Ska denna vara här?
-	InitializeAbilities();
 	OnCharacterInitialized();
+	SpawnDefaultWeapon();
 }
 
 void ABaseCharacter::OnRep_PlayerState()
@@ -105,19 +107,9 @@ void ABaseCharacter::OnRep_PlayerState()
 	{
 		BasePlayerState = GetPlayerState<ABasePlayerState>();
 	}
-
-	if (APlayerController* PC = Cast<APlayerController>(GetController()))
-	{
-		if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
-			ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer()))
-		{
-			Subsystem->AddMappingContext(PlayerInputContext, 0);
-		}
-	}
 	
 	InitAbilitySystemComponent();
 	InitAbilityActorInfo();
-	InitializeAbilities();
 	
 	OnCharacterInitialized();
 }
@@ -170,33 +162,6 @@ void ABaseCharacter::SendAbilityLocalInput(const FInputActionValue& Value, int32
 	else
 	{
 		BaseAbilitySystemComp->AbilityLocalInputReleased(InputID);
-	}
-}
-/*
-void ABaseCharacter::InitializeEffects()
-{
-	if (!AbilitySystemComponent.IsValid())
-		return;
-	FGameplayEffectContextHandle EffectContext = AbilitySystemComponent->MakeEffectContext();
-	EffectContext.AddSourceObject(this);
-
-	for (TSubclassOf<UGameplayEffect>& Effect : DefaultEffects)
-	{
-		FGameplayEffectSpecHandle SpecHandle = AbilitySystemComponent->MakeOutgoingSpec(Effect, 1, EffectContext);
-		if (SpecHandle.IsValid())
-		{
-			FActiveGameplayEffectHandle GEHandle = AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
-		}
-	}
-}
-*/
-void ABaseCharacter::InitializeAbilities()
-{
-	if (!HasAuthority() || !BaseAbilitySystemComp.IsValid())
-		return;
-	for (TSubclassOf<UBaseGameplayAbility>& Ability : DefaultAbilities)
-	{
-		FGameplayAbilitySpecHandle SpecHandle = BaseAbilitySystemComp->GiveAbility(FGameplayAbilitySpec(Ability, 1, static_cast<int32>(Ability.GetDefaultObject()->AbilityInputID), this));
 	}
 }
 

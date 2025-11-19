@@ -14,6 +14,8 @@ AWeapon::AWeapon()
 {
 	PrimaryActorTick.bCanEverTick = false;
 	bReplicates = true;
+	bNetUseOwnerRelevancy = true;
+	SetReplicateMovement(true);
 	
 	RootComponent = CreateDefaultSubobject<USceneComponent>("RootComponent");
 	
@@ -34,10 +36,19 @@ AWeapon::AWeapon()
 	
 	Collider->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	Collider->SetCollisionResponseToAllChannels(ECR_Ignore);
-	
-	LocationOffset = FVector::ZeroVector;
-	RotationOffset = FRotator::ZeroRotator;
+}
 
+void AWeapon::OnRep_Owner()
+{
+	Super::OnRep_Owner();
+	
+	AttachWeapon();
+}
+
+void AWeapon::OnRep_AttachmentReplication()
+{
+	Super::OnRep_AttachmentReplication();
+	AttachWeapon();
 }
 
 void AWeapon::ApplyEffectToTarget(AActor* Target)
@@ -80,25 +91,15 @@ void AWeapon::ApplyEffectToTarget(AActor* Target)
 		
 	}
 }
-
-void AWeapon::AttachToCharacter(ACharacter* NewOwner, FName InSocketName)
-{
-	WeaponOwner = Cast<ABaseCharacter>(NewOwner);
-	if (WeaponOwner && Mesh)
-		
-	Mesh->SetRelativeLocation(LocationOffset);
-	Mesh->SetRelativeRotation(RotationOffset);
-	
-	AttachToComponent(
-		WeaponOwner->GetMesh(),
-		FAttachmentTransformRules::KeepRelativeTransform,
-		InSocketName);
-	
-	
-}
-
 void AWeapon::HitScan()
 {
+	UE_LOG(LogTemp, Verbose, TEXT("HitScan() tick on %s by %s. Targets currently: %d"),
+	*GetName(),
+	HasAuthority() ? TEXT("SERVER") : TEXT("CLIENT"),
+	Targets.Num());
+	
+	if (!HasAuthority()) return;
+	
 	if (!StartTrace || !EndTrace) return;
 	
 	FVector const Start = StartTrace->GetComponentLocation();
@@ -106,6 +107,9 @@ void AWeapon::HitScan()
 	
 	FCollisionQueryParams TraceParams(FName(TEXT("WeaponTrace")), true, this);
 	TraceParams.bReturnPhysicalMaterial = false;
+
+	TraceParams.AddIgnoredActor(this);
+	TraceParams.AddIgnoredActor(GetOwner());
 	
 	TArray<FHitResult> HitResults;
 	
@@ -121,10 +125,13 @@ void AWeapon::HitScan()
 		for (auto& Hit : HitResults)
 		{
 			AActor* HitActor = Hit.GetActor();
-			if (HitActor)
-			UE_LOG(LogTemp, Warning, TEXT("Hit Actor: %s"), *HitActor->GetName());
-			ApplyEffectToTarget(HitActor);
+			if (!HitActor) continue;
 			
+			if (!Targets.Contains(HitActor))
+			{
+				Targets.Add(HitActor);
+				ApplyEffectToTarget(HitActor);
+			}
 		}
 	}
 	DrawDebugLine(GetWorld(), Start, End, FColor::Green, false, 2.f, 0, 2.f);
@@ -137,11 +144,18 @@ void AWeapon::HitScan()
 
 void AWeapon::HitScanStart(float Interval)
 {
+	UE_LOG(LogTemp, Warning, TEXT("HitScanStart called on %s. HasAuthority(): %s. TimerActive: %s"),
+	*GetName(),
+	HasAuthority() ? TEXT("SERVER") : TEXT("CLIENT"),
+	GetWorld()->GetTimerManager().IsTimerActive(HitScanTimerHandle) ? TEXT("true") : TEXT("false"));
+	
+	if (!HasAuthority()) return;
+	
 	if(bIsHitscanActive) return;
 	
-	bIsHitscanActive = true;
+	Targets.Empty();
 	
-	HitScan();
+	//HitScan();
 	
 	GetWorld()->GetTimerManager().SetTimer(
 		HitScanTimerHandle,
@@ -149,23 +163,44 @@ void AWeapon::HitScanStart(float Interval)
 		&AWeapon::HitScan,
 		Interval,
 		true);
+	bIsHitscanActive = true;
 }
 
 void AWeapon::HitScanEnd()
 {
+	if (!HasAuthority()) return;
+	
 	if (!bIsHitscanActive) return;
 
-	bIsHitscanActive = false;
+	if (!bIsHitscanActive && !GetWorld()->GetTimerManager().IsTimerActive(HitScanTimerHandle)) return;
 	
+	Targets.Empty();
 	GetWorld()->GetTimerManager().ClearTimer(HitScanTimerHandle);
+	bIsHitscanActive = false;
+}
+
+void AWeapon::Server_HitScanStart_Implementation(float DeltaTime)
+{
+	HitScanStart(DeltaTime);
+
+}
+
+void AWeapon::AttachWeapon()
+{
+	if (ACharacter* Char = Cast<ACharacter>(GetOwner()))
+	{
+		AttachToComponent(Char->GetMesh(),
+		                  FAttachmentTransformRules::SnapToTargetNotIncludingScale,
+		                  TEXT("WeaponSocket"));
+
+		Mesh->SetRelativeLocation(LocationOffset);
+		Mesh->SetRelativeRotation(RotationOffset);
+	}
 }
 
 void AWeapon::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	WeaponOwner = Cast<ABaseCharacter>(GetOwner());
-	if (WeaponOwner && !SocketName.IsNone())
-	AttachToCharacter(WeaponOwner, SocketName);
 }
 

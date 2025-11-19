@@ -38,19 +38,6 @@ UCharacterAttributeSet* ABasePlayerState::GetCharacterAttributeSet() const
 	return BaseAttributeSet;
 }
 
-void ABasePlayerState::GiveDefaultAbilities(const TArray<TSubclassOf<UGameplayAbility>>& Abilities)
-{
-	if (HasAuthority() && BaseAbilitySystemComponent)
-	{
-		for (auto& AbilityClass : Abilities)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Server: Giving %s to %s"), 
-					   *AbilityClass->GetName(), *GetName());
-			BaseAbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(AbilityClass, 1, 0, this));
-		}
-	}
-}
-
 void ABasePlayerState::InitializeASC(class AActor* Avatar)
 {
 	BaseAbilitySystemComponent->InitAbilityActorInfo(this, Avatar);
