@@ -22,20 +22,20 @@ void AProjectile_SpacetimeAnomaly::BeginPlay()
 void AProjectile_SpacetimeAnomaly::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	for (ACharacter* Actor : OverlapCharacters)
-	{
-		if (!Actor) continue;
+	//for (ACharacter* Actor : OverlapCharacters)
+	//{
+	//	if (!Actor) continue;
 
-		UPrimitiveComponent* Prim = Cast<UPrimitiveComponent>(Actor->GetRootComponent());
+	//	UPrimitiveComponent* Prim = Cast<UPrimitiveComponent>(Actor->GetRootComponent());
 		//if (!Prim || !Prim->IsSimulatingPhysics()) continue;
 
-		FVector Dir = GetActorLocation() - Actor->GetActorLocation(); // direction to black hole
-		float Distance = Dir.Size();
-		Dir.Normalize();
-		UE_LOG(LogTemp, Warning, TEXT("Prim->AddForce to %s"),*Actor->GetName() );
-		float Strength = FMath::Clamp(1000000.f / (Distance * Distance), 0.f, 500000.f); // inverse square
-		Prim->AddForce(Dir * Strength);
-	}
+	//	FVector Dir = GetActorLocation() - Actor->GetActorLocation(); // direction to black hole
+	//	float Distance = Dir.Size();
+	//	Dir.Normalize();
+	//	UE_LOG(LogTemp, Warning, TEXT("Prim->AddForce to %s"),*Actor->GetName() );
+	//	float Strength = FMath::Clamp(1000000.f / (Distance * Distance), 0.f, 500000.f); // inverse square
+	//	Prim->AddForce(Dir * Strength);
+	//}
 	
 }
 
