@@ -14,6 +14,7 @@
 #include "GameplayAbilitySystem/AttributeSets/CharacterAttributeSet.h"
 #include "Library/BaseAbilitySystemLibrary.h"
 #include "./PROJ.h"
+#include "CharacterComponents/CooldownTagManagerComponent.h"
 #include "./PROJ/GameplayAbilitySystem/GameplayAbilities/BaseGameplayAbility.h"
 #include "Weapon/Weapon.h"
 
@@ -31,6 +32,8 @@ ABaseCharacter::ABaseCharacter()
 	bUseControllerRotationYaw = false; // THIS IS THE MASTER SWITCH
 	bUseControllerRotationRoll = false;
 	LockedMovementDirection = FRotator::ZeroRotator;
+
+	CooldownTagManager = CreateDefaultSubobject<UCooldownTagManagerComponent>(TEXT("CooldownTagManager"));
 	
 }
 
@@ -95,6 +98,12 @@ void ABaseCharacter::PossessedBy(AController* NewController)
 	
 	InitAbilitySystemComponent();
 	InitAbilityActorInfo();
+	
+	if (CooldownTagManager && BaseAbilitySystemComp.IsValid())
+	{
+		CooldownTagManager->Initialize(BaseAbilitySystemComp.Get());
+	}
+	
 	OnCharacterInitialized();
 	SpawnDefaultWeapon();
 }
@@ -220,6 +229,11 @@ void ABaseCharacter::InitAbilityActorInfo()
 			{
 				InitClassDefaults();
 			}
+
+			if (CooldownTagManager)
+			{
+				CooldownTagManager->Initialize(BaseAbilitySystemComp.Get());
+			}
 		}
 	}
 }
@@ -325,7 +339,6 @@ void ABaseCharacter::InputRotateCharacterCompleted(const FInputActionValue& Valu
 
 void ABaseCharacter::InputRotateCharacterTriggered(const FInputActionValue& Value)
 {
-	UE_LOG(LogTemp, Display, TEXT("InputRotateCharacterOngoing"));
 	LockedMovementRotation = GetActorRotation();
 }
 

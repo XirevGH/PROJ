@@ -3,6 +3,7 @@
 
 #include "BaseGameplayAbility.h"
 
+#include "AbilitySystemComponent.h"
 #include "PROJ/GameplayAbilitySystem/GameplayEffects/GE_BaseCooldown.h"
 
 
@@ -25,27 +26,23 @@ void UBaseGameplayAbility::ApplyCooldown(const FGameplayAbilitySpecHandle Handle
 {
 	Super::ApplyCooldown(Handle, ActorInfo, ActivationInfo);
 
-	if (!CooldownGameplayEffectClass || !ActorInfo)
-		return;
+	if (!CooldownGameplayEffectClass || !ActorInfo) return;
 
 	// Create spec
 	FGameplayEffectSpecHandle SpecHandle = MakeOutgoingGameplayEffectSpec(CooldownGameplayEffectClass, GetAbilityLevel());
-	if (!SpecHandle.IsValid())
-		return;
+	if (!SpecHandle.IsValid()) return;
 
 	FGameplayEffectSpec* Spec = SpecHandle.Data.Get();
-	if (!Spec)
-		return;
+	if (!Spec) return;
 	
+	// Set the cooldown duration
 	Spec->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(TEXT("Data.Cooldown.Duration")), Cooldown);
-	//UE_LOG(LogTemp, Warning, TEXT("Apply Cooldown to %s "), *ActorInfo->AvatarActor->GetName());
-	
-	const FGameplayTag& CooldownTag = GetCooldownTagFromInputID(InputTag); // e.g., Cooldown.Slot.Primary
-	
+
+	// Add the cooldown tag dynamically so your manager sees it
+	const FGameplayTag CooldownTag = GetCooldownTagFromInputID(InputTag);
 	Spec->DynamicGrantedTags.AddTag(CooldownTag);
+	
 	ApplyGameplayEffectSpecToOwner(Handle, ActorInfo, ActivationInfo, SpecHandle);
-	//UE_LOG(LogTemp, Warning, TEXT("Apply Cooldown is valid: %s"),
-	//	ApplyGameplayEffectSpecToOwner(Handle, ActorInfo, ActivationInfo, SpecHandle).IsValid() ? TEXT("True") :TEXT("False"));
 }
 
 FGameplayTag UBaseGameplayAbility::GetCooldownTagFromInputID(const FGameplayTag InputTag) 
