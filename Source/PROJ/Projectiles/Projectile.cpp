@@ -90,6 +90,7 @@ void AProjectile::OnProjectileHit_Implementation(UPrimitiveComponent* HitComp, A
 	{
 		OnProjectileHitDelegate.Broadcast(Hit);
 	}
+	
 	UE_LOG(LogTemp, Warning, TEXT("Hit %s via OnHit"), *OtherActor->GetActorNameOrLabel());
 	
 	//Destroy();
