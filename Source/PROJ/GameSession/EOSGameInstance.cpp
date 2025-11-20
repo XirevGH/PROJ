@@ -7,10 +7,12 @@
 #include "Online/OnlineSessionNames.h"
 
 UEOSGameInstance::UEOSGameInstance() :
+	OriginalSessionNameKey("OriginalSessionName"),
 	CustomSessionNameKey("CustomSessionName"),
 	SelectedGameModeKey("SelectedGameMode"),
 	IsSearchingForMatchKey("IsSearchingForMatch"),
-	MaxSearchResults(100)
+	MaxSearchResults(100),
+	DestroySessionNextAction_Internal(JoinLobby)
 {}
 
 void UEOSGameInstance::Init()
@@ -32,15 +34,20 @@ void UEOSGameInstance::Init()
 	}
 }
 
-void UEOSGameInstance::HandleSuccessfulJoin()
+void UEOSGameInstance::HandleSuccessfulJoin(const FString& NewSessionName)
 {
 	UE_LOG(LogTemp, Display, TEXT("UEOSGameInstance::HandleSuccessfulJoin"));
-	UE_LOG(LogTemp, Display, TEXT("Initiating client travel"));
+	
+	OriginalSessionName = FName(*NewSessionName);
+
+	// UE_LOG(LogTemp, Display, TEXT("Waiting for server to initiate client travel"));
+	
 	IOnlineSessionPtr SessionInterface = Online::GetSessionInterface(GetWorld());
 	if (SessionInterface.IsValid())
 	{
+		UE_LOG(LogTemp, Display, TEXT("Initiating client travel"));
 		FString TravelURL;
-		SessionInterface->GetResolvedConnectString(SessionName, TravelURL);
+		SessionInterface->GetResolvedConnectString(OriginalSessionName, TravelURL);
 		GetFirstLocalPlayerController(GetWorld())->ClientTravel(TravelURL, TRAVEL_Absolute);
 	}
 	else
@@ -49,12 +56,52 @@ void UEOSGameInstance::HandleSuccessfulJoin()
 	}
 }
 
-// FString UEOSGameInstance::GetSessionName(const FOnlineSessionSearchResult& SessionSearchResult) const
-// {
-// 	FString OutValue = TEXT("Name None");
-// 	SessionSearchResult.Session.SessionSettings.Get(FName(CustomSessionNameKey), OutValue);
-// 	return OutValue;
-// }
+void UEOSGameInstance::DestroyCurrentSession(EDestroySessionNextAction NextAction)
+{
+	IOnlineSessionPtr SessionInterface = Online::GetSessionInterface(GetWorld());
+	DestroySessionNextAction_Internal = NextAction;
+	if (!SessionInterface.IsValid() || !OriginalSessionName.IsValid() || OriginalSessionName == NAME_None)
+	{
+		// No session to destroy (or error), signal success immediately to continue flow
+		OnDestroySessionCompletedWithNextAction.Broadcast(true, DestroySessionNextAction_Internal);
+		return;
+	}
+	
+	FOnDestroySessionCompleteDelegate Delegate;
+	Delegate.BindUObject(this, &ThisClass::OnDestroySessionCompleted, NextAction);
+    
+	// Store the handle so we can clear it in the callback
+	DestroySessionDelegateHandle = SessionInterface->AddOnDestroySessionCompleteDelegate_Handle(Delegate);
+    
+	SessionInterface->DestroySession(OriginalSessionName);
+}
+
+void UEOSGameInstance::OnDestroySessionCompleted(FName Name, bool bWasSuccessful,
+	EDestroySessionNextAction NextAction)
+{
+	IOnlineSessionPtr SessionInterface = Online::GetSessionInterface(GetWorld());
+	if (SessionInterface.IsValid())
+	{
+		// Clear the delegate handle
+		SessionInterface->ClearOnDestroySessionCompleteDelegate_Handle(DestroySessionDelegateHandle);
+		DestroySessionDelegateHandle.Reset();
+	}
+    
+	if (bWasSuccessful)
+	{
+		// Clean up the local name on success
+		OriginalSessionName = NAME_None; 
+	}
+	
+	OnDestroySessionCompletedWithNextAction.Broadcast(bWasSuccessful, NextAction);
+}
+
+FString UEOSGameInstance::GetSessionName(const FOnlineSessionSearchResult& SessionSearchResult) const
+{
+	FString OutValue = TEXT("Name None");
+	SessionSearchResult.Session.SessionSettings.Get(FName(CustomSessionNameKey), OutValue);
+	return OutValue;
+}
 
 bool UEOSGameInstance::GetIsSearchingForMatch() const
 {
@@ -87,6 +134,27 @@ FString UEOSGameInstance::GetCustomSessionName() const
 		return CustomSessionName;
 	}
 	return FString();
+}
+
+FString UEOSGameInstance::GetOriginalSessionName() const
+{
+	if (const FOnlineSessionSettings* SessionSettings = GetSessionSettings())
+	{
+		FString Name;
+		SessionSettings->Get(FName(OriginalSessionNameKey), Name);
+		return Name;
+	}
+	return FString();
+}
+
+void UEOSGameInstance::SetOriginalSessionName(const FString& NewOriginalSessionName)
+{
+	if (FOnlineSessionSettings* SessionSettings = GetSessionSettings())
+	{
+		SessionSettings->Set(FName(OriginalSessionNameKey),
+			FOnlineSessionSetting(NewOriginalSessionName, EOnlineDataAdvertisementType::ViaOnlineService));
+		UpdateSessionSettings(SessionSettings);
+	}
 }
 
 void UEOSGameInstance::SetIsSearchingForMatch(const bool bIsSearching)
@@ -154,7 +222,7 @@ void UEOSGameInstance::CreateSession(const FName& Name)
 	IOnlineSessionPtr SessionInterface = Online::GetSessionInterface(GetWorld());
 	if (SessionInterface.IsValid())
 	{
-		SessionName = Name;
+		OriginalSessionName = Name;
 		
 		FOnlineSessionSettings SessionSettings;
 		SessionSettings.bAllowInvites = true;
@@ -168,6 +236,8 @@ void UEOSGameInstance::CreateSession(const FName& Name)
 		SessionSettings.NumPublicConnections = 6;
 
 		// Custom settings
+		SessionSettings.Set(FName(CustomSessionNameKey),
+			FOnlineSessionSetting(Name.ToString(), EOnlineDataAdvertisementType::ViaOnlineService));
 		SessionSettings.Set(FName(CustomSessionNameKey),
 			FOnlineSessionSetting(Name.ToString(), EOnlineDataAdvertisementType::ViaOnlineService));
 		SessionSettings.Set(FName(IsSearchingForMatchKey),
@@ -278,7 +348,7 @@ void UEOSGameInstance::FindCompatibleMatchSessions()
 	MatchSearch->QuerySettings.Set(SEARCH_KEYWORDS,FString("PublicSession"),EOnlineComparisonOp::Equals);
 	MatchSearch->QuerySettings.Set(FName(IsSearchingForMatchKey), true, EOnlineComparisonOp::Equals);
 	MatchSearch->QuerySettings.Set(FName(SelectedGameModeKey), GetSelectedGameMode(), EOnlineComparisonOp::Equals);
-	MatchSearch->QuerySettings.Set(FName(CustomSessionNameKey), SessionName.ToString(), EOnlineComparisonOp::NotEquals);
+	MatchSearch->QuerySettings.Set(FName(CustomSessionNameKey), OriginalSessionName.ToString(), EOnlineComparisonOp::NotEquals);
 	
 	MatchSessionsDelegateHandle = SessionInterface->AddOnFindSessionsCompleteDelegate_Handle(
 		FOnFindSessionsCompleteDelegate::CreateUObject(
@@ -340,7 +410,7 @@ void UEOSGameInstance::FindOpenPublicSessions()
 	OpenPublicSearch->QuerySettings.Set(SEARCH_LOBBIES, true, EOnlineComparisonOp::Equals);
 	OpenPublicSearch->QuerySettings.Set(SEARCH_KEYWORDS,FString("PublicSession"),EOnlineComparisonOp::Equals);
 	OpenPublicSearch->QuerySettings.Set(FName(IsSearchingForMatchKey), false, EOnlineComparisonOp::Equals);
-	OpenPublicSearch->QuerySettings.Set(FName(CustomSessionNameKey), SessionName.ToString(), EOnlineComparisonOp::NotEquals);
+	OpenPublicSearch->QuerySettings.Set(FName(CustomSessionNameKey), OriginalSessionName.ToString(), EOnlineComparisonOp::NotEquals);
 	OpenPublicSearch->MaxSearchResults = MaxSearchResults;
 	
 	OpenPublicSessionsDelegateHandle = SessionInterface->AddOnFindSessionsCompleteDelegate_Handle(
@@ -391,10 +461,10 @@ FOnlineSessionSettings* UEOSGameInstance::GetSessionSettings() const
 	IOnlineSessionPtr SessionInterface = Online::GetSessionInterface(GetWorld());
 	if (!SessionInterface.IsValid()) return nullptr;
 
-	FOnlineSessionSettings* SessionSettings = SessionInterface->GetSessionSettings(SessionName);
+	FOnlineSessionSettings* SessionSettings = SessionInterface->GetSessionSettings(OriginalSessionName);
 	if (!SessionSettings)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Failed to get session settings from session name: %s"), *SessionName.ToString());
+		UE_LOG(LogTemp, Warning, TEXT("Failed to get session settings from session name: %s"), *OriginalSessionName.ToString());
 	}
 	
 	return SessionSettings;
@@ -404,6 +474,6 @@ void UEOSGameInstance::UpdateSessionSettings(FOnlineSessionSettings* NewSessionS
 {
 	IOnlineSessionPtr SessionInterface = Online::GetSessionInterface(GetWorld());
 	if (!SessionInterface.IsValid() || NewSessionSettings == nullptr) return;
-	SessionInterface->UpdateSession(SessionName, *NewSessionSettings, true);
+	SessionInterface->UpdateSession(OriginalSessionName, *NewSessionSettings, true);
 	UE_LOG(LogTemp, Warning, TEXT("Session settings updated"));
 }

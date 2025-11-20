@@ -5,8 +5,13 @@
 #include "Engine/GameInstance.h"
 #include "EOSGameInstance.generated.h"
 
+UENUM(BlueprintType)
+enum EDestroySessionNextAction { JoinLobby, HostJoinMatch, ClientJoinMatch };
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnOpenPublicLobbiesFound,
 	const TArray<FBlueprintSessionResult>&, Sessions);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnDestroySessionCompletedWithNextAction,
+	bool, bWasSuccessful, EDestroySessionNextAction, NextAction);
 
 class IOnlineSubsystem;
 /**
@@ -48,6 +53,8 @@ public:
 	
 	/* ----------- Custom settings -------------- */
 	UFUNCTION(BlueprintPure)
+	const FString& GetOriginalSessionNameKey() const { return OriginalSessionNameKey; }
+	UFUNCTION(BlueprintPure)
 	const FString& GetCustomSessionNameKey() const { return CustomSessionNameKey; }
 	UFUNCTION(BlueprintPure)
 	const FString& GetSelectedGameModeKey() const { return SelectedGameModeKey; }
@@ -60,6 +67,8 @@ public:
 	FString GetSelectedGameMode() const;
 	UFUNCTION(BlueprintPure)
 	FString GetCustomSessionName() const;
+	UFUNCTION(BlueprintPure)
+	FString GetOriginalSessionName() const;
 	
 	UFUNCTION(BlueprintCallable)
 	void SetIsSearchingForMatch(const bool bIsSearching);
@@ -67,20 +76,29 @@ public:
 	void SetSelectedGameMode(const FString& GameMode);
 	UFUNCTION(BlueprintCallable)
 	void SetCustomSessionName(const FString& CustomSessionName);
+	UFUNCTION(BlueprintCallable)
+	void SetOriginalSessionName(const FString& NewOriginalSessionName);
 	/* ------------------------------------------ */
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TSoftObjectPtr<UWorld> LobbyLevel;
 	
 protected:
 	virtual void Init() override;
 
 	// Call in blueprint after JoinSession:OnSuccess 
 	UFUNCTION(BlueprintCallable)
-	void HandleSuccessfulJoin();
+	void HandleSuccessfulJoin(const FString& NewSessionName);
+
+	UPROPERTY(BlueprintAssignable)
+	FOnDestroySessionCompletedWithNextAction OnDestroySessionCompletedWithNextAction;
+
+	UFUNCTION(BlueprintCallable)
+	void DestroyCurrentSession(EDestroySessionNextAction NextAction);
 
 private:
-	UPROPERTY(EditDefaultsOnly)
-	TSoftObjectPtr<UWorld> LobbyLevel;
-	
-	FName SessionName;
+	FName OriginalSessionName;
+	FString OriginalSessionNameKey;
 	FString CustomSessionNameKey;
 	FString SelectedGameModeKey;
 	FString IsSearchingForMatchKey;
@@ -91,11 +109,15 @@ private:
 
 	FDelegateHandle OpenPublicSessionsDelegateHandle;
 	FDelegateHandle MatchSessionsDelegateHandle;
+	FDelegateHandle DestroySessionDelegateHandle;
+
+	EDestroySessionNextAction DestroySessionNextAction_Internal;
 
 	UFUNCTION()
 	void OnFindOpenPublicSessionsCompleted(const bool bSuccess);
 	void OnFindMatchSessionsCompleted(bool bSuccess);
 	void FindCompatibleMatchSessions();
+	void OnDestroySessionCompleted(FName Name, bool bWasSuccessful, EDestroySessionNextAction NextAction);
 	
 	void LoginCompleted(int NumOfPlayers, bool bWasSuccessful, const FUniqueNetId& UniqueId, const FString& Error);
 	void CreateSessionCompleted(FName SessionName, bool bWasSuccessful);
