@@ -39,4 +39,10 @@ public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Cooldown")
 	float Cooldown = 0;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Cooldown")
+	FGameplayTag CooldownTag;   
+
+	UPROPERTY()
+	FGameplayTagContainer CooldownTagContainer;
 };
