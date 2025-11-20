@@ -278,13 +278,7 @@ void UEOSGameInstance::FindCompatibleMatchSessions()
 	MatchSearch->QuerySettings.Set(SEARCH_KEYWORDS,FString("PublicSession"),EOnlineComparisonOp::Equals);
 	MatchSearch->QuerySettings.Set(FName(IsSearchingForMatchKey), true, EOnlineComparisonOp::Equals);
 	MatchSearch->QuerySettings.Set(FName(SelectedGameModeKey), GetSelectedGameMode(), EOnlineComparisonOp::Equals);
-
-	IOnlineIdentityPtr IdentityPtr = Online::GetIdentityInterface(GetWorld());
-	TSharedPtr<const FUniqueNetId> LocalUserId = IdentityPtr.IsValid() ? IdentityPtr->GetUniquePlayerId(0) : nullptr;
-	if (LocalUserId.IsValid())
-	{
-		MatchSearch->QuerySettings.Set(SEARCH_EXCLUDE_UNIQUEIDS, LocalUserId->ToString(), EOnlineComparisonOp::Equals);	
-	}
+	MatchSearch->QuerySettings.Set(FName(CustomSessionNameKey), SessionName.ToString(), EOnlineComparisonOp::NotEquals);
 	
 	MatchSessionsDelegateHandle = SessionInterface->AddOnFindSessionsCompleteDelegate_Handle(
 		FOnFindSessionsCompleteDelegate::CreateUObject(
@@ -347,14 +341,8 @@ void UEOSGameInstance::FindOpenPublicSessions()
 	OpenPublicSearch->QuerySettings.Set(SEARCH_LOBBIES, true, EOnlineComparisonOp::Equals);
 	OpenPublicSearch->QuerySettings.Set(SEARCH_KEYWORDS,FString("PublicSession"),EOnlineComparisonOp::Equals);
 	OpenPublicSearch->QuerySettings.Set(FName(IsSearchingForMatchKey), false, EOnlineComparisonOp::Equals);
+	OpenPublicSearch->QuerySettings.Set(FName(CustomSessionNameKey), SessionName.ToString(), EOnlineComparisonOp::NotEquals);
 	OpenPublicSearch->MaxSearchResults = MaxSearchResults;
-	
-	IOnlineIdentityPtr IdentityPtr = Online::GetIdentityInterface(GetWorld());
-	TSharedPtr<const FUniqueNetId> LocalUserId = IdentityPtr.IsValid() ? IdentityPtr->GetUniquePlayerId(0) : nullptr;
-	if (LocalUserId.IsValid())
-	{
-		OpenPublicSearch->QuerySettings.Set(SEARCH_EXCLUDE_UNIQUEIDS, LocalUserId->ToString(), EOnlineComparisonOp::Equals);	
-	}
 	
 	OpenPublicSessionsDelegateHandle = SessionInterface->AddOnFindSessionsCompleteDelegate_Handle(
 		FOnFindSessionsCompleteDelegate::CreateUObject(
