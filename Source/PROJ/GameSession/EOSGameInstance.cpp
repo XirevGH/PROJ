@@ -4,6 +4,7 @@
 #include "OnlineSessionSettings.h"
 #include "Interfaces/OnlineIdentityInterface.h"
 #include "Interfaces/OnlineSessionInterface.h"
+#include "Online/OnlineSessionNames.h"
 
 UEOSGameInstance::UEOSGameInstance() :
 	CustomSessionNameKey("CustomSessionName"),
@@ -252,6 +253,7 @@ void UEOSGameInstance::FindCompatibleMatchSessions()
 	MatchSearch = MakeShareable(new FOnlineSessionSearch());
 	MatchSearch->MaxSearchResults = MaxSearchResults;
 
+	OpenPublicSearch->QuerySettings.Set(SEARCH_LOBBIES, true, EOnlineComparisonOp::Equals);
 	MatchSearch->QuerySettings.Set(FName(IsSearchingForMatchKey), true, EOnlineComparisonOp::Equals);
 	MatchSearch->QuerySettings.Set(FName(SelectedGameModeKey), GetSelectedGameMode(), EOnlineComparisonOp::Equals);
 	
@@ -312,6 +314,7 @@ void UEOSGameInstance::FindOpenPublicSessions()
 	}
 	OpenPublicSearch = MakeShareable(new FOnlineSessionSearch());
 	OpenPublicSearch->bIsLanQuery = false;
+	OpenPublicSearch->QuerySettings.Set(SEARCH_LOBBIES, true, EOnlineComparisonOp::Equals);
 	OpenPublicSearch->MaxSearchResults = MaxSearchResults;
 	
 	OpenPublicSessionsDelegateHandle = SessionInterface->AddOnFindSessionsCompleteDelegate_Handle(
