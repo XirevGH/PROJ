@@ -91,3 +91,11 @@ FGameplayTag UBaseGameplayAbility::GetCooldownTagFromInputID(const FGameplayTag 
 
 	return FGameplayTag::RequestGameplayTag(FName(*CooldownTagString), false);
 }
+
+const FGameplayTagContainer* UBaseGameplayAbility::GetCooldownTags() const
+{
+	const FGameplayTag& CooldownTag = GetCooldownTagFromInputID(InputTag);
+	FGameplayTagContainer Tags;
+	Tags.AddTag(CooldownTag);
+	return Tags;
+}

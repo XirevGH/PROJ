@@ -56,4 +56,9 @@ protected:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void OnConfirm();
 	virtual void OnConfirm_Implementation();
+
+	UFUNCTION(Server, Reliable)
+	void ServerConfirmTarget(const FVector& Location);
+	void ServerConfirmTarget_Implementation(const FVector& Location);
+	
 };

@@ -23,7 +23,7 @@ public:
 	TArray<FGameplayEffectSpecHandle> MakeEffectSpecsHandles();
 	
 	static FGameplayTag GetCooldownTagFromInputID(const FGameplayTag InputTag);
-	
+	virtual const FGameplayTagContainer* GetCooldownTags() const override;
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Custom Values| Input")
 	FGameplayTag InputTag;

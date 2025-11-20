@@ -53,22 +53,22 @@ void UGA_Cast_AOE::OnCancel_Implementation()
 	//Indicator->SetActorHiddenInGame(true);
 	Indicator->Destroy();
 	EndAbility(CachedHandle, CachedActorInfo, CachedActivationInfo, true, true);
-	UE_LOG(LogTemp, Warning, TEXT("task canel"));
+	UE_LOG(LogTemp, Warning, TEXT("task cancel"));
 }
 
 void UGA_Cast_AOE::OnConfirm_Implementation()
 {
-	UE_LOG(LogTemp, Warning, TEXT("task actiavte"));
+	UE_LOG(LogTemp, Warning, TEXT("task activate"));
 	
+		FVector Location = Indicator->GetActorLocation();
+		ServerConfirmTarget(Location);
+		Indicator->Destroy();
 	
-	if (GetOwningActorFromActorInfo()->HasAuthority())  // only server
-	{
-		SpawnLocation = Indicator->GetActorLocation();
-		UE_LOG(LogTemp, Warning, TEXT("SpawnLocation: %s"), *SpawnLocation.ToString());
-		CommitAbility(CachedHandle, CachedActorInfo, CachedActivationInfo);
-	}
-	
-	Indicator->Destroy();
 }
 
+void UGA_Cast_AOE::ServerConfirmTarget_Implementation(const FVector& Location)
+{
+	SpawnLocation = Location;
+	CommitAbility(CachedHandle, CachedActorInfo, CachedActivationInfo);
+}
 
