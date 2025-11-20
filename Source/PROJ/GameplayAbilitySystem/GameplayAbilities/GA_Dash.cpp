@@ -65,8 +65,7 @@ void UGA_Dash::ActivateAbility(
 		FGameplayEffectSpecHandle SpecHandle = MakeOutgoingGameplayEffectSpec(CooldownGameplayEffect, GetAbilityLevel());
 		if (SpecHandle.IsValid())
 		{
-			SpecHandle.Data->SetDuration(CooldownDuration,true);
-			// SpecHandle.Data->DynamicGrantedTags.AddTag(CooldownTag);
+			SpecHandle.Data->SetDuration(Cooldown,true);
 			FActiveGameplayEffectHandle HandleApplied = ActorInfo->AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
 			
 			if (HandleApplied.IsValid())

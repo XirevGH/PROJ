@@ -1,7 +1,5 @@
 
 #include "BaseCharacter.h"
-#include "Camera/CameraComponent.h"
-#include "GameFramework/SpringArmComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "AbilitySystemComponent.h"
@@ -31,7 +29,6 @@ ABaseCharacter::ABaseCharacter()
 	bUseControllerRotationYaw = false; // THIS IS THE MASTER SWITCH
 	bUseControllerRotationRoll = false;
 	LockedMovementDirection = FRotator::ZeroRotator;
-	
 }
 
 void ABaseCharacter::SpawnDefaultWeapon()
@@ -95,6 +92,7 @@ void ABaseCharacter::PossessedBy(AController* NewController)
 	
 	InitAbilitySystemComponent();
 	InitAbilityActorInfo();
+	
 	OnCharacterInitialized();
 	SpawnDefaultWeapon();
 }
@@ -172,6 +170,20 @@ void ABaseCharacter::SendAbilityLocalInput(const FInputActionValue& Value, int32
 	{
 		BaseAbilitySystemComp->AbilityLocalInputReleased(InputID);
 	}
+}
+
+void ABaseCharacter::Server_SetFreeLooking_Implementation(bool bNewFreeLooking)
+{
+	bIsFreeLooking = bNewFreeLooking;
+	if (bIsFreeLooking)
+	{
+		GetCharacterMovement()->bOrientRotationToMovement = false;
+	}
+}
+
+void ABaseCharacter::Server_SetUseControllerRotationYaw_Implementation(bool bNewUseControllerRotationYaw)
+{
+	bUseControllerRotationYaw = bNewUseControllerRotationYaw;
 }
 
 void ABaseCharacter::Tick(float DeltaTime)
@@ -314,27 +326,29 @@ inline void ABaseCharacter::InputRotateCameraStarted(const FInputActionValue& Va
 	bIsFreeLooking = true;
 	LockedMovementRotation = GetActorRotation();
 	GetCharacterMovement()->bOrientRotationToMovement = false;
+	Server_SetFreeLooking(true);
 }
 
 inline void ABaseCharacter::InputRotateCameraCompleted(const FInputActionValue& Value)
 {
 	bIsFreeLooking = false;
-	// GetCharacterMovement()->bOrientRotationToMovement = true;
+	Server_SetFreeLooking(false);
 }
 
 void ABaseCharacter::InputRotateCharacterStarted(const FInputActionValue& Value)
 {
 	bUseControllerRotationYaw = true;
+	Server_SetUseControllerRotationYaw(true);
 }
 
 void ABaseCharacter::InputRotateCharacterCompleted(const FInputActionValue& Value)
 {
 	bUseControllerRotationYaw = false;
+	Server_SetUseControllerRotationYaw(false);
 }
 
 void ABaseCharacter::InputRotateCharacterTriggered(const FInputActionValue& Value)
 {
-	UE_LOG(LogTemp, Display, TEXT("InputRotateCharacterOngoing"));
 	LockedMovementRotation = GetActorRotation();
 }
 
