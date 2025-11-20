@@ -1,7 +1,5 @@
 
 #include "BaseCharacter.h"
-#include "Camera/CameraComponent.h"
-#include "GameFramework/SpringArmComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "AbilitySystemComponent.h"
@@ -31,7 +29,6 @@ ABaseCharacter::ABaseCharacter()
 	bUseControllerRotationYaw = false; // THIS IS THE MASTER SWITCH
 	bUseControllerRotationRoll = false;
 	LockedMovementDirection = FRotator::ZeroRotator;
-	
 }
 
 void ABaseCharacter::SpawnDefaultWeapon()
@@ -95,6 +92,7 @@ void ABaseCharacter::PossessedBy(AController* NewController)
 	
 	InitAbilitySystemComponent();
 	InitAbilityActorInfo();
+	
 	OnCharacterInitialized();
 	SpawnDefaultWeapon();
 }
@@ -334,7 +332,6 @@ void ABaseCharacter::InputRotateCharacterCompleted(const FInputActionValue& Valu
 
 void ABaseCharacter::InputRotateCharacterTriggered(const FInputActionValue& Value)
 {
-	UE_LOG(LogTemp, Display, TEXT("InputRotateCharacterOngoing"));
 	LockedMovementRotation = GetActorRotation();
 }
 
