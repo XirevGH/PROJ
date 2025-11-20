@@ -43,7 +43,7 @@ void UBaseGameplayAbility::ApplyCooldown(const FGameplayAbilitySpecHandle Handle
 	
 	//const FGameplayTag& CooldownTag = GetCooldownTagFromInputID(InputTag); // e.g., Cooldown.Slot.Primary
 	
-	//Spec->DynamicGrantedTags.AddTag(CooldownTag);
+	Spec->DynamicGrantedTags.AddTag(CooldownTag);
 	ApplyGameplayEffectSpecToOwner(Handle, ActorInfo, ActivationInfo, SpecHandle);
 
 }
@@ -98,7 +98,5 @@ FGameplayTag UBaseGameplayAbility::GetCooldownTagFromInputID(const FGameplayTag 
 
 const FGameplayTagContainer* UBaseGameplayAbility::GetCooldownTags() const
 {
-	UE_LOG(LogTemp, Warning, TEXT("Tag: %s"), *CooldownTagContainer.ToString());
-
 	return &CooldownTagContainer;
 }

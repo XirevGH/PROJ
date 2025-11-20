@@ -22,7 +22,8 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-
+	bool ShouldSkipHit(AActor* OtherActor);
+	
 public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
 	class UProjectileMovementComponent* ProjectileMovement;
@@ -53,8 +54,6 @@ public:
 
 	UFUNCTION()
 	void DestroySelf();
-	
-	
 	
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void OnProjectileHit(

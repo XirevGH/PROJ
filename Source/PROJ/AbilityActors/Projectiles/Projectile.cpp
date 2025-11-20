@@ -42,6 +42,11 @@ void AProjectile::BeginPlay()
 	GetWorldTimerManager().SetTimer(DestroyTimerHandle, this, &AProjectile::DestroySelf, ProjectileLifeTime, false);
 }
 
+bool AProjectile::ShouldSkipHit(AActor* OtherActor)
+{
+	return OtherActor == Caster || OtherActor->IsA(StaticClass());
+}
+
 // Called every frame
 void AProjectile::Tick(float DeltaTime)
 {
@@ -57,20 +62,13 @@ void AProjectile::DestroySelf()
 void AProjectile::OnProjectileHit_Implementation(UPrimitiveComponent* HitComp, AActor* OtherActor,
                                   UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
-	if (OtherActor == Caster)
+	if (ShouldSkipHit(OtherActor))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Do nothing because hit Caster"));
 		return;
 	}
-	if (OtherActor->IsA(StaticClass()))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Do nothing because hit projectile"));
-		return;
-	}
-	if(Cast<AActor>(OtherActor) != nullptr )
-	{
-		OnProjectileHitDelegate.Broadcast(Hit);
-	}
+	
+	OnProjectileHitDelegate.Broadcast(Hit);
+	
 	
 	UE_LOG(LogTemp, Warning, TEXT("Hit %s via OnHit"), *OtherActor->GetActorNameOrLabel());
 	
@@ -81,22 +79,13 @@ void AProjectile::OnProjectileHit_Implementation(UPrimitiveComponent* HitComp, A
 void AProjectile::OnBeginOverlap_Implementation(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (OtherActor == Caster)
+	if (ShouldSkipHit(OtherActor))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Do nothing because hit Caster"));
-		return;
-	}
-
-	if (OtherActor->IsA(StaticClass()))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Do nothing because hit projectile"));
 		return;
 	}
 	
-	if(Cast<AActor>(OtherActor) != nullptr )
-	{
-		OnProjectileHitDelegate.Broadcast(SweepResult);
-	}
+	OnProjectileHitDelegate.Broadcast(SweepResult);
+	
 	
 		//ApplyEffectToTarget(OtherActor);
 	
