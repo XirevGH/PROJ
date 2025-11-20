@@ -4,6 +4,7 @@
 #include "Projectile.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Components/SphereComponent.h"
+#include "GameplayEffectTypes.h"
 
 // Sets default values
 AProjectile::AProjectile()

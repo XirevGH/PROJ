@@ -63,7 +63,7 @@ void UGA_Cast_Projectile::SpawnProjectile()
 		ProjectileActor->Caster = Avatar;
 		ProjectileActor->CastedAbility = this;
 		ProjectileActor->CasterASC = GetAbilitySystemComponentFromActorInfo();
-		//ProjectileActor->EffectSpecHandles = DefaultEffects;
+		ProjectileActor->EffectSpecHandles = MakeEffectSpecsHandles();
 	}
 	else
 	{

@@ -68,7 +68,6 @@ TArray<FGameplayEffectSpecHandle> UBaseGameplayAbility::MakeEffectSpecsHandles()
 		{
 			Spec->SetSetByCallerMagnitude(Pair.Key, Pair.Value);
 		}
-
 		Specs.Add(SpecHandle);
 	}
 

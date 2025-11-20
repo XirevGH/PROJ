@@ -41,14 +41,17 @@ bool AAbilityActor::ApplyEffectToTarget(const AActor* Target)
 		return false;
 	}
 	
-	UE_LOG(LogTemp, Warning, TEXT("Target ASC is from: %s"), *TargetASC->GetAvatarActor()->GetName());
+	//UE_LOG(LogTemp, Warning, TEXT("Target ASC is from: %s"), *TargetASC->GetAvatarActor()->GetName());
 
 	
 	for (auto& SpecHandle : EffectSpecHandles)
 	{
+		if (!SpecHandle.IsValid())
+		{
+			continue;
+		}
 		TargetASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
-			
-		
+		UE_LOG(LogTemp, Warning, TEXT("Applied: %s to %s"),*SpecHandle.Data->GetContext().ToString(),  *TargetASC->GetAvatarActor()->GetName());
 	}
 	
 	return true;

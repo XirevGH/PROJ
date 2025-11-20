@@ -36,11 +36,7 @@ public:
 	
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category="Effects")
 	TMap<FGameplayTag, float> SetByCallerValues;
-
 	
-	//UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Damage")
-	//float BaseDamage = 0;
-
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Cooldown")
 	float Cooldown = 0;
 };
