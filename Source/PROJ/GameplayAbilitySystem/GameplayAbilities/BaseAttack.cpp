@@ -16,6 +16,12 @@ void UBaseAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	const FGameplayEventData* TriggerEventData)
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
+
+	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
+	{
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+		return;
+	}
 	
 	if (!MyMontage)
 	{
@@ -40,12 +46,6 @@ void UBaseAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 		MontageTask->ReadyForActivation();
 	if (HasAuthority(&ActivationInfo))
 	{
-		if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
-		{
-			EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
-			return;
-		}
-	
 		ABaseCharacter* Player = Cast<ABaseCharacter>(GetAvatarActorFromActorInfo());
 		if (Player)
 		{
