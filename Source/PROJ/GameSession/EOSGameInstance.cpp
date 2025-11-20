@@ -28,7 +28,24 @@ void UEOSGameInstance::Init()
 	{
 		SessionInterface->OnCreateSessionCompleteDelegates.AddUObject(this, &ThisClass::CreateSessionCompleted);
 		//SessionInterface->OnFindSessionsCompleteDelegates.AddUObject(this, &ThisClass::FindSessionsCompleted);
-		SessionInterface->OnJoinSessionCompleteDelegates.AddUObject(this, &ThisClass::JoinSessionCompleted);
+		// SessionInterface->OnJoinSessionCompleteDelegates.AddUObject(this, &ThisClass::JoinSessionCompleted);
+	}
+}
+
+void UEOSGameInstance::HandleSuccessfulJoin()
+{
+	UE_LOG(LogTemp, Display, TEXT("UEOSGameInstance::HandleSuccessfulJoin"));
+	UE_LOG(LogTemp, Display, TEXT("Initiating client travel"));
+	IOnlineSessionPtr SessionInterface = Online::GetSessionInterface(GetWorld());
+	if (SessionInterface.IsValid())
+	{
+		FString TravelURL;
+		SessionInterface->GetResolvedConnectString(SessionName, TravelURL);
+		GetFirstLocalPlayerController(GetWorld())->ClientTravel(TravelURL, TRAVEL_Absolute);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("HandleSuccessfulJoin failed: SessionInterface is invalid."));
 	}
 }
 
@@ -205,20 +222,20 @@ void UEOSGameInstance::CreateSessionCompleted(FName Name, bool bWasSuccessful)
 // 	}
 // }
 //
-void UEOSGameInstance::JoinSessionCompleted(FName Name, EOnJoinSessionCompleteResult::Type Result)
-{
-	UE_LOG(LogTemp, Display, TEXT("Join session completed."));
-	if (Result == EOnJoinSessionCompleteResult::Success)
-	{
-		IOnlineSessionPtr SessionInterface = Online::GetSessionInterface(GetWorld());
-		if (SessionInterface.IsValid())
-		{
-			FString TravelURL;
-			SessionInterface->GetResolvedConnectString(SessionName, TravelURL);
-			GetFirstLocalPlayerController(GetWorld())->ClientTravel(TravelURL, TRAVEL_Absolute);
-		}
-	}
-}
+// void UEOSGameInstance::JoinSessionCompleted(FName Name, EOnJoinSessionCompleteResult::Type Result)
+// {
+// 	UE_LOG(LogTemp, Display, TEXT("Join session completed."));
+// 	if (Result == EOnJoinSessionCompleteResult::Success)
+// 	{
+// 		IOnlineSessionPtr SessionInterface = Online::GetSessionInterface(GetWorld());
+// 		if (SessionInterface.IsValid())
+// 		{
+// 			FString TravelURL;
+// 			SessionInterface->GetResolvedConnectString(SessionName, TravelURL);
+// 			GetFirstLocalPlayerController(GetWorld())->ClientTravel(TravelURL, TRAVEL_Absolute);
+// 		}
+// 	}
+// }
 
 void UEOSGameInstance::LoadLevelAndListen(const TSoftObjectPtr<UWorld>& LevelToLoad)
 {
@@ -257,11 +274,17 @@ void UEOSGameInstance::FindCompatibleMatchSessions()
 
 	MatchSearch = MakeShareable(new FOnlineSessionSearch());
 	MatchSearch->MaxSearchResults = MaxSearchResults;
-
 	MatchSearch->QuerySettings.Set(SEARCH_LOBBIES, true, EOnlineComparisonOp::Equals);
-	MatchSearch->QuerySettings.Set(FName(SEARCH_KEYWORDS),FString("PublicSession"),EOnlineComparisonOp::Equals);
+	MatchSearch->QuerySettings.Set(SEARCH_KEYWORDS,FString("PublicSession"),EOnlineComparisonOp::Equals);
 	MatchSearch->QuerySettings.Set(FName(IsSearchingForMatchKey), true, EOnlineComparisonOp::Equals);
 	MatchSearch->QuerySettings.Set(FName(SelectedGameModeKey), GetSelectedGameMode(), EOnlineComparisonOp::Equals);
+
+	IOnlineIdentityPtr IdentityPtr = Online::GetIdentityInterface(GetWorld());
+	TSharedPtr<const FUniqueNetId> LocalUserId = IdentityPtr.IsValid() ? IdentityPtr->GetUniquePlayerId(0) : nullptr;
+	if (LocalUserId.IsValid())
+	{
+		MatchSearch->QuerySettings.Set(SEARCH_EXCLUDE_UNIQUEIDS, LocalUserId->ToString(), EOnlineComparisonOp::Equals);	
+	}
 	
 	MatchSessionsDelegateHandle = SessionInterface->AddOnFindSessionsCompleteDelegate_Handle(
 		FOnFindSessionsCompleteDelegate::CreateUObject(
@@ -318,11 +341,20 @@ void UEOSGameInstance::FindOpenPublicSessions()
 	{
 		SessionInterface->ClearOnFindSessionsCompleteDelegate_Handle(OpenPublicSessionsDelegateHandle);
 	}
+	
 	OpenPublicSearch = MakeShareable(new FOnlineSessionSearch());
 	OpenPublicSearch->bIsLanQuery = false;
 	OpenPublicSearch->QuerySettings.Set(SEARCH_LOBBIES, true, EOnlineComparisonOp::Equals);
-	OpenPublicSearch->QuerySettings.Set(FName(SEARCH_KEYWORDS),FString("PublicSession"),EOnlineComparisonOp::Equals);
+	OpenPublicSearch->QuerySettings.Set(SEARCH_KEYWORDS,FString("PublicSession"),EOnlineComparisonOp::Equals);
+	OpenPublicSearch->QuerySettings.Set(FName(IsSearchingForMatchKey), false, EOnlineComparisonOp::Equals);
 	OpenPublicSearch->MaxSearchResults = MaxSearchResults;
+	
+	IOnlineIdentityPtr IdentityPtr = Online::GetIdentityInterface(GetWorld());
+	TSharedPtr<const FUniqueNetId> LocalUserId = IdentityPtr.IsValid() ? IdentityPtr->GetUniquePlayerId(0) : nullptr;
+	if (LocalUserId.IsValid())
+	{
+		OpenPublicSearch->QuerySettings.Set(SEARCH_EXCLUDE_UNIQUEIDS, LocalUserId->ToString(), EOnlineComparisonOp::Equals);	
+	}
 	
 	OpenPublicSessionsDelegateHandle = SessionInterface->AddOnFindSessionsCompleteDelegate_Handle(
 		FOnFindSessionsCompleteDelegate::CreateUObject(

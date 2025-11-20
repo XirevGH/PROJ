@@ -72,6 +72,10 @@ public:
 protected:
 	virtual void Init() override;
 
+	// Call in blueprint after JoinSession:OnSuccess 
+	UFUNCTION(BlueprintCallable)
+	void HandleSuccessfulJoin();
+
 private:
 	UPROPERTY(EditDefaultsOnly)
 	TSoftObjectPtr<UWorld> LobbyLevel;
@@ -96,7 +100,7 @@ private:
 	void LoginCompleted(int NumOfPlayers, bool bWasSuccessful, const FUniqueNetId& UniqueId, const FString& Error);
 	void CreateSessionCompleted(FName SessionName, bool bWasSuccessful);
 	// void FindSessionsCompleted(bool bWasSuccessful);
-	void JoinSessionCompleted(FName Name, EOnJoinSessionCompleteResult::Type Result);
+	// void JoinSessionCompleted(FName Name, EOnJoinSessionCompleteResult::Type Result);
 	void LoadLevelAndListen(const TSoftObjectPtr<UWorld>& LevelToLoad);
 	
 	void UpdateSessionSettings(FOnlineSessionSettings* NewSessionSettings) const;
