@@ -60,9 +60,10 @@ void UGA_Cast_AOE::OnConfirm_Implementation()
 {
 	UE_LOG(LogTemp, Warning, TEXT("task actiavte"));
 	
-	SpawnLocation = Indicator->GetActorLocation();
+	
 	if (GetOwningActorFromActorInfo()->HasAuthority())  // only server
 	{
+		SpawnLocation = Indicator->GetActorLocation();
 		UE_LOG(LogTemp, Warning, TEXT("SpawnLocation: %s"), *SpawnLocation.ToString());
 		CommitAbility(CachedHandle, CachedActorInfo, CachedActivationInfo);
 	}

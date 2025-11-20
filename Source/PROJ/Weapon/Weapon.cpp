@@ -84,9 +84,13 @@ void AWeapon::ApplyEffectToTarget(AActor* Target)
 		if (SpecHandle.IsValid())
 		{
 			FGameplayTag DamageTag = FGameplayTag::RequestGameplayTag(FName("Data.Damage"));
-			SpecHandle.Data->SetSetByCallerMagnitude(DamageTag,Ability->BaseDamage);
-
-			TargetASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+			
+			//SpecHandle.Data->SetSetByCallerMagnitude(DamageTag,Ability->BaseDamage);
+			for (FGameplayEffectSpecHandle Spec : Ability->MakeEffectSpecsHandles())
+			{
+				TargetASC->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
+			}
+			
 		}
 		
 	}

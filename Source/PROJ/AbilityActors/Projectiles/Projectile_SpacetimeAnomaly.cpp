@@ -45,45 +45,12 @@ void AProjectile_SpacetimeAnomaly::OnProjectileHit_Implementation(UPrimitiveComp
 	Super::OnProjectileHit_Implementation( HitComp,  OtherActor,
 								  OtherComp,  NormalImpulse, Hit);
 	
-	if (OtherActor == Caster)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Do nothing because hit Caster"));
-		return;
-	}
-
-	if(Cast<AActor>(OtherActor) != nullptr )
-	{
-		OnProjectileHitDelegate.Broadcast(Hit);
-	}
-	UE_LOG(LogTemp, Warning, TEXT("Hit %s via OnHit"), *OtherActor->GetActorNameOrLabel());
-	
-	//Destroy();
 }
 
 
 void AProjectile_SpacetimeAnomaly::OnBeginOverlap_Implementation(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (OtherActor == Caster)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Do nothing because hit Caster"));
-		return;
-	}
-
-	if (OtherActor->IsA(StaticClass()))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Do nothing because hit same type of projectile"));
-		return;
-	}
-	
-	if(Cast<AActor>(OtherActor) != nullptr )
-	{
-		OnProjectileHitDelegate.Broadcast(SweepResult);
-	}
-	if (CasterASC && CastedAbility)
-	{
-		ApplyEffectToTarget(OtherActor);
-	}
 	
 	//UE_LOG(LogTemp, Warning, TEXT("Hit %s via OnBeginOverlap"), *OtherActor->GetActorNameOrLabel());
 	

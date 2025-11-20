@@ -4,9 +4,7 @@
 #include "Projectile.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Components/SphereComponent.h"
-#include "AbilitySystemComponent.h"
-#include "AbilitySystemGlobals.h"
-#include "./PROJ/GameplayAbilitySystem/GameplayAbilities/BaseGameplayAbility.h"
+#include "GameplayEffectTypes.h"
 
 // Sets default values
 AProjectile::AProjectile()
@@ -55,23 +53,6 @@ void AProjectile::DestroySelf()
 	Destroy();
 }
 
-bool AProjectile::ApplyEffectToTarget(const AActor* Target)
-{
-	UAbilitySystemComponent* TargetASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Target);
-	if (HasAuthority() && TargetASC)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Target ASC is from: %s"), *TargetASC->GetAvatarActor()->GetName());
-		for (auto& EffectClass : Effects)
-		{
-			FGameplayEffectSpecHandle SpecHandle = CasterASC->MakeOutgoingSpec(EffectClass, CastedAbility->GetAbilityLevel(), CasterASC->MakeEffectContext());
-			SpecHandle.Data->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(FName("Data.Damage")), CastedAbility->BaseDamage);
-			TargetASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
-		}
-		return true;
-	}
-	UE_LOG(LogTemp, Warning, TEXT("No target ASC, Effect(s) not applied"));
-	return false;
-}
 
 void AProjectile::OnProjectileHit_Implementation(UPrimitiveComponent* HitComp, AActor* OtherActor,
                                   UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
@@ -90,6 +71,7 @@ void AProjectile::OnProjectileHit_Implementation(UPrimitiveComponent* HitComp, A
 	{
 		OnProjectileHitDelegate.Broadcast(Hit);
 	}
+	
 	UE_LOG(LogTemp, Warning, TEXT("Hit %s via OnHit"), *OtherActor->GetActorNameOrLabel());
 	
 	//Destroy();
