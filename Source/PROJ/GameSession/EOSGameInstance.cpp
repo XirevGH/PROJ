@@ -319,9 +319,8 @@ void UEOSGameInstance::OnFindMatchSessionsCompleted(bool bSuccess)
 	BlueprintSessionResult.OnlineResult = MatchSearch->SearchResults[RandomIndex];
 
 	MatchSearch.Reset();
-	OnMatchSessionFound(BlueprintSessionResult);
-
 	UE_LOG(LogTemp, Warning, TEXT("FindMatchSessionsCompleted"));
+	OnMatchSessionFound(BlueprintSessionResult);
 }
 
 void UEOSGameInstance::FindOpenPublicSessions()
@@ -382,9 +381,9 @@ void UEOSGameInstance::OnFindOpenPublicSessionsCompleted(const bool bSuccess)
 		}
 	}
 	OpenPublicSearch.Reset();
-	OnOpenPublicLobbiesFound.Broadcast(SessionResults);
 	UE_LOG(LogTemp, Warning, TEXT("Sessions found after filtering: %d"), SessionResults.Num());
 	UE_LOG(LogTemp, Warning, TEXT("FindOpenPublicSessionsCompleted"));
+	OnOpenPublicLobbiesFound.Broadcast(SessionResults);
 }
 
 FOnlineSessionSettings* UEOSGameInstance::GetSessionSettings() const
