@@ -158,6 +158,11 @@ void UEOSGameInstance::CreateSession(const FName& Name)
 		SessionSettings.Set(FName(SelectedGameModeKey),
 			FOnlineSessionSetting(TEXT("1v1"), EOnlineDataAdvertisementType::ViaOnlineService));
 
+		SessionSettings.Set(
+		FName(SEARCH_KEYWORDS),
+		FOnlineSessionSetting(FString("PublicSession"), EOnlineDataAdvertisementType::ViaOnlineService)
+	);
+
 		UE_LOG(LogTemp, Display, TEXT("Creating session with name: %s"), *Name.ToString());
 		SessionInterface->CreateSession(0, Name, SessionSettings);
 	}
@@ -253,7 +258,8 @@ void UEOSGameInstance::FindCompatibleMatchSessions()
 	MatchSearch = MakeShareable(new FOnlineSessionSearch());
 	MatchSearch->MaxSearchResults = MaxSearchResults;
 
-	OpenPublicSearch->QuerySettings.Set(SEARCH_LOBBIES, true, EOnlineComparisonOp::Equals);
+	MatchSearch->QuerySettings.Set(SEARCH_LOBBIES, true, EOnlineComparisonOp::Equals);
+	MatchSearch->QuerySettings.Set(FName(SEARCH_KEYWORDS),FString("PublicSession"),EOnlineComparisonOp::Equals);
 	MatchSearch->QuerySettings.Set(FName(IsSearchingForMatchKey), true, EOnlineComparisonOp::Equals);
 	MatchSearch->QuerySettings.Set(FName(SelectedGameModeKey), GetSelectedGameMode(), EOnlineComparisonOp::Equals);
 	
@@ -315,6 +321,7 @@ void UEOSGameInstance::FindOpenPublicSessions()
 	OpenPublicSearch = MakeShareable(new FOnlineSessionSearch());
 	OpenPublicSearch->bIsLanQuery = false;
 	OpenPublicSearch->QuerySettings.Set(SEARCH_LOBBIES, true, EOnlineComparisonOp::Equals);
+	OpenPublicSearch->QuerySettings.Set(FName(SEARCH_KEYWORDS),FString("PublicSession"),EOnlineComparisonOp::Equals);
 	OpenPublicSearch->MaxSearchResults = MaxSearchResults;
 	
 	OpenPublicSessionsDelegateHandle = SessionInterface->AddOnFindSessionsCompleteDelegate_Handle(
