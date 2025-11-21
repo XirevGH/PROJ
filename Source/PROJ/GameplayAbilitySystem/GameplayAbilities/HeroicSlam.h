@@ -37,12 +37,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float Height;
-
-	UFUNCTION(NetMulticast, Reliable)
-	void Multicast_PlaySlamEffects(FVector Location);
 	
 	UPROPERTY(EditDefaultsOnly, Category="Slam")
-	UNiagaraSystem* SlamVFX;
+	UNiagaraSystem* SlamVfx;
 
 	UPROPERTY(EditDefaultsOnly, Category="Slam")
 	TSubclassOf<UCameraShakeBase> SlamCameraShake;

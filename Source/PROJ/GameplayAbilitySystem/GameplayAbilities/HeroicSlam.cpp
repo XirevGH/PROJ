@@ -26,30 +26,17 @@ void UHeroicSlam::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 	}
+	/*Get and Check CachedPlayer*/
+	CachedPlayer = Cast<ABaseCharacter>(ActorInfo->AvatarActor.Get());
+	if (!CachedPlayer) return;
 	
-	ABaseCharacter* Player = Cast<ABaseCharacter>(ActorInfo->AvatarActor.Get());
-	if (!Player)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Player is null"));
-		return;
-	}
-	CachedPlayer = Player;
 	/*Shoot up*/
-	FVector Direction = Player->GetActorUpVector();
-	Player->LaunchCharacter(Direction * 1000.f, true,true);
-
-	/*Get & Check player controller*/
-	APlayerController* PC = Cast<APlayerController>(Player->GetController());
-	if (!PC)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Player controller is null"));
-		return;
-	}
-	if (!IndicatorClass)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("IndicatorClass is null"));
-		return;
-	}
+	FVector Direction = CachedPlayer->GetActorUpVector();
+	CachedPlayer->LaunchCharacter(Direction * 1000.f, true,true);
+	
+	/*Null Check*/
+	if (!IndicatorClass) return;
+	
 	/*Task & delegate setup*/
 	UAbilityTask_WaitTargetData* Task = UAbilityTask_WaitTargetData::WaitTargetData(
 	this,
@@ -61,6 +48,7 @@ void UHeroicSlam::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const
 	Task->Cancelled.AddDynamic(this, &UHeroicSlam::OnCancel);
 	UE_LOG(LogTemp, Warning, TEXT("Task %s"), Task->IsValidLowLevel() ? TEXT("Successfully activated") : TEXT("Failed to activate"));
 	Task->ReadyForActivation();
+	
 }
 
 void UHeroicSlam::OnConfirm(const FGameplayAbilityTargetDataHandle& Data)
@@ -88,17 +76,6 @@ void UHeroicSlam::OnConfirm(const FGameplayAbilityTargetDataHandle& Data)
 		}
 	}
 }
-
-void UHeroicSlam::Multicast_PlaySlamEffects_Implementation(FVector Location)
-{
-	if (SlamVFX)
-		UNiagaraFunctionLibrary::SpawnSystemAtLocation(
-			GetWorld(),
-			SlamVFX,
-			Location
-		);
-}
-
 void UHeroicSlam::LaunchToTarget()
 {
 	ESuggestProjVelocityTraceOption::Type TraceOption = ESuggestProjVelocityTraceOption::DoNotTrace;
@@ -177,7 +154,14 @@ void UHeroicSlam::LandingCheck()
 			ApplyEffectsToTarget(HitActor);
 		}
 	}
-	
+	DrawDebugSphere(GetWorld(), Origin, SlamRadius, 32, FColor::Blue, false, 2.f);
+	if (SlamCameraShake)
+	{
+		if (APlayerController* PC = Cast<APlayerController>(CachedPlayer->GetController()))
+		{
+			PC->ClientStartCameraShake(SlamCameraShake);
+		}
+	}
 	CachedPlayer->GetCharacterMovement()->MaxWalkSpeed = CachedOriginalMaxSpeed;
 	GetWorld()->GetTimerManager().ClearTimer(LandingCheckTimer);
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
