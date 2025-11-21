@@ -1,1 +1,0 @@
-"C:\Program Files\Epic Games\UE_5.6\Engine\Binaries\Win64\UnrealEditor.exe" "C:\GitHub\PROJ\PROJ.uproject" -game -log
