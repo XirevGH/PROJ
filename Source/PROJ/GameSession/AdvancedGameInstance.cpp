@@ -195,7 +195,7 @@ void UAdvancedGameInstance::OnFindMatchSessionsCompleted(bool bSuccess)
 	{
 		// Do nothing, wait for another session to search for a match and then join this one
 		// Implement a clock in the UI to see how long the search have been active, perhaps show number of other
-		// sessions active and not in lobby
+		// sessions active and in lobby
 		UE_LOG(LogTemp, Warning, TEXT("No matches found"))
 		return;
 	}
