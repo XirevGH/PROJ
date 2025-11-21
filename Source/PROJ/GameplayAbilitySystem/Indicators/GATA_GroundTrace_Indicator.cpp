@@ -48,22 +48,32 @@ FHitResult AGATA_GroundTrace_Indicator::PerformTrace(AActor* InSourceActor)
 		UE_LOG(LogTemp, Warning, TEXT("Can't deproject screen position"));
 		return Hit;
 	}
+	//DrawDebugSphere(GetWorld(),WorldOrigin, 50.0f, 24,  FColor::Red, true);
+	
+	// Trace from camera to get mouse world location on the ground
+	FVector CameraTraceEnd = WorldOrigin + WorldDirection * 100000.f;
+	FCollisionQueryParams TraceParams;
+	TraceParams.AddIgnoredActor(this);
 
-	// Clamp the trace end to MaxRange from ability origin
-	FVector AbilityOrigin = InSourceActor->GetActorLocation();
-	FVector TraceEnd = WorldOrigin + WorldDirection * MaxRange;
+	FHitResult MouseHit;
+	GetWorld()->LineTraceSingleByChannel(MouseHit, WorldOrigin, CameraTraceEnd, ECC_Visibility, TraceParams);
 
-	float DistanceToOrigin = FVector::Dist(AbilityOrigin, TraceEnd);
-	if (DistanceToOrigin > MaxRange)
+	// Use either the hit location or the far point
+	FVector DesiredLocation = MouseHit.bBlockingHit ? MouseHit.Location : CameraTraceEnd;
+
+	// Clamp to MaxRange from player/caster
+	FVector PlayerPosition = InSourceActor->GetActorLocation();
+	FVector Direction = DesiredLocation - PlayerPosition;
+	float Distance = Direction.Size();
+
+	if (Distance > MaxRange)
 	{
-		FVector Direction = (TraceEnd - AbilityOrigin).GetSafeNormal();
-		TraceEnd = AbilityOrigin + Direction * MaxRange;
+		Direction = Direction.GetSafeNormal();
+		DesiredLocation = PlayerPosition + Direction * MaxRange;
 	}
 
-	// Perform the trace
-	FCollisionQueryParams Params;
-	Params.AddIgnoredActor(this);
-	GetWorld()->LineTraceSingleByChannel(Hit, WorldOrigin, TraceEnd, ECC_Visibility, Params);
+	// Trace from player to the clamped location to get final hit on ground
+	GetWorld()->LineTraceSingleByChannel(Hit, PlayerPosition, DesiredLocation, ECC_Visibility, TraceParams);
 
 	return Hit;
 }
