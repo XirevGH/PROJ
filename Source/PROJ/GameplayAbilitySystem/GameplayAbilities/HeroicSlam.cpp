@@ -3,7 +3,9 @@
 
 #include "HeroicSlam.h"
 
+#include "AbilitySystemGlobals.h"
 #include "Abilities/Tasks/AbilityTask_WaitTargetData.h"
+#include "Engine/OverlapResult.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "PROJ/BaseCharacter.h"
@@ -31,7 +33,7 @@ void UHeroicSlam::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const
 		UE_LOG(LogTemp, Warning, TEXT("Player is null"));
 		return;
 	}
-
+	CachedPlayer = Player;
 	/*Shoot up*/
 	FVector Direction = Player->GetActorUpVector();
 	Player->LaunchCharacter(Direction * 1000.f, true,true);
@@ -43,7 +45,7 @@ void UHeroicSlam::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const
 		UE_LOG(LogTemp, Warning, TEXT("Player controller is null"));
 		return;
 	}
-	if (IndicatorClass)
+	if (!IndicatorClass)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("IndicatorClass is null"));
 		return;
@@ -81,6 +83,8 @@ void UHeroicSlam::OnConfirm(const FGameplayAbilityTargetDataHandle& Data)
 				TargetLocation = LocationData->GetEndPoint();
 				UE_LOG(LogTemp, Warning, TEXT("TargetLocation from GetEndPoint: %f,%f,%f"), TargetLocation.X,TargetLocation.Y,TargetLocation.Z);
 			}
+			if (TargetLocation.IsNearlyZero()) LaunchToTarget();
+			
 			/*Call Launch Logic*/
 			LaunchToTarget();
 		}
@@ -88,14 +92,10 @@ void UHeroicSlam::OnConfirm(const FGameplayAbilityTargetDataHandle& Data)
 }
 void UHeroicSlam::LaunchToTarget()
 {
-	ABaseCharacter* Player = Cast<ABaseCharacter>(GetAvatarActorFromActorInfo());
-	if (!Player) return;
-
-	CachedPlayer = Player;
 	ESuggestProjVelocityTraceOption::Type TraceOption = ESuggestProjVelocityTraceOption::DoNotTrace;
 	FCollisionResponseParams& ResponseParam = FCollisionResponseParams::DefaultResponseParam;
 	TArray<AActor*> ActorsToIgnore;
-	ActorsToIgnore.Add(Player);
+	ActorsToIgnore.Add(CachedPlayer);
 	
 	FVector Start = CachedPlayer->GetActorLocation();
 	FVector End = TargetLocation;
@@ -121,7 +121,7 @@ void UHeroicSlam::LaunchToTarget()
 	{
 		
 		/*Get players current MaxWalkSpeed*/
-		float OriginalMaxSpeed = Player->GetCharacterMovement()->MaxWalkSpeed;
+		float OriginalMaxSpeed = CachedPlayer->GetCharacterMovement()->MaxWalkSpeed;
 		/*Raises player MaxWalkSpeed*/
 		CachedPlayer->GetCharacterMovement()->MaxWalkSpeed = FMath::Max(LaunchVelocity.Length() + 100.f, OriginalMaxSpeed);
 		CachedPlayer->GetCharacterMovement()->StopMovementImmediately();
@@ -141,16 +141,78 @@ void UHeroicSlam::LaunchToTarget()
 }
 void UHeroicSlam::LandingCheck()
 {
-	if (CachedPlayer && CachedPlayer->GetCharacterMovement()->IsMovingOnGround())
+	if (!CachedPlayer->HasAuthority()) return;
+	if (!CachedPlayer) return;
+	if (!CachedPlayer->GetCharacterMovement()->IsMovingOnGround()) return;
+
+	FVector Origin = CachedPlayer->GetActorLocation();
+	TArray<FOverlapResult> Overlaps;
+
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(CachedPlayer);
+
+	bool bHit = GetWorld()->OverlapMultiByChannel(
+		Overlaps,
+		Origin,
+		FQuat::Identity,
+		ECC_Pawn,
+		FCollisionShape::MakeSphere(SlamRadius),
+		Params);
+
+	if (bHit)
 	{
-		CachedPlayer->GetCharacterMovement()->MaxWalkSpeed = CachedOriginalMaxSpeed;
-		GetWorld()->GetTimerManager().ClearTimer(LandingCheckTimer);
-		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
+		for (auto& Result : Overlaps)
+		{
+			AActor* HitActor = Result.GetActor();
+			if (!HitActor || HitActor == CachedPlayer) continue;
+
+			ApplyEffectsToTarget(HitActor);
+		}
 	}
+	
+	CachedPlayer->GetCharacterMovement()->MaxWalkSpeed = CachedOriginalMaxSpeed;
+	GetWorld()->GetTimerManager().ClearTimer(LandingCheckTimer);
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
+	
 }
 void UHeroicSlam::OnCancel(const FGameplayAbilityTargetDataHandle& Data)
 {
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
+}
+
+void UHeroicSlam::ApplyEffectsToTarget(AActor* Target)
+{
+	UAbilitySystemComponent* TargetASC
+	= UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Target);
+	UAbilitySystemComponent* OwnerASC
+	= GetAbilitySystemComponentFromActorInfo();
+	
+	if (!TargetASC || !OwnerASC) return;
+	/*Must have Authority*/
+	if (!OwnerASC->GetOwner()->HasAuthority()) return;
+
+	UE_LOG(LogTemp, Warning, TEXT("Applying effects to target: %s"), *Target->GetName());
+	
+	for (auto& EffectClass : Effects)
+	{
+		if (!EffectClass)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("EffectClass is null!"));
+			continue;
+		}
+		/*Create context*/
+		FGameplayEffectContextHandle Context = OwnerASC->MakeEffectContext();
+		Context.AddSourceObject(this);
+		/*Create outgoing spec*/
+		FGameplayEffectSpecHandle SpecHandle =
+			OwnerASC->MakeOutgoingSpec(EffectClass,GetAbilityLevel(), Context);
+
+		if (!SpecHandle.IsValid()) continue;
+		
+		FGameplayTag DamageTag = FGameplayTag::RequestGameplayTag(FName("Data.Damage"));
+		/*Apply spec to target*/
+		TargetASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+	}
 }
 
 void UHeroicSlam::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
