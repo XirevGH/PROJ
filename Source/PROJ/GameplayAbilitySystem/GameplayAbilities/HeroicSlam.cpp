@@ -3,12 +3,12 @@
 
 #include "HeroicSlam.h"
 
-#include "Abilities/Tasks/AbilityTask_WaitConfirmCancel.h"
-#include "Components/DecalComponent.h"
+#include "Abilities/Tasks/AbilityTask_WaitTargetData.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "PROJ/BaseCharacter.h"
-#include "PROJ/GameplayAbilitySystem/Indicators/Indicator.h"
+
+
 
 UHeroicSlam::UHeroicSlam()
 {
@@ -36,25 +36,6 @@ void UHeroicSlam::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const
 	FVector Direction = Player->GetActorUpVector();
 	Player->LaunchCharacter(Direction * 1000.f, true,true);
 
-	/*Spawn params*/
-	FActorSpawnParameters SpawnParams;
-	SpawnParams.Owner = Player;
-	SpawnParams.Instigator = Cast<APawn>(Player);
-
-	/*Spawn*/
-	Indicator = GetWorld()->SpawnActor<AIndicator>(
-		IndicatorClass,
-		Player->GetActorLocation(),
-		FRotator::ZeroRotator,
-		SpawnParams);
-
-	/*Check Indicator*/
-	if (!Indicator)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Failed to spawn Indicator"));
-		return;
-	}
-
 	/*Get & Check player controller*/
 	APlayerController* PC = Cast<APlayerController>(Player->GetController());
 	if (!PC)
@@ -62,78 +43,121 @@ void UHeroicSlam::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const
 		UE_LOG(LogTemp, Warning, TEXT("Player controller is null"));
 		return;
 	}
-
-	/*Setup Indicator*/
-	Indicator->CasterController = PC;
-	Indicator->Caster = Cast<APawn>(Player);
-	Indicator->MaxRange = Range;
-	Indicator->Decal->DecalSize = FVector(128.f,Radius,Radius);
-
+	if (IndicatorClass)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("IndicatorClass is null"));
+		return;
+	}
 	/*Task & delegate setup*/
-	UAbilityTask_WaitConfirmCancel* Task = UAbilityTask_WaitConfirmCancel::WaitConfirmCancel(this);
-	Task->OnConfirm.AddDynamic(this, &UHeroicSlam::OnConfirm);
-	Task->OnConfirm.AddDynamic(this, &UHeroicSlam::OnCancel);
-	Task->ReadyForActivation();
-
+	UAbilityTask_WaitTargetData* Task = UAbilityTask_WaitTargetData::WaitTargetData(
+	this,
+	FName("WaitForTarget"),
+	EGameplayTargetingConfirmation::UserConfirmed,
+	IndicatorClass);
+	/***/
+	Task->ValidData.AddDynamic(this, &UHeroicSlam::OnConfirm);
+	Task->Cancelled.AddDynamic(this, &UHeroicSlam::OnCancel);
 	UE_LOG(LogTemp, Warning, TEXT("Task %s"), Task->IsValidLowLevel() ? TEXT("Successfully activated") : TEXT("Failed to activate"));
+	Task->ReadyForActivation();
 }
 
-void UHeroicSlam::OnConfirm()
+void UHeroicSlam::OnConfirm(const FGameplayAbilityTargetDataHandle& Data)
 {
-	if (!Indicator) return;
-
 	/*Get Location Marked With Indicator*/
-	TargetLocation = Indicator->GetActorLocation();
-
-	Indicator->Destroy();
-	Indicator = nullptr;
-	
-	/*Call Launch Logic*/
-	LaunchToTarget();
+	if (Data.Num() > 0)
+	{
+		const FGameplayAbilityTargetData* TargetData = Data.Get(0);
+		if (TargetData)
+		{
+			if (const FGameplayAbilityTargetData_SingleTargetHit* HitData =
+				static_cast<const FGameplayAbilityTargetData_SingleTargetHit*>(TargetData))
+			{
+				TargetLocation = HitData->HitResult.ImpactPoint;
+				UE_LOG(LogTemp, Warning, TEXT("TargetLocation from Hit Result: %f,%f,%f"), TargetLocation.X,TargetLocation.Y,TargetLocation.Z);
+			}
+			else if (const FGameplayAbilityTargetData_LocationInfo* LocationData =
+				static_cast<const FGameplayAbilityTargetData_LocationInfo*>(TargetData))
+			{
+				TargetLocation = LocationData->GetEndPoint();
+				UE_LOG(LogTemp, Warning, TEXT("TargetLocation from GetEndPoint: %f,%f,%f"), TargetLocation.X,TargetLocation.Y,TargetLocation.Z);
+			}
+			/*Call Launch Logic*/
+			LaunchToTarget();
+		}
+	}
 }
 void UHeroicSlam::LaunchToTarget()
 {
 	ABaseCharacter* Player = Cast<ABaseCharacter>(GetAvatarActorFromActorInfo());
 	if (!Player) return;
 
-	FVector Start = Player->GetActorLocation();
-	FVector End = TargetLocation;
-
-	float DesiredArcHeight = 400.f;
-	FVector FlatEnd = End;
-	FlatEnd.Z = Start.Z;
-
-	FVector Direction = (FlatEnd - Start);
-	float DistanceXY = Direction.Size2D();
-	Direction.Normalize();
-
-	float JumpTime = 0.5f;
-
-	FVector Velocity;
-	Velocity.X = Direction.X * DistanceXY/JumpTime;
-	Velocity.Y = Direction.Y * DistanceXY/JumpTime;
-
-	Velocity.Z = (2.f * DesiredArcHeight) / JumpTime;
+	CachedPlayer = Player;
+	ESuggestProjVelocityTraceOption::Type TraceOption = ESuggestProjVelocityTraceOption::DoNotTrace;
+	FCollisionResponseParams& ResponseParam = FCollisionResponseParams::DefaultResponseParam;
+	TArray<AActor*> ActorsToIgnore;
+	ActorsToIgnore.Add(Player);
 	
-	/*FVector LaunchVelocity;
-	bool bHasSolution = UGameplayStatics::SuggestProjectileVelocity_CustomArc(
+	FVector Start = CachedPlayer->GetActorLocation();
+	FVector End = TargetLocation;
+	
+	FVector LaunchVelocity;
+	bool bHasSolution = UGameplayStatics::SuggestProjectileVelocity(
 		this,
 		LaunchVelocity,
 		Start,
 		End,
-		0.5f);*/
+		1800.f,
+		false,
+		0.f,
+		0.f,
+		TraceOption,
+		ResponseParam,
+		ActorsToIgnore,
+		true,
+		false);
 	
-	
-		Player->GetCharacterMovement()->StopMovementImmediately();
+	/*Runs if SuggestProjVel is true*/
+	if (bHasSolution)
+	{
+		
+		/*Get players current MaxWalkSpeed*/
+		float OriginalMaxSpeed = Player->GetCharacterMovement()->MaxWalkSpeed;
+		/*Raises player MaxWalkSpeed*/
+		CachedPlayer->GetCharacterMovement()->MaxWalkSpeed = FMath::Max(LaunchVelocity.Length() + 100.f, OriginalMaxSpeed);
+		CachedPlayer->GetCharacterMovement()->StopMovementImmediately();
+		/*Launch player in an arc*/
+		CachedPlayer->LaunchCharacter(LaunchVelocity, true, true);
+		/*Save the cached MaxWalkSpeed*/
+		CachedOriginalMaxSpeed = OriginalMaxSpeed;
 
-		Player->LaunchCharacter(Velocity, true, true);
+		/*Set a timer to check every 0.1 sec to see if the player landed to restore MS*/
+		GetWorld()->GetTimerManager().SetTimer(
+		LandingCheckTimer,
+		this,
+		&UHeroicSlam::LandingCheck,
+		0.1f,
+		true);
+	}
 }
-void UHeroicSlam::OnCancel()
+void UHeroicSlam::LandingCheck()
 {
-	
+	if (CachedPlayer && CachedPlayer->GetCharacterMovement()->IsMovingOnGround())
+	{
+		CachedPlayer->GetCharacterMovement()->MaxWalkSpeed = CachedOriginalMaxSpeed;
+		GetWorld()->GetTimerManager().ClearTimer(LandingCheckTimer);
+		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
+	}
 }
+void UHeroicSlam::OnCancel(const FGameplayAbilityTargetDataHandle& Data)
+{
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
+}
+
 void UHeroicSlam::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
-	const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicatedEndAbility, bool bWasCancelled)
+                             const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicatedEndAbility, bool bWasCancelled)
 {
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicatedEndAbility, bWasCancelled);
 }
+
+
+

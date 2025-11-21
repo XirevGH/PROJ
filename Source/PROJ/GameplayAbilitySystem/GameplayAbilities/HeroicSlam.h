@@ -6,7 +6,9 @@
 #include "BaseGameplayAbility.h"
 #include "HeroicSlam.generated.h"
 
-class AIndicator;
+class AGameplayAbilityTargetActor;
+class AGATA_GroundTrace_Indicator;
+class ABaseCharacter;
 /**
  * 
  */
@@ -21,10 +23,10 @@ public:
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<AIndicator> IndicatorClass;
+	TSubclassOf<AGameplayAbilityTargetActor> IndicatorClass;
 
 	UPROPERTY()
-	AIndicator* Indicator;
+	AGameplayAbilityTargetActor* Indicator;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float Range;
@@ -37,12 +39,13 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 	FVector SpawnLocation;
 
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	void LaunchToTarget();
 	UFUNCTION(BlueprintCallable)
-	void OnConfirm();
+	void OnConfirm(const FGameplayAbilityTargetDataHandle& Data);
 	UFUNCTION(BlueprintCallable)
-	void OnCancel();
+	void OnCancel(const FGameplayAbilityTargetDataHandle& Data);
+	
 	
 	virtual void ActivateAbility(
 		const FGameplayAbilitySpecHandle Handle,
@@ -57,5 +60,16 @@ public:
 	    bool bReplicatedEndAbility, bool bWasCancelled) override;
 private:
 	UPROPERTY()
-	FVector TargetLocation; 
+	FVector TargetLocation;
+
+	UPROPERTY()
+	float CachedOriginalMaxSpeed = 600.f;
+
+	UPROPERTY()
+	ABaseCharacter* CachedPlayer;
+
+	FTimerHandle LandingCheckTimer;
+
+	UFUNCTION()
+	void LandingCheck();
 };
