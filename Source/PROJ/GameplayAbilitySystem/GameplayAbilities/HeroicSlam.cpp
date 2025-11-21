@@ -83,13 +83,22 @@ void UHeroicSlam::OnConfirm(const FGameplayAbilityTargetDataHandle& Data)
 				TargetLocation = LocationData->GetEndPoint();
 				UE_LOG(LogTemp, Warning, TEXT("TargetLocation from GetEndPoint: %f,%f,%f"), TargetLocation.X,TargetLocation.Y,TargetLocation.Z);
 			}
-			if (TargetLocation.IsNearlyZero()) LaunchToTarget();
-			
 			/*Call Launch Logic*/
 			LaunchToTarget();
 		}
 	}
 }
+
+void UHeroicSlam::Multicast_PlaySlamEffects_Implementation(FVector Location)
+{
+	if (SlamVFX)
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+			GetWorld(),
+			SlamVFX,
+			Location
+		);
+}
+
 void UHeroicSlam::LaunchToTarget()
 {
 	ESuggestProjVelocityTraceOption::Type TraceOption = ESuggestProjVelocityTraceOption::DoNotTrace;
@@ -119,7 +128,6 @@ void UHeroicSlam::LaunchToTarget()
 	/*Runs if SuggestProjVel is true*/
 	if (bHasSolution)
 	{
-		
 		/*Get players current MaxWalkSpeed*/
 		float OriginalMaxSpeed = CachedPlayer->GetCharacterMovement()->MaxWalkSpeed;
 		/*Raises player MaxWalkSpeed*/
@@ -193,24 +201,9 @@ void UHeroicSlam::ApplyEffectsToTarget(AActor* Target)
 
 	UE_LOG(LogTemp, Warning, TEXT("Applying effects to target: %s"), *Target->GetName());
 	
-	for (auto& EffectClass : Effects)
+	for (auto& SpecHandle : MakeEffectSpecsHandles())
 	{
-		if (!EffectClass)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("EffectClass is null!"));
-			continue;
-		}
-		/*Create context*/
-		FGameplayEffectContextHandle Context = OwnerASC->MakeEffectContext();
-		Context.AddSourceObject(this);
-		/*Create outgoing spec*/
-		FGameplayEffectSpecHandle SpecHandle =
-			OwnerASC->MakeOutgoingSpec(EffectClass,GetAbilityLevel(), Context);
-
-		if (!SpecHandle.IsValid()) continue;
 		
-		FGameplayTag DamageTag = FGameplayTag::RequestGameplayTag(FName("Data.Damage"));
-		/*Apply spec to target*/
 		TargetASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
 	}
 }

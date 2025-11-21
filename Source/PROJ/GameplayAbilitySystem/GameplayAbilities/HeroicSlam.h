@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "NiagaraFunctionLibrary.h"
 #include "BaseGameplayAbility.h"
 #include "HeroicSlam.generated.h"
 
@@ -37,14 +38,17 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float Height;
 
-	/*UPROPERTY(EditDefaultsOnly, Category="Slam")
-	UNiagaraSystem* SlamVFX;*/
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_PlaySlamEffects(FVector Location);
+	
+	UPROPERTY(EditDefaultsOnly, Category="Slam")
+	UNiagaraSystem* SlamVFX;
 
 	UPROPERTY(EditDefaultsOnly, Category="Slam")
 	TSubclassOf<UCameraShakeBase> SlamCameraShake;
 
 	UPROPERTY(EditDefaultsOnly, Category="Slam")
-	float SlamRadius = 500.f;
+	float SlamRadius = 800.f;
 
 	UFUNCTION(BlueprintCallable)
 	void LaunchToTarget();
