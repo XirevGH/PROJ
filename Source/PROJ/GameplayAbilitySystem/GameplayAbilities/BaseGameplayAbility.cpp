@@ -11,8 +11,12 @@ void UBaseGameplayAbility::OnGiveAbility(const FGameplayAbilityActorInfo* ActorI
 {
 	Super::OnGiveAbility(ActorInfo, Spec);
 
-	FGameplayTag CooldownTag = GetCooldownTagFromInputID(InputTag);
-
+	CooldownTag = GetCooldownTagFromInputID(InputTag);
+	if (CooldownTag.IsValid())
+	{
+		CooldownTagContainer.AddTag(CooldownTag);
+	}
+	
 	ActivationBlockedTags.AddTag(CooldownTag);
 	
 }
@@ -36,7 +40,7 @@ void UBaseGameplayAbility::ApplyCooldown(const FGameplayAbilitySpecHandle Handle
 	
 	Spec->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(TEXT("Data.Cooldown.Duration")), Cooldown);
 	
-	const FGameplayTag& CooldownTag = GetCooldownTagFromInputID(InputTag); // e.g., Cooldown.Slot.Primary
+	//const FGameplayTag& CooldownTag = GetCooldownTagFromInputID(InputTag); // e.g., Cooldown.Slot.Primary
 	
 	Spec->DynamicGrantedTags.AddTag(CooldownTag);
 	ApplyGameplayEffectSpecToOwner(Handle, ActorInfo, ActivationInfo, SpecHandle);
@@ -89,4 +93,9 @@ FGameplayTag UBaseGameplayAbility::GetCooldownTagFromInputID(const FGameplayTag 
 	FString CooldownTagString = FString::Printf(TEXT("Cooldown.Ability.%s"), *Last);
 
 	return FGameplayTag::RequestGameplayTag(FName(*CooldownTagString), false);
+}
+
+const FGameplayTagContainer* UBaseGameplayAbility::GetCooldownTags() const
+{
+	return &CooldownTagContainer;
 }

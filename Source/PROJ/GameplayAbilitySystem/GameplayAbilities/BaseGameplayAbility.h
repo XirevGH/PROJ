@@ -23,7 +23,7 @@ public:
 	TArray<FGameplayEffectSpecHandle> MakeEffectSpecsHandles();
 	
 	static FGameplayTag GetCooldownTagFromInputID(const FGameplayTag InputTag);
-	
+	virtual const FGameplayTagContainer* GetCooldownTags() const override;
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Custom Values| Input")
 	FGameplayTag InputTag;
@@ -39,4 +39,10 @@ public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Cooldown")
 	float Cooldown = 0;
+
+	UPROPERTY()
+	FGameplayTag CooldownTag;   
+
+	UPROPERTY()
+	FGameplayTagContainer CooldownTagContainer;
 };
