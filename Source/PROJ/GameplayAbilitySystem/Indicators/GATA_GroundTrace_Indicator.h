@@ -13,6 +13,8 @@ UCLASS()
 class PROJ_API AGATA_GroundTrace_Indicator : public AGameplayAbilityTargetActor_Trace
 {
 	GENERATED_BODY()
+	protected:
+	void BeginPlay() override;
 
 public:
 	AGATA_GroundTrace_Indicator();

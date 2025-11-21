@@ -7,13 +7,19 @@
 #include "Abilities/GameplayAbility.h"
 #include "GameFramework/Actor.h"
 
+void AGATA_GroundTrace_Indicator::BeginPlay()
+{
+	Super::BeginPlay();
+	Decal->DecalSize = Size;
+}
+
 AGATA_GroundTrace_Indicator::AGATA_GroundTrace_Indicator()
 {
 	Decal = CreateDefaultSubobject<UDecalComponent>(TEXT("Decal"));
 	Root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
 	SetRootComponent(Root);
 	Decal->SetupAttachment(Root);
-	Decal->SetRelativeLocation(FVector(0, 0, 0));
+	
 }
 
 
