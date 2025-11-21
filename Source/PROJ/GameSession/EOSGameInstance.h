@@ -5,18 +5,13 @@
 #include "Engine/GameInstance.h"
 #include "EOSGameInstance.generated.h"
 
-UENUM(BlueprintType)
-enum EDestroySessionNextAction { JoinLobby, HostJoinMatch, ClientJoinMatch };
-
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnOpenPublicLobbiesFound,
 	const TArray<FBlueprintSessionResult>&, Sessions);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnDestroySessionCompletedWithNextAction,
-	bool, bWasSuccessful, EDestroySessionNextAction, NextAction);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnSessionFoundByName,
+	bool, bWasSuccessful, const FBlueprintSessionResult&, Session);
 
 class IOnlineSubsystem;
-/**
- * 
- */
+
 UCLASS()
 class PROJ_API UEOSGameInstance : public UGameInstance
 {
@@ -30,18 +25,14 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 	void CreateSession(const FName& Name);
-
-	// UFUNCTION(BlueprintCallable)
-	// void FindSessions();
 	
 	FString GetSessionName(const FOnlineSessionSearchResult& SessionSearchResult) const;
 
 	UFUNCTION(BlueprintCallable)
 	void SearchForMatch();
-
-	// After a compatible match has been found, call destroy session and join session on success.
+	
 	UFUNCTION(BlueprintImplementableEvent)
-	void OnMatchSessionFound(const FBlueprintSessionResult FoundMatchSession);
+	void OnMatchSessionFound(const FName Name);
 
 	// Find sessions "lobbies" open for joining
 	// Should bind custom event in blueprint to OnOpenPublicLobbiesFound to get the array of sessions
@@ -50,10 +41,25 @@ public:
 
 	UPROPERTY(BlueprintAssignable)
 	FOnOpenPublicLobbiesFound OnOpenPublicLobbiesFound;
+
+	UFUNCTION(BlueprintCallable)
+	void FindSessionByName(const FString Name);
+
+	UPROPERTY(BlueprintAssignable)
+	FOnSessionFoundByName OnSessionFoundByName;
+
+	UFUNCTION(BlueprintCallable)
+	void JoinSavedSession();
+
+	UFUNCTION(BlueprintCallable)
+	void JoinLobbyByIndex(const int32 Index);
+
+	UFUNCTION(BlueprintPure)
+	FBlueprintSessionResult GetCachedSessionToJoin() const;
 	
 	/* ----------- Custom settings -------------- */
 	UFUNCTION(BlueprintPure)
-	const FString& GetOriginalSessionNameKey() const { return OriginalSessionNameKey; }
+	const FString& GetSessionNameKey() const { return SessionNameKey; }
 	UFUNCTION(BlueprintPure)
 	const FString& GetCustomSessionNameKey() const { return CustomSessionNameKey; }
 	UFUNCTION(BlueprintPure)
@@ -68,7 +74,7 @@ public:
 	UFUNCTION(BlueprintPure)
 	FString GetCustomSessionName() const;
 	UFUNCTION(BlueprintPure)
-	FString GetOriginalSessionName() const;
+	FString GetSessionName() const;
 	
 	UFUNCTION(BlueprintCallable)
 	void SetIsSearchingForMatch(const bool bIsSearching);
@@ -77,7 +83,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SetCustomSessionName(const FString& CustomSessionName);
 	UFUNCTION(BlueprintCallable)
-	void SetOriginalSessionName(const FString& NewOriginalSessionName);
+	void SetSessionName(const FString& NewSessionName);
 	/* ------------------------------------------ */
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
@@ -86,19 +92,12 @@ public:
 protected:
 	virtual void Init() override;
 
-	// Call in blueprint after JoinSession:OnSuccess 
 	UFUNCTION(BlueprintCallable)
-	void HandleSuccessfulJoin(const FString& NewSessionName);
-
-	UPROPERTY(BlueprintAssignable)
-	FOnDestroySessionCompletedWithNextAction OnDestroySessionCompletedWithNextAction;
-
-	UFUNCTION(BlueprintCallable)
-	void DestroyCurrentSession(EDestroySessionNextAction NextAction);
+	void DestroyCurrentSessionAndJoinCachedSession();
 
 private:
-	FName OriginalSessionName;
-	FString OriginalSessionNameKey;
+	FName SessionName;
+	FString SessionNameKey;
 	FString CustomSessionNameKey;
 	FString SelectedGameModeKey;
 	FString IsSearchingForMatchKey;
@@ -106,25 +105,29 @@ private:
 
 	TSharedPtr<FOnlineSessionSearch> MatchSearch;
 	TSharedPtr<FOnlineSessionSearch> OpenPublicSearch;
+	TSharedPtr<FOnlineSessionSearch> NameSearch;
+
+	FOnlineSessionSearchResult CachedSessionToJoin;
 
 	FDelegateHandle OpenPublicSessionsDelegateHandle;
 	FDelegateHandle MatchSessionsDelegateHandle;
+	FDelegateHandle FindSessionByNameDelegateHandle;
 	FDelegateHandle DestroySessionDelegateHandle;
-
-	EDestroySessionNextAction DestroySessionNextAction_Internal;
 
 	UFUNCTION()
 	void OnFindOpenPublicSessionsCompleted(const bool bSuccess);
 	void OnFindMatchSessionsCompleted(bool bSuccess);
+	void OnFindSessionByNameCompleted(bool bWasSuccessful);
 	void FindCompatibleMatchSessions();
-	void OnDestroySessionCompleted(FName Name, bool bWasSuccessful, EDestroySessionNextAction NextAction);
+	void OnDestroySessionCompleted(FName Name, bool bWasSuccessful);
 	
 	void LoginCompleted(int NumOfPlayers, bool bWasSuccessful, const FUniqueNetId& UniqueId, const FString& Error);
-	void CreateSessionCompleted(FName SessionName, bool bWasSuccessful);
-	// void FindSessionsCompleted(bool bWasSuccessful);
-	// void JoinSessionCompleted(FName Name, EOnJoinSessionCompleteResult::Type Result);
+	void CreateSessionCompleted(FName Name, bool bWasSuccessful);
+	void OnJoinSessionCompleted(FName Name, EOnJoinSessionCompleteResult::Type Result);
 	void LoadLevelAndListen(const TSoftObjectPtr<UWorld>& LevelToLoad);
 	
 	void UpdateSessionSettings(FOnlineSessionSettings* NewSessionSettings) const;
 	FOnlineSessionSettings* GetSessionSettings() const;
+	
+	void ClearCachedSession();
 };
