@@ -2,7 +2,7 @@
 
 
 #include "GA_Cast_AOE.h"
-#include "Abilities/Tasks/AbilityTask_WaitConfirmCancel.h"
+#include "Abilities/Tasks/AbilityTask_WaitTargetData.h"
 #include "Components/DecalComponent.h"
 #include "PROJ/GameplayAbilitySystem/Indicators/Indicator.h"
 
@@ -13,36 +13,21 @@ void UGA_Cast_AOE::ActivateAbility(const FGameplayAbilitySpecHandle Handle, cons
                                    const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
-	CachedHandle = Handle;
-	CachedActorInfo = ActorInfo;
-	CachedActivationInfo = ActivationInfo;
-
 	
-	FActorSpawnParameters SpawnParams;
-	SpawnParams.Owner = ActorInfo->AvatarActor.Get();
-	SpawnParams.Instigator = Cast<APawn>(ActorInfo->AvatarActor.Get());
-	Indicator = GetWorld()->SpawnActor<AIndicator>(IndicatorClass, ActorInfo->AvatarActor->GetActorLocation(), FRotator::ZeroRotator, SpawnParams);
-	
-	APawn* Pawn = Cast<APawn>(ActorInfo->AvatarActor);
-	APlayerController* PC = Pawn ? Cast<APlayerController>(Pawn->GetController()) : nullptr;
-	 if (!PC)
-	 {
-	 	UE_LOG(LogTemp, Warning, TEXT("no controller"));
-	 	return;
-	 }
-	
-	if (Indicator)
-	{
-		Indicator->CasterController = PC;
-		Indicator->Caster = Cast<AActor>(ActorInfo->AvatarActor);
-		Indicator->MaxRange = Range;
-		Indicator->Decal->DecalSize = FVector(128, Radius, Radius);
-	}
-	
-	UAbilityTask_WaitConfirmCancel* Task = UAbilityTask_WaitConfirmCancel::WaitConfirmCancel(this);
-	Task->OnConfirm.AddDynamic(this, &UGA_Cast_AOE::OnConfirm);
-	Task->OnCancel.AddDynamic(this, &UGA_Cast_AOE::OnCancel);
+	UAbilityTask_WaitTargetData* Task = UAbilityTask_WaitTargetData::WaitTargetData(
+	this,
+	FName("WaitForTarget"),
+	EGameplayTargetingConfirmation::UserConfirmed,
+	IndicatorClass);
+	//Task->SetTargetActor();
+	Task->ValidData.AddDynamic(this, &UGA_Cast_AOE::OnTargetDataReceived);
+	Task->Cancelled.AddDynamic(this, &UGA_Cast_AOE::OnTargetDataCancelled);
 	Task->ReadyForActivation();
+	//Task->BeginSpawningActor();
+	//UAbilityTask_WaitConfirmCancel* Task = UAbilityTask_WaitConfirmCancel::WaitConfirmCancel(this);
+	//Task->OnConfirm.AddDynamic(this, &UGA_Cast_AOE::OnConfirm);
+	//Task->OnCancel.AddDynamic(this, &UGA_Cast_AOE::OnCancel);
+	//Task->ReadyForActivation();
 	//Indicator->SetActorHiddenInGame(true);
 	UE_LOG(LogTemp, Warning, TEXT("Task %s"), Task->IsValidLowLevel() ? TEXT("Successfully activated") : TEXT("Failed to activate"));
 
@@ -51,24 +36,30 @@ void UGA_Cast_AOE::ActivateAbility(const FGameplayAbilitySpecHandle Handle, cons
 void UGA_Cast_AOE::OnCancel_Implementation()
 {
 	//Indicator->SetActorHiddenInGame(true);
-	Indicator->Destroy();
+	//Indicator->Destroy();
 	EndAbility(CachedHandle, CachedActorInfo, CachedActivationInfo, true, true);
-	UE_LOG(LogTemp, Warning, TEXT("task canel"));
+	UE_LOG(LogTemp, Warning, TEXT("task cancel"));
 }
 
 void UGA_Cast_AOE::OnConfirm_Implementation()
 {
-	UE_LOG(LogTemp, Warning, TEXT("task actiavte"));
 	
 	
-	if (GetOwningActorFromActorInfo()->HasAuthority())  // only server
-	{
-		SpawnLocation = Indicator->GetActorLocation();
-		UE_LOG(LogTemp, Warning, TEXT("SpawnLocation: %s"), *SpawnLocation.ToString());
-		CommitAbility(CachedHandle, CachedActorInfo, CachedActivationInfo);
-	}
+		//FVector Location = Indicator->GetActorLocation();
+		//ServerConfirmTarget(Location);
+	//	Indicator->Destroy();
 	
-	Indicator->Destroy();
+}
+
+void UGA_Cast_AOE::OnTargetDataReceived(const FGameplayAbilityTargetDataHandle& Data)
+{
+	CommitAbility(CachedHandle, CachedActorInfo, CachedActivationInfo);
+	UE_LOG(LogTemp, Warning, TEXT("task activate"));
+}
+
+void UGA_Cast_AOE::OnTargetDataCancelled(const FGameplayAbilityTargetDataHandle& Data)
+{
+	UE_LOG(LogTemp, Warning, TEXT("task cancel"));
 }
 
 

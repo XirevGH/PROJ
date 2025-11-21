@@ -8,7 +8,8 @@
 // Sets default values
 AIndicator::AIndicator()
 {
-	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	bReplicates = false;
+	SetReplicates(false);
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.TickGroup = TG_PostUpdateWork;
 

@@ -33,25 +33,43 @@ void AAbilityActor::Tick(float DeltaTime)
 
 bool AAbilityActor::ApplyEffectToTarget(const AActor* Target)
 {
-	UAbilitySystemComponent* TargetASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Target);
+	if (!HasAuthority())
+		return false;
 
-	if (!HasAuthority() && TargetASC)
+	if (!CasterASC)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Effect failed — missing ASC or authority."));
+		UE_LOG(LogTemp, Error, TEXT("Caster ASC is NULL"));
 		return false;
 	}
+
+	if (!CastedAbility)
+	{
+		UE_LOG(LogTemp, Error, TEXT("CastedAbility is NULL"));
+		return false;
+	}
+
+	UAbilitySystemComponent* TargetASC =
+		UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Target);
+
+	if (!TargetASC)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Target ASC is NULL! %s has no ASC"), *GetNameSafe(Target));
+		return false;
+	}
+
 	
 	//UE_LOG(LogTemp, Warning, TEXT("Target ASC is from: %s"), *TargetASC->GetAvatarActor()->GetName());
+	
 
 	
 	for (auto& SpecHandle : EffectSpecHandles)
 	{
-		if (!SpecHandle.IsValid())
+		if (!SpecHandle.Data.Get())
 		{
 			continue;
 		}
-		TargetASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
 		UE_LOG(LogTemp, Warning, TEXT("Applied: %s to %s"),*SpecHandle.Data->GetContext().ToString(),  *TargetASC->GetAvatarActor()->GetName());
+		TargetASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
 	}
 	
 	return true;
