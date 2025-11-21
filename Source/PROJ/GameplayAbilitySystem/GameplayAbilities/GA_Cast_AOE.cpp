@@ -3,12 +3,9 @@
 
 #include "GA_Cast_AOE.h"
 #include "Abilities/Tasks/AbilityTask_WaitTargetData.h"
-#include "Components/DecalComponent.h"
-#include "PROJ/GameplayAbilitySystem/Indicators/Indicator.h"
-
-
 #include "GameFramework/PlayerController.h"
-
+#include "PROJ/GameplayAbilitySystem/Indicators/BaseAbilityTask_WaitTargetData.h"
+#include "AbilitySystemBlueprintLibrary.h"
 void UGA_Cast_AOE::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
                                    const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
@@ -19,16 +16,12 @@ void UGA_Cast_AOE::ActivateAbility(const FGameplayAbilitySpecHandle Handle, cons
 	FName("WaitForTarget"),
 	EGameplayTargetingConfirmation::UserConfirmed,
 	IndicatorClass);
-	//Task->SetTargetActor();
+	
 	Task->ValidData.AddDynamic(this, &UGA_Cast_AOE::OnTargetDataReceived);
 	Task->Cancelled.AddDynamic(this, &UGA_Cast_AOE::OnTargetDataCancelled);
 	Task->ReadyForActivation();
-	//Task->BeginSpawningActor();
-	//UAbilityTask_WaitConfirmCancel* Task = UAbilityTask_WaitConfirmCancel::WaitConfirmCancel(this);
-	//Task->OnConfirm.AddDynamic(this, &UGA_Cast_AOE::OnConfirm);
-	//Task->OnCancel.AddDynamic(this, &UGA_Cast_AOE::OnCancel);
-	//Task->ReadyForActivation();
-	//Indicator->SetActorHiddenInGame(true);
+	
+
 	UE_LOG(LogTemp, Warning, TEXT("Task %s"), Task->IsValidLowLevel() ? TEXT("Successfully activated") : TEXT("Failed to activate"));
 
 }
@@ -55,6 +48,8 @@ void UGA_Cast_AOE::OnTargetDataReceived(const FGameplayAbilityTargetDataHandle& 
 {
 	CommitAbility(CachedHandle, CachedActorInfo, CachedActivationInfo);
 	UE_LOG(LogTemp, Warning, TEXT("task activate"));
+	FTransform EndPoint = UAbilitySystemBlueprintLibrary::GetTargetDataEndPointTransform(Data, 0);
+	
 }
 
 void UGA_Cast_AOE::OnTargetDataCancelled(const FGameplayAbilityTargetDataHandle& Data)
