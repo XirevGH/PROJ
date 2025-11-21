@@ -60,10 +60,11 @@ void UGA_Cast_Projectile::SpawnProjectile()
 	{
 		ProjectileActor->SetReplicates(true);
 		ProjectileActor->SetReplicateMovement(true);
-		ProjectileActor->Caster = Avatar;
-		ProjectileActor->CastedAbility = this;
-		ProjectileActor->CasterASC = GetAbilitySystemComponentFromActorInfo();
-		ProjectileActor->EffectSpecHandles = MakeEffectSpecsHandles();
+		ProjectileActor->InitializeAbilityActor(Avatar,
+			GetAbilitySystemComponentFromActorInfo(),
+			this,
+			MakeEffectSpecsHandles()
+			);
 	}
 	else
 	{
