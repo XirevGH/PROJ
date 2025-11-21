@@ -34,7 +34,10 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Effects")
 	TArray<FGameplayEffectSpecHandle> EffectSpecHandles;
 
-
+	UFUNCTION(BlueprintCallable)
+	bool InitializeAbilityActor(AActor* InCaster, UAbilitySystemComponent* InCasterASC,
+	UBaseGameplayAbility* InCastedAbility, const TArray<FGameplayEffectSpecHandle>& InEffectSpecHandles);
+	
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -42,6 +45,8 @@ protected:
 
 	UFUNCTION(BlueprintCallable)
 	bool ApplyEffectToTarget(const AActor* Target);
+
+	
 	
 public:
 	// Called every frame

@@ -49,13 +49,13 @@ protected:
 		const FGameplayEventData* TriggerEventData) override;
 	
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-	void OnCancel();
-	virtual void OnCancel_Implementation();
+	void OnCancel(const FGameplayAbilityTargetDataHandle& Data);
+	virtual void OnCancel_Implementation(const FGameplayAbilityTargetDataHandle& Data);
 
 	
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-	void OnConfirm();
-	virtual void OnConfirm_Implementation();
+	void OnConfirm(const FGameplayAbilityTargetDataHandle& Data);
+	virtual void OnConfirm_Implementation(const FGameplayAbilityTargetDataHandle& Data);
 
 	UFUNCTION()
 	void OnTargetDataReceived(const FGameplayAbilityTargetDataHandle& Data);

@@ -75,7 +75,18 @@ void AIndicator::Tick(float DeltaTime)
 	{
 		FHitResult HitResult = PerformTrace();
 		FVector EndPoint = HitResult.Location;
-		SetActorLocation(EndPoint);
+
+		FVector PlayerLocation = Caster->GetActorLocation();
+		FVector Direction = EndPoint - PlayerLocation;
+
+		float Distance = Direction.Size();
+		if (Distance > MaxRange)
+		{
+			Direction = Direction.GetSafeNormal() * MaxRange;
+		}
+		FVector ClampedLocation = PlayerLocation + Direction;
+		
+		SetActorLocation(ClampedLocation);
 	}
 }
 
