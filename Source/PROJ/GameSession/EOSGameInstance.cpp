@@ -266,7 +266,7 @@ void UEOSGameInstance::JoinLobbyByIndex(const int32 Index)
 		UE_LOG(LogTemp, Warning, TEXT("OpenPublicSearch is invalid"));
 		return;
 	}
-	if (Index < 0 || Index > OpenPublicSearch->SearchResults.Num())
+	if (Index < 0 || Index >= OpenPublicSearch->SearchResults.Num())
 	{
 		UE_LOG(LogTemp, Error, TEXT("JoinLobbyByIndex: Index is out of range"));
 		return;
