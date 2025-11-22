@@ -46,7 +46,16 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category="Slam")
 	float SlamRadius = 800.f;
+	/*Attributes for air and launch arc*/
+	UPROPERTY()
+	float OriginalAirControl;
+	UPROPERTY()
+	float OriginalBraking;
+	UPROPERTY()
+	float OriginalFriction;
 
+	UFUNCTION()
+	void RestorAirFriction();
 	UFUNCTION(BlueprintCallable)
 	void LaunchToTarget();
 	UFUNCTION(BlueprintCallable)

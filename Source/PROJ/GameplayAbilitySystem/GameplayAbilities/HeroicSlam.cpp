@@ -5,6 +5,7 @@
 
 #include "AbilitySystemGlobals.h"
 #include "Abilities/Tasks/AbilityTask_WaitTargetData.h"
+#include "Components/CapsuleComponent.h"
 #include "Engine/OverlapResult.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -56,35 +57,49 @@ void UHeroicSlam::OnConfirm(const FGameplayAbilityTargetDataHandle& Data)
 	/*Get Location Marked With Indicator*/
 	if (Data.Num() > 0)
 	{
+		/*Gets TargetData*/
 		const FGameplayAbilityTargetData* TargetData = Data.Get(0);
 		if (TargetData)
 		{
+			/*Sets TargetLocation via HitData*/
 			if (const FGameplayAbilityTargetData_SingleTargetHit* HitData =
 				static_cast<const FGameplayAbilityTargetData_SingleTargetHit*>(TargetData))
 			{
 				TargetLocation = HitData->HitResult.ImpactPoint;
-				UE_LOG(LogTemp, Warning, TEXT("TargetLocation from Hit Result: %f,%f,%f"), TargetLocation.X,TargetLocation.Y,TargetLocation.Z);
 			}
+			/*Sets TargetLocation via LocationData if no there is no HitData*/
 			else if (const FGameplayAbilityTargetData_LocationInfo* LocationData =
 				static_cast<const FGameplayAbilityTargetData_LocationInfo*>(TargetData))
 			{
 				TargetLocation = LocationData->GetEndPoint();
-				UE_LOG(LogTemp, Warning, TEXT("TargetLocation from GetEndPoint: %f,%f,%f"), TargetLocation.X,TargetLocation.Y,TargetLocation.Z);
 			}
 			/*Call Launch Logic*/
 			LaunchToTarget();
 		}
 	}
 }
+
+void UHeroicSlam::RestorAirFriction()
+{
+	auto* Move = CachedPlayer->GetCharacterMovement();
+	Move->MaxWalkSpeed = CachedOriginalMaxSpeed;
+	Move->AirControl = OriginalAirControl;
+	Move->BrakingDecelerationFalling = OriginalBraking;
+	Move->FallingLateralFriction = OriginalFriction;
+	Move->SetMovementMode(MOVE_Walking);
+}
+
 void UHeroicSlam::LaunchToTarget()
 {
-	ESuggestProjVelocityTraceOption::Type TraceOption = ESuggestProjVelocityTraceOption::DoNotTrace;
+	ESuggestProjVelocityTraceOption::Type TraceOption = ESuggestProjVelocityTraceOption::OnlyTraceWhileAscending;
 	FCollisionResponseParams& ResponseParam = FCollisionResponseParams::DefaultResponseParam;
 	TArray<AActor*> ActorsToIgnore;
 	ActorsToIgnore.Add(CachedPlayer);
 	
 	FVector Start = CachedPlayer->GetActorLocation();
 	FVector End = TargetLocation;
+	/*Because Target location is on ground level and player start is above ground(Better calculation imo*TEST*)*/
+	End.Z += CachedPlayer->GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
 	
 	FVector LaunchVelocity;
 	bool bHasSolution = UGameplayStatics::SuggestProjectileVelocity(
@@ -102,27 +117,38 @@ void UHeroicSlam::LaunchToTarget()
 		true,
 		false);
 	
-	/*Runs if SuggestProjVel is true*/
-	if (bHasSolution)
-	{
-		/*Get players current MaxWalkSpeed*/
-		float OriginalMaxSpeed = CachedPlayer->GetCharacterMovement()->MaxWalkSpeed;
-		/*Raises player MaxWalkSpeed*/
-		CachedPlayer->GetCharacterMovement()->MaxWalkSpeed = FMath::Max(LaunchVelocity.Length() + 100.f, OriginalMaxSpeed);
-		CachedPlayer->GetCharacterMovement()->StopMovementImmediately();
-		/*Launch player in an arc*/
-		CachedPlayer->LaunchCharacter(LaunchVelocity, true, true);
-		/*Save the cached MaxWalkSpeed*/
-		CachedOriginalMaxSpeed = OriginalMaxSpeed;
+	if (!bHasSolution) return;
 
-		/*Set a timer to check every 0.1 sec to see if the player landed to restore MS*/
-		GetWorld()->GetTimerManager().SetTimer(
-		LandingCheckTimer,
-		this,
-		&UHeroicSlam::LandingCheck,
-		0.1f,
-		true);
-	}
+	auto* Move = CachedPlayer->GetCharacterMovement();
+	if (!Move) return;
+
+	/*Save original settings to restore later*/
+	CachedOriginalMaxSpeed = Move->MaxWalkSpeed;
+	OriginalAirControl = Move->AirControl;
+	OriginalBraking = Move->BrakingDecelerationFalling;
+	OriginalFriction = Move->FallingLateralFriction;
+
+	/*Disable stuff that reduce arc distance*/
+	Move->AirControl = 0.f;
+	Move->BrakingDecelerationFalling = 0.f;
+	Move->FallingLateralFriction = 0.f;
+
+	/*Increase MaxWalkSpeed*/
+	Move->MaxWalkSpeed = LaunchVelocity.Size();
+	/*Movementmodes*/
+	Move->StopMovementImmediately();
+	Move->SetMovementMode(MOVE_Falling);
+	
+	/*Launch player in an arc*/
+	CachedPlayer->LaunchCharacter(LaunchVelocity, true, true);
+
+	/*Set a timer to check every 0.1 sec to see if the player landed to restore MS*/
+	GetWorld()->GetTimerManager().SetTimer(
+	LandingCheckTimer,
+	this,
+	&UHeroicSlam::LandingCheck,
+	0.1f,
+	true);
 }
 void UHeroicSlam::LandingCheck()
 {
@@ -130,6 +156,12 @@ void UHeroicSlam::LandingCheck()
 	if (!CachedPlayer) return;
 	if (!CachedPlayer->GetCharacterMovement()->IsMovingOnGround()) return;
 
+	auto* Move = CachedPlayer->GetCharacterMovement();
+	FVector Vel = Move->Velocity;
+	Vel.X = 0.f,
+	Vel.Y = 0.f;
+	Move->Velocity = Vel;
+	
 	FVector Origin = CachedPlayer->GetActorLocation();
 	TArray<FOverlapResult> Overlaps;
 
@@ -155,15 +187,11 @@ void UHeroicSlam::LandingCheck()
 		}
 	}
 	DrawDebugSphere(GetWorld(), Origin, SlamRadius, 32, FColor::Blue, false, 2.f);
-	if (SlamCameraShake)
-	{
-		if (APlayerController* PC = Cast<APlayerController>(CachedPlayer->GetController()))
-		{
-			PC->ClientStartCameraShake(SlamCameraShake);
-		}
-	}
-	CachedPlayer->GetCharacterMovement()->MaxWalkSpeed = CachedOriginalMaxSpeed;
+	/*Reset all movement attributes*/
+	RestorAirFriction();
+	/*Reset timer*/
 	GetWorld()->GetTimerManager().ClearTimer(LandingCheckTimer);
+	
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 	
 }
