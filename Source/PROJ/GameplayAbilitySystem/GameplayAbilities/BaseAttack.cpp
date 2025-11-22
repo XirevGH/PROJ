@@ -4,6 +4,7 @@
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "PROJ/Characters/BaseCharacter.h"
+#include "PROJ/Data/AttackData.h"
 #include "PROJ/Weapon/Weapon.h"
 
 UBaseAttack::UBaseAttack()
@@ -26,10 +27,9 @@ void UBaseAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
-	
-	if (!MyMontage)
+	if (!AttackData)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("MyMontage is null"));
+		UE_LOG(LogTemp, Error, TEXT("AttackData not set on ability BaseAttack"))
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 		return;
 	}
@@ -38,8 +38,8 @@ void UBaseAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	if (!HasAuthority(&ActivationInfo)) return;
 
 	if (!SetupPlayerWeapon()) return;
-
-	SetupHitScanTasks();
+	if (AttackData->bUseHitScan)
+		SetupHitScanTasks();
 }
 bool UBaseAttack::SetupPlayerWeapon()
 {
@@ -93,11 +93,16 @@ void UBaseAttack::ClearExistingTasks()
 
 void UBaseAttack::PlayMontage()
 {
+	if (!AttackData || !AttackData->Montage)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Attack montage missing in data."))
+		return;
+	}
 	/*Montage start*/
 	auto* MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
 	this,
 	TEXT("MyMontageTask"),
-	MyMontage,
+	AttackData->Montage,
 	1.0f,
 	NAME_None,
 	true);
@@ -111,18 +116,16 @@ void UBaseAttack::PlayMontage()
 
 void UBaseAttack::OnHitscanStart(FGameplayEventData Payload)
 {
-	if (!EquippedWeapon)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Current weapon null in HitScanStart"));
-		return;
-	}
+	if (!EquippedWeapon) return;
+
+	float Interval = AttackData->HitScanInterval;
 	
 	if (!EquippedWeapon->bIsHitscanActive)
 	{
 		if (!EquippedWeapon->HasAuthority())
-			EquippedWeapon->Server_HitScanStart(1.f/30.f);
+			EquippedWeapon->Server_HitScanStart(Interval);
 		else
-			EquippedWeapon->HitScanStart(1.f/30.f);
+			EquippedWeapon->HitScanStart(Interval);
 	}
 }
 

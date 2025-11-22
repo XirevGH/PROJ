@@ -6,13 +6,14 @@
 #include "BaseGameplayAbility.h"
 #include "BaseAttack.generated.h"
 
+class UAttackData;
 class UAbilityTask_WaitGameplayEvent;
 class AWeapon;
 class UAbilityTask_PlayMontageAndWait;
 /**
  * 
  */
-UCLASS()
+UCLASS(Blueprintable)
 class PROJ_API UBaseAttack : public UBaseGameplayAbility
 {
 	GENERATED_BODY()
@@ -34,10 +35,12 @@ class PROJ_API UBaseAttack : public UBaseGameplayAbility
 	
 	bool bIsHitscanActive = false;
 	
+	UAttackData* GetAttackData() const { return AttackData; }
+	
 protected:
-	bool SetupPlayerWeapon();
-	void SetupHitScanTasks();
-	void ClearExistingTasks();
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AttackData")
+	UAttackData* AttackData;
+	
 	
 	virtual  void ActivateAbility(
 		const FGameplayAbilitySpecHandle Handle,
@@ -50,18 +53,20 @@ protected:
 		const FGameplayAbilityActivationInfo ActivationInfo,
 		bool bReplicatedEndAbility,
 		bool bWasCancelled) override;
-
-	UFUNCTION()
+	
+	bool SetupPlayerWeapon();
+	void SetupHitScanTasks();
+	void ClearExistingTasks();
 	void PlayMontage();
+	
+	/*Events from HitScan*/
 	UFUNCTION()
 	void OnHitscanStart(FGameplayEventData Payload);
 
 	UFUNCTION()
 	void OnHitscanEnd(FGameplayEventData Payload);
-	
-	UFUNCTION(BlueprintImplementableEvent)
-	void OntargetReady(const FGameplayAbilityTargetDataHandle& TargetData);
-	
+
+	/*Montage events*/
 	UFUNCTION()
 	void OnMontageCompleted();
 
