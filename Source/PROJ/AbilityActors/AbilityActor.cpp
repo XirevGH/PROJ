@@ -74,3 +74,22 @@ bool AAbilityActor::ApplyEffectToTarget(const AActor* Target)
 	
 	return true;
 }
+bool AAbilityActor::InitializeAbilityActor(
+	AActor* InCaster, 
+	UAbilitySystemComponent* InCasterASC,
+	UBaseGameplayAbility* InCastedAbility,
+	const TArray<FGameplayEffectSpecHandle>& InEffectSpecHandles)
+{
+	if (!InCaster || !InCasterASC || !InCastedAbility)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("InitializeAbilityActor failed: invalid input"));
+		return false;
+	}
+
+	Caster = InCaster;
+	CasterASC = InCasterASC;
+	CastedAbility = InCastedAbility;
+	EffectSpecHandles = InEffectSpecHandles;
+    
+	return true;
+}
