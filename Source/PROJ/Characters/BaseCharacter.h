@@ -6,8 +6,8 @@
 #include "InputAction.h"
 #include "AbilitySystemInterface.h"
 #include "InputActionValue.h"
-#include "GameplayAbilitySystem/BasePlayerState.h"
-#include "GameplayAbilitySystem/AttributeSets/CharacterAttributeSet.h"
+#include "../Framework/BasePlayerState.h"
+#include "PROJ/GameplayAbilitySystem/AttributeSets/CharacterAttributeSet.h"
 #include "Net/UnrealNetwork.h"
 #include "BaseCharacter.generated.h"
 

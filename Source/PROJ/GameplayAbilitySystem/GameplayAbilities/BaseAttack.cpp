@@ -3,7 +3,7 @@
 #include "BaseAttack.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
-#include "PROJ/BaseCharacter.h"
+#include "PROJ/Characters/BaseCharacter.h"
 #include "PROJ/Weapon/Weapon.h"
 
 UBaseAttack::UBaseAttack()
