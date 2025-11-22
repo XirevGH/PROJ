@@ -78,8 +78,8 @@ FHitResult AGATA_GroundTrace_Indicator::PerformTrace(AActor* InSourceActor)
 	FVector GroundTraceStart = DesiredLocation; // start above
 	FVector GroundTraceEnd = DesiredLocation - FVector(0, 0, 5000.f);   // trace down
 	GetWorld()->LineTraceSingleByChannel(Hit, GroundTraceStart, GroundTraceEnd, ECC_Visibility, TraceParams);
-	DrawDebugSphere(GetWorld(),Hit.Location, 50.0f, 24,  FColor::Red, true);
-	DrawDebugLine(GetWorld(),GroundTraceStart, Hit.Location, FColor::Red, true);
+	//DrawDebugSphere(GetWorld(),Hit.Location, 50.0f, 24,  FColor::Red, true);
+	//DrawDebugLine(GetWorld(),GroundTraceStart, Hit.Location, FColor::Red, true);
 	
 	bool bWalkable = false;
 	if (ABaseCharacter* Char = Cast<ABaseCharacter>(InSourceActor))
@@ -96,7 +96,7 @@ FHitResult AGATA_GroundTrace_Indicator::PerformTrace(AActor* InSourceActor)
 		GroundTraceStart = PlayerPosition + FVector(0, 0, 500.f);
 		GroundTraceEnd = PlayerPosition - FVector(0, 0, 5000.f);
 		GetWorld()->LineTraceSingleByChannel(Hit, GroundTraceStart, GroundTraceEnd, ECC_Visibility, TraceParams);
-		DrawDebugSphere(GetWorld(),Hit.Location, 50.0f, 24,  FColor::Green, true);
+		//DrawDebugSphere(GetWorld(),Hit.Location, 50.0f, 24,  FColor::Green, true);
 	}
 
 	return Hit;
