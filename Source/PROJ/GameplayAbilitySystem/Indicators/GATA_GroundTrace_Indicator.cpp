@@ -61,9 +61,7 @@ FHitResult AGATA_GroundTrace_Indicator::PerformTrace(AActor* InSourceActor)
 
 	FHitResult MouseHit;
 	GetWorld()->LineTraceSingleByChannel(MouseHit, WorldOrigin, CameraTraceEnd, ECC_Visibility, TraceParams);
-	
-	//DrawDebugLine(GetWorld(),WorldOrigin, CameraTraceEnd, FColor::Red, true);
-	
+
 	// Use either the hit location or the far point
 	FVector DesiredLocation = MouseHit.bBlockingHit ? MouseHit.Location : CameraTraceEnd;
 
@@ -77,21 +75,29 @@ FHitResult AGATA_GroundTrace_Indicator::PerformTrace(AActor* InSourceActor)
 		Direction = Direction.GetSafeNormal();
 		DesiredLocation = PlayerPosition + Direction * MaxRange;
 	}
-	TraceParams.bTraceComplex = true;
-    TraceParams.AddIgnoredActor(MouseHit.GetActor());
-	
-	FVector GroundTraceStart = DesiredLocation;
-	FVector GroundTraceEnd = DesiredLocation - FVector(0, 0, MaxRange + MaxRange);   // trace down
+	FVector GroundTraceStart = DesiredLocation; // start above
+	FVector GroundTraceEnd = DesiredLocation - FVector(0, 0, 5000.f);   // trace down
 	GetWorld()->LineTraceSingleByChannel(Hit, GroundTraceStart, GroundTraceEnd, ECC_Visibility, TraceParams);
-	if (!Hit.GetActor())
+	//DrawDebugSphere(GetWorld(),Hit.Location, 50.0f, 24,  FColor::Red, true);
+	//DrawDebugLine(GetWorld(),GroundTraceStart, Hit.Location, FColor::Red, true);
+	
+	bool bWalkable = false;
+	if (ABaseCharacter* Char = Cast<ABaseCharacter>(InSourceActor))
 	{
-		TraceParams.ClearIgnoredSourceObjects();
-		TraceParams.AddIgnoredActor(this);
-		GetWorld()->LineTraceSingleByChannel(Hit, GroundTraceStart, GroundTraceEnd, ECC_Visibility);
+		float WalkableAngle = Char->GetCharacterMovement()->GetWalkableFloorAngle();
+		// Compare normal with Up vector
+		float FloorAngle = FMath::RadiansToDegrees(FMath::Acos(FVector::DotProduct(Hit.ImpactNormal, FVector::UpVector)));
+		bWalkable = FloorAngle <= WalkableAngle;
 	}
-	
-	DrawDebugLine(GetWorld(),GroundTraceStart, GroundTraceEnd, FColor::Green, true);
-	
+
+	// If not walkable, project straight down from player
+	if (!bWalkable)
+	{
+		GroundTraceStart = PlayerPosition + FVector(0, 0, 500.f);
+		GroundTraceEnd = PlayerPosition - FVector(0, 0, 5000.f);
+		GetWorld()->LineTraceSingleByChannel(Hit, GroundTraceStart, GroundTraceEnd, ECC_Visibility, TraceParams);
+		//DrawDebugSphere(GetWorld(),Hit.Location, 50.0f, 24,  FColor::Green, true);
+	}
 
 	return Hit;
 }
