@@ -2,8 +2,20 @@
 
 
 #include "GATA_GroundTrace_Indicator.h"
+
+#include "CollisionDebugDrawingPublic.h"
 #include "Components/DecalComponent.h"
 #include "Components/SceneComponent.h"
+#include "GameFramework/Actor.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "PROJ/BaseCharacter.h"
+
+
+void AGATA_GroundTrace_Indicator::BeginPlay()
+{
+	Super::BeginPlay();
+	Decal->DecalSize = Size;
+}
 
 AGATA_GroundTrace_Indicator::AGATA_GroundTrace_Indicator()
 {
@@ -11,7 +23,81 @@ AGATA_GroundTrace_Indicator::AGATA_GroundTrace_Indicator()
 	Root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
 	SetRootComponent(Root);
 	Decal->SetupAttachment(Root);
+	
+}
 
+FHitResult AGATA_GroundTrace_Indicator::PerformTrace(AActor* InSourceActor)
+{
+	FHitResult Hit;
+	if (!InSourceActor) return Hit;
+
+	APawn* Pawn = Cast<APawn>(InSourceActor);
+	APlayerController* CasterController = Pawn ? Cast<APlayerController>(Pawn->GetController()) : nullptr;
+	if (!CasterController)
+	{
+		UE_LOG(LogTemp, Error, TEXT("No APlayerController"));
+		return Hit;
+	}
+
+	float MouseX, MouseY;
+	if (!CasterController->GetMousePosition(MouseX, MouseY))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Can't get mouse position"));
+		return Hit;
+	}
+
+	FVector WorldOrigin, WorldDirection;
+	if (!CasterController->DeprojectScreenPositionToWorld(MouseX, MouseY, WorldOrigin, WorldDirection))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Can't deproject screen position"));
+		return Hit;
+	}
+	//DrawDebugSphere(GetWorld(),WorldOrigin, 50.0f, 24,  FColor::Red, true);
 	
+	// Trace from camera to get mouse world location on the ground
+	FVector CameraTraceEnd = WorldOrigin + WorldDirection * 100000.f;
+	FCollisionQueryParams TraceParams;
+	TraceParams.AddIgnoredActor(this);
+
+	FHitResult MouseHit;
+	GetWorld()->LineTraceSingleByChannel(MouseHit, WorldOrigin, CameraTraceEnd, ECC_Visibility, TraceParams);
+
+	// Use either the hit location or the far point
+	FVector DesiredLocation = MouseHit.bBlockingHit ? MouseHit.Location : CameraTraceEnd;
+
+	// Clamp to MaxRange from player/caster
+	FVector PlayerPosition = InSourceActor->GetActorLocation();
+	FVector Direction = DesiredLocation - PlayerPosition;
+	float Distance = Direction.Size();
+
+	if (Distance > MaxRange)
+	{
+		Direction = Direction.GetSafeNormal();
+		DesiredLocation = PlayerPosition + Direction * MaxRange;
+	}
+	FVector GroundTraceStart = DesiredLocation; // start above
+	FVector GroundTraceEnd = DesiredLocation - FVector(0, 0, 5000.f);   // trace down
+	GetWorld()->LineTraceSingleByChannel(Hit, GroundTraceStart, GroundTraceEnd, ECC_Visibility, TraceParams);
+	//DrawDebugSphere(GetWorld(),Hit.Location, 50.0f, 24,  FColor::Red, true);
+	//DrawDebugLine(GetWorld(),GroundTraceStart, Hit.Location, FColor::Red, true);
 	
+	bool bWalkable = false;
+	if (ABaseCharacter* Char = Cast<ABaseCharacter>(InSourceActor))
+	{
+		float WalkableAngle = Char->GetCharacterMovement()->GetWalkableFloorAngle();
+		// Compare normal with Up vector
+		float FloorAngle = FMath::RadiansToDegrees(FMath::Acos(FVector::DotProduct(Hit.ImpactNormal, FVector::UpVector)));
+		bWalkable = FloorAngle <= WalkableAngle;
+	}
+
+	// If not walkable, project straight down from player
+	if (!bWalkable)
+	{
+		GroundTraceStart = PlayerPosition + FVector(0, 0, 500.f);
+		GroundTraceEnd = PlayerPosition - FVector(0, 0, 5000.f);
+		GetWorld()->LineTraceSingleByChannel(Hit, GroundTraceStart, GroundTraceEnd, ECC_Visibility, TraceParams);
+		//DrawDebugSphere(GetWorld(),Hit.Location, 50.0f, 24,  FColor::Green, true);
+	}
+
+	return Hit;
 }

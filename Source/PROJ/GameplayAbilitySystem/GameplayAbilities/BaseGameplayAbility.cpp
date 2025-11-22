@@ -2,8 +2,8 @@
 
 
 #include "BaseGameplayAbility.h"
-
 #include "AbilitySystemComponent.h"
+#include "AbilitySystemGlobals.h"
 
 
 
@@ -11,13 +11,14 @@ void UBaseGameplayAbility::OnGiveAbility(const FGameplayAbilityActorInfo* ActorI
 {
 	Super::OnGiveAbility(ActorInfo, Spec);
 
-	FGameplayTag CooldownTag = GetCooldownTagFromInputID(InputTag);
-
+	CooldownTag = GetCooldownTagFromInputID(InputTag);
+	if (CooldownTag.IsValid())
+	{
+		CooldownTagContainer.AddTag(CooldownTag);
+	}
+	
 	ActivationBlockedTags.AddTag(CooldownTag);
-
-	UE_LOG(LogTemp, Warning, TEXT("InputTag  is  %s "), *InputTag.ToString());
-	UE_LOG(LogTemp, Warning, TEXT("GetCooldownTagFromInputID Tag is  %s "), *GetCooldownTagFromInputID(InputTag).ToString());
-	UE_LOG(LogTemp, Warning, TEXT("ActivationBlockedTags is  %s "), *ActivationBlockedTags.GetByIndex(1).ToString());
+	
 }
 
 void UBaseGameplayAbility::ApplyCooldown(const FGameplayAbilitySpecHandle Handle,
@@ -25,23 +26,55 @@ void UBaseGameplayAbility::ApplyCooldown(const FGameplayAbilitySpecHandle Handle
 {
 	Super::ApplyCooldown(Handle, ActorInfo, ActivationInfo);
 
-	if (!CooldownGameplayEffectClass || !ActorInfo) return;
+	if (!CooldownGameplayEffectClass || !ActorInfo)
+		return;
 
 	// Create spec
 	FGameplayEffectSpecHandle SpecHandle = MakeOutgoingGameplayEffectSpec(CooldownGameplayEffectClass, GetAbilityLevel());
-	if (!SpecHandle.IsValid()) return;
+	if (!SpecHandle.IsValid())
+		return;
 
 	FGameplayEffectSpec* Spec = SpecHandle.Data.Get();
-	if (!Spec) return;
+	if (!Spec)
+		return;
 	
-	// Set the cooldown duration
 	Spec->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(TEXT("Data.Cooldown.Duration")), Cooldown);
-
-	// Add the cooldown tag dynamically so your manager sees it
-	const FGameplayTag CooldownTag = GetCooldownTagFromInputID(InputTag);
-	Spec->DynamicGrantedTags.AddTag(CooldownTag);
 	
+	//const FGameplayTag& CooldownTag = GetCooldownTagFromInputID(InputTag); // e.g., Cooldown.Slot.Primary
+	
+	Spec->DynamicGrantedTags.AddTag(CooldownTag);
 	ApplyGameplayEffectSpecToOwner(Handle, ActorInfo, ActivationInfo, SpecHandle);
+
+}
+
+TArray<FGameplayEffectSpecHandle> UBaseGameplayAbility::MakeEffectSpecsHandles()
+{
+	TArray<FGameplayEffectSpecHandle> Specs;
+
+	UAbilitySystemComponent* CasterASC = GetAbilitySystemComponentFromActorInfo();
+	if (!CasterASC) return Specs;
+
+	for (TSubclassOf<UGameplayEffect> EffectClass : Effects)
+	{
+		if (!EffectClass) continue;
+
+		FGameplayEffectContextHandle EffectContext = CasterASC->MakeEffectContext();
+		FGameplayEffectSpecHandle SpecHandle = CasterASC->MakeOutgoingSpec(EffectClass, GetAbilityLevel(), EffectContext);
+
+		if (!SpecHandle.IsValid()) continue;
+
+		FGameplayEffectSpec* Spec = SpecHandle.Data.Get();
+		if (!Spec) continue;
+
+		// Apply values from member variable
+		for (const TPair<FGameplayTag, float>& Pair : SetByCallerValues)
+		{
+			Spec->SetSetByCallerMagnitude(Pair.Key, Pair.Value);
+		}
+		Specs.Add(SpecHandle);
+	}
+
+	return Specs;
 }
 
 FGameplayTag UBaseGameplayAbility::GetCooldownTagFromInputID(const FGameplayTag InputTag) 
@@ -60,4 +93,9 @@ FGameplayTag UBaseGameplayAbility::GetCooldownTagFromInputID(const FGameplayTag 
 	FString CooldownTagString = FString::Printf(TEXT("Cooldown.Ability.%s"), *Last);
 
 	return FGameplayTag::RequestGameplayTag(FName(*CooldownTagString), false);
+}
+
+const FGameplayTagContainer* UBaseGameplayAbility::GetCooldownTags() const
+{
+	return &CooldownTagContainer;
 }

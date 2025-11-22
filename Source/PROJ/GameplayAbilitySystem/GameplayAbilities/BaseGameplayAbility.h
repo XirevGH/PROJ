@@ -19,21 +19,30 @@ public:
 	 virtual void OnGiveAbility(const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec) override;
 	virtual void ApplyCooldown(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) const override;
 
-	static FGameplayTag GetCooldownTagFromInputID(const FGameplayTag InputTag);
+	UFUNCTION(BlueprintCallable)
+	TArray<FGameplayEffectSpecHandle> MakeEffectSpecsHandles();
 	
+	static FGameplayTag GetCooldownTagFromInputID(const FGameplayTag InputTag);
+	virtual const FGameplayTagContainer* GetCooldownTags() const override;
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Custom Values| Input")
 	FGameplayTag InputTag;
 	
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category =  "Ability")
 	EAbilityInputID AbilityInputID{ EAbilityInputID::None };
-
+	
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category="Effects")
-	TArray<TSubclassOf<UGameplayEffect>> DefaultEffects;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Damage")
-	float BaseDamage = 0;
-
+	TArray<TSubclassOf<UGameplayEffect>> Effects;
+	
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category="Effects")
+	TMap<FGameplayTag, float> SetByCallerValues;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Cooldown")
 	float Cooldown = 0;
+
+	UPROPERTY()
+	FGameplayTag CooldownTag;   
+
+	UPROPERTY()
+	FGameplayTagContainer CooldownTagContainer;
 };

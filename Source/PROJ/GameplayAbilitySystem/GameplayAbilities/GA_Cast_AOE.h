@@ -10,7 +10,7 @@
 /**
  * 
  */
-class AIndicator;
+class AGameplayAbilityTargetActor;
 
 UCLASS()
 class PROJ_API UGA_Cast_AOE : public UBaseGameplayAbility
@@ -19,10 +19,10 @@ class PROJ_API UGA_Cast_AOE : public UBaseGameplayAbility
 	
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<AIndicator> IndicatorClass;
+	TSubclassOf<AGameplayAbilityTargetActor> IndicatorClass;
 
 	UPROPERTY()
-	AIndicator* Indicator;
+	AGameplayAbilityTargetActor* Indicator;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float Range;
@@ -49,11 +49,17 @@ protected:
 		const FGameplayEventData* TriggerEventData) override;
 	
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-	void OnCancel();
-	virtual void OnCancel_Implementation();
+	void OnCancel(const FGameplayAbilityTargetDataHandle& Data);
+	virtual void OnCancel_Implementation(const FGameplayAbilityTargetDataHandle& Data);
 
 	
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-	void OnConfirm();
-	virtual void OnConfirm_Implementation();
+	void OnConfirm(const FGameplayAbilityTargetDataHandle& Data);
+	virtual void OnConfirm_Implementation(const FGameplayAbilityTargetDataHandle& Data);
+
+	UFUNCTION()
+	void OnTargetDataReceived(const FGameplayAbilityTargetDataHandle& Data);
+	UFUNCTION()
+	void OnTargetDataCancelled(const FGameplayAbilityTargetDataHandle& Data);
+	
 };

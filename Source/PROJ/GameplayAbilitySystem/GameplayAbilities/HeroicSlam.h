@@ -6,6 +6,9 @@
 #include "BaseGameplayAbility.h"
 #include "HeroicSlam.generated.h"
 
+class AGameplayAbilityTargetActor;
+class ABaseCharacter;
+class UNiagaraSystem;
 /**
  * 
  */
@@ -18,6 +21,40 @@ public:
 
 	UHeroicSlam();
 
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<AGameplayAbilityTargetActor> IndicatorClass;
+
+	UPROPERTY()
+	AGameplayAbilityTargetActor* Indicator;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float Range;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float Radius;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float Height;
+
+	/*UPROPERTY(EditDefaultsOnly, Category="Slam")
+	UNiagaraSystem* SlamVFX;*/
+
+	UPROPERTY(EditDefaultsOnly, Category="Slam")
+	TSubclassOf<UCameraShakeBase> SlamCameraShake;
+
+	UPROPERTY(EditDefaultsOnly, Category="Slam")
+	float SlamRadius = 500.f;
+
+	UFUNCTION(BlueprintCallable)
+	void LaunchToTarget();
+	UFUNCTION(BlueprintCallable)
+	void OnConfirm(const FGameplayAbilityTargetDataHandle& Data);
+	UFUNCTION(BlueprintCallable)
+	void OnCancel(const FGameplayAbilityTargetDataHandle& Data);
+	UFUNCTION()
+	void ApplyEffectsToTarget(AActor* Target);
+	
 	virtual void ActivateAbility(
 		const FGameplayAbilitySpecHandle Handle,
 		const FGameplayAbilityActorInfo* ActorInfo,
@@ -29,4 +66,18 @@ public:
 		const FGameplayAbilityActorInfo* ActorInfo,
 	    const FGameplayAbilityActivationInfo ActivationInfo,
 	    bool bReplicatedEndAbility, bool bWasCancelled) override;
+private:
+	UPROPERTY()
+	FVector TargetLocation;
+
+	UPROPERTY()
+	float CachedOriginalMaxSpeed = 600.f;
+
+	UPROPERTY()
+	ABaseCharacter* CachedPlayer;
+
+	FTimerHandle LandingCheckTimer;
+
+	UFUNCTION()
+	void LandingCheck();
 };

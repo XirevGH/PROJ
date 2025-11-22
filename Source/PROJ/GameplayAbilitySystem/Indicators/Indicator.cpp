@@ -8,7 +8,8 @@
 // Sets default values
 AIndicator::AIndicator()
 {
-	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	bReplicates = false;
+	SetReplicates(false);
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.TickGroup = TG_PostUpdateWork;
 
@@ -74,7 +75,18 @@ void AIndicator::Tick(float DeltaTime)
 	{
 		FHitResult HitResult = PerformTrace();
 		FVector EndPoint = HitResult.Location;
-		SetActorLocation(EndPoint);
+
+		FVector PlayerLocation = Caster->GetActorLocation();
+		FVector Direction = EndPoint - PlayerLocation;
+
+		float Distance = Direction.Size();
+		if (Distance > MaxRange)
+		{
+			Direction = Direction.GetSafeNormal() * MaxRange;
+		}
+		FVector ClampedLocation = PlayerLocation + Direction;
+		
+		SetActorLocation(ClampedLocation);
 	}
 }
 
