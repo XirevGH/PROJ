@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Abilities/GameplayAbility.h"
-#include "./PROJ/PROJ.h"
+#include "PROJ/Core/PROJ.h"
 #include "BaseGameplayAbility.generated.h"
 
 /**

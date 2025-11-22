@@ -4,7 +4,7 @@
 #include "BaseAbilitySystemLibrary.h"
 
 #include "Kismet/GameplayStatics.h"
-#include "PROJ/GameMode/BaseGameMode.h"
+#include "PROJ/Framework/BaseGameMode.h"
 
 UCharacterClassInfo* UBaseAbilitySystemLibrary::GetCharacterClassDefaultInfo(const UObject* WorldContextObject)
 {

@@ -6,7 +6,7 @@
 #include "GameplayEffectTypes.h"
 #include "AbilitySystemGlobals.h"
 #include "Components/CapsuleComponent.h"
-#include "PROJ/BaseCharacter.h"
+#include "PROJ/Characters/BaseCharacter.h"
 #include "PROJ/GameplayAbilitySystem/GameplayAbilities/BaseAttack.h"
 #include "PROJ/GameplayAbilitySystem/GameplayAbilities/BaseGameplayAbility.h"
 
