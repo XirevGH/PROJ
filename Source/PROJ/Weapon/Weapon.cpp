@@ -7,7 +7,6 @@
 #include "AbilitySystemGlobals.h"
 #include "Components/CapsuleComponent.h"
 #include "PROJ/Characters/BaseCharacter.h"
-#include "PROJ/Data/AttackData.h"
 #include "PROJ/GameplayAbilitySystem/GameplayAbilities/BaseAttack.h"
 #include "PROJ/GameplayAbilitySystem/GameplayAbilities/BaseGameplayAbility.h"
 
@@ -64,10 +63,8 @@ void AWeapon::ApplyEffectToTarget(AActor* Target)
 	UAbilitySystemComponent* OwnerASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GetOwner());
 	
 	if (!OwnerASC || !TargetASC) return;
-
-	UAttackData* Data = Ability->GetAttackData();
 	
-	for (auto& EffectClass : Data->Effects)
+	for (auto& EffectClass : Effects)
 	{
 		if (!EffectClass) continue;
 		FGameplayEffectContextHandle EffectContext = OwnerASC->MakeEffectContext();
@@ -128,6 +125,27 @@ void AWeapon::HitScan()
 			ApplyEffectToTarget(HitActor);
 		}
 	}
+	/*bool bHit = GetWorld()->LineTraceMultiByChannel(
+	HitResults,
+	Start,
+	End,
+	ECC_Pawn,
+	TraceParams);
+	
+	if (bHit)
+	{
+		for (auto& Hit : HitResults)
+		{
+			AActor* HitActor = Hit.GetActor();
+			if (!HitActor) continue;
+			
+			if (!Targets.Contains(HitActor))
+			{
+				Targets.Add(HitActor);
+				ApplyEffectToTarget(HitActor);
+			}
+		}
+	}*/
 #if	WITH_EDITOR
 	DrawDebugLine(GetWorld(), Start, End, FColor::Green, false, 2.f, 0, 2.f);
 	for (auto& Hit : HitResults)
