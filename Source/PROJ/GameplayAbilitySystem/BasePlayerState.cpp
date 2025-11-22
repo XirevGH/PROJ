@@ -1,8 +1,8 @@
 
 #include "BasePlayerState.h"
 #include "AbilitySystemComponent.h"
-#include "PROJ/GameplayAbilitySystem/BaseAbilitySystemComponent.h"
-#include "PROJ/GameplayAbilitySystem/AttributeSets/CharacterAttributeSet.h"
+#include "BaseAbilitySystemComponent.h"
+#include "AttributeSets/CharacterAttributeSet.h"
 
 ABasePlayerState::ABasePlayerState()
 {

@@ -9,7 +9,7 @@
 #include "Engine/OverlapResult.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
-#include "PROJ/Characters/BaseCharacter.h"
+#include "PROJ/BaseCharacter.h"
 
 
 

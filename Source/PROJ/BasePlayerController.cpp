@@ -2,9 +2,9 @@
 
 
 #include "BasePlayerController.h"
-#include "../GameplayAbilitySystem/BaseAbilitySystemComponent.h"
-#include "BasePlayerState.h"
-#include "../Input/BaseEnhancedInputComponent.h"
+#include "GameplayAbilitySystem/BaseAbilitySystemComponent.h"
+#include "GameplayAbilitySystem/BasePlayerState.h"
+#include "Input/BaseEnhancedInputComponent.h"
 
 void ABasePlayerController::SetupInputComponent()
 {

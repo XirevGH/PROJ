@@ -37,39 +37,33 @@ void UEOSGameInstance::DestroyCurrentSessionAndJoinCachedSession()
 	IOnlineSessionPtr SessionInterface = Online::GetSessionInterface(GetWorld());
 	if (!SessionInterface.IsValid() || !SessionName.IsValid() || SessionName == NAME_None)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("DestroyCurrentSessionAndJoinCachedSession:SessionInterface or Session name is invalid or SessionName is none"));
 		return;
 	}
-	if (DestroySessionDelegateHandle.IsValid())
-	{
-		SessionInterface->ClearOnDestroySessionCompleteDelegate_Handle(DestroySessionDelegateHandle);
-		DestroySessionDelegateHandle.Reset();
-	}
 	
-	DestroySessionDelegateHandle = SessionInterface->AddOnDestroySessionCompleteDelegate_Handle(
-		FOnDestroySessionCompleteDelegate::CreateUObject(this, &ThisClass::OnDestroySessionCompleted));
+	FOnDestroySessionCompleteDelegate Delegate;
+	Delegate.BindUObject(this, &ThisClass::OnDestroySessionCompleted);
 	
+	DestroySessionDelegateHandle = SessionInterface->AddOnDestroySessionCompleteDelegate_Handle(Delegate);
+    
 	SessionInterface->DestroySession(SessionName);
 	// JoinSavedSession called in OnDestroySessionCompleted
 }
 
 void UEOSGameInstance::OnDestroySessionCompleted(FName Name, bool bWasSuccessful)
 {
-	UE_LOG(LogTemp, Warning, TEXT("OnDestroySessionCompleted called"));
 	IOnlineSessionPtr SessionInterface = Online::GetSessionInterface(GetWorld());
-	if (!SessionInterface.IsValid()) return;
-
-	if (DestroySessionDelegateHandle.IsValid())
+	if (SessionInterface.IsValid())
 	{
+		// Clear the delegate handle
 		SessionInterface->ClearOnDestroySessionCompleteDelegate_Handle(DestroySessionDelegateHandle);
 		DestroySessionDelegateHandle.Reset();
 	}
     
 	if (bWasSuccessful)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("OnDestroySessionCompleted: Session destroyed with name: %s"), *Name.ToString());
 		// Clean up the local name on success
 		SessionName = NAME_None;
+
 		JoinSavedSession();
 	}
 }
@@ -307,14 +301,9 @@ void UEOSGameInstance::OnJoinSessionCompleted(FName Name, EOnJoinSessionComplete
 		IOnlineSessionPtr SessionInterface = Online::GetSessionInterface(GetWorld());
 		if (SessionInterface.IsValid())
 		{
-			UE_LOG(LogTemp, Display, TEXT("Initiate client travel"));
 			FString TravelURL;
 			SessionInterface->GetResolvedConnectString(Name, TravelURL);
 			GetFirstLocalPlayerController(GetWorld())->ClientTravel(TravelURL, TRAVEL_Absolute);
-		}
-		else
-		{
-			UE_LOG(LogTemp, Error, TEXT("OnJoinSessionCompleted: SessionInterface is invalid"));
 		}
 		SessionName = Name;
 		ClearCachedSession();

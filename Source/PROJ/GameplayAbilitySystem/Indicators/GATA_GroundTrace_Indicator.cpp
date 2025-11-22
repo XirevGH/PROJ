@@ -8,7 +8,7 @@
 #include "Components/SceneComponent.h"
 #include "GameFramework/Actor.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "PROJ/Characters/BaseCharacter.h"
+#include "PROJ/BaseCharacter.h"
 
 
 void AGATA_GroundTrace_Indicator::BeginPlay()
