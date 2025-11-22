@@ -33,12 +33,17 @@ class PROJ_API UBaseAttack : public UBaseGameplayAbility
 	UAbilityTask_WaitGameplayEvent* EndTask;
 	
 	bool bIsHitscanActive = false;
-
+	
 protected:
-	virtual  void ActivateAbility(const FGameplayAbilitySpecHandle Handle,
-		const FGameplayAbilityActorInfo* ActorInfo,
-		const FGameplayAbilityActivationInfo ActivationInfo,
-		const FGameplayEventData* TriggerEventData) override;
+	bool SetupPlayerWeapon();
+	void SetupHitScanTasks();
+	void ClearExistingTasks();
+	
+	virtual  void ActivateAbility(
+		const FGameplayAbilitySpecHandle Handle,
+	    const FGameplayAbilityActorInfo* ActorInfo,
+	    const FGameplayAbilityActivationInfo ActivationInfo,
+	    const FGameplayEventData* TriggerEventData) override;
 	
 	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle,
 		const FGameplayAbilityActorInfo* ActorInfo,
@@ -46,6 +51,8 @@ protected:
 		bool bReplicatedEndAbility,
 		bool bWasCancelled) override;
 
+	UFUNCTION()
+	void PlayMontage();
 	UFUNCTION()
 	void OnHitscanStart(FGameplayEventData Payload);
 

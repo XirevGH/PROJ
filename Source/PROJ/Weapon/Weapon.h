@@ -24,9 +24,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Mesh")
 	UStaticMeshComponent* Mesh;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Collider")
-	UCapsuleComponent* Collider;
-	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Owner")
 	ABaseCharacter* WeaponOwner;
 	
@@ -78,9 +75,5 @@ public:
 	UFUNCTION(Server, Reliable)
 	void Server_HitScanStart(float Interval = 0.03f);
 	void AttachWeapon();
-protected:
-	void AttachWeaponDelayed();
-	virtual void BeginPlay() override;
-	
 
 };
