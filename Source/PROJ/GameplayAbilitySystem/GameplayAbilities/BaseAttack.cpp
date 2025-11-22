@@ -105,12 +105,13 @@ void UBaseAttack::PlayMontage()
 	AttackData->Montage,
 	1.0f,
 	NAME_None,
-	true);
+	true,
+	1);
 	
 	MontageTask->OnCompleted.AddDynamic(this, &UBaseAttack::OnMontageCompleted);
 	MontageTask->OnInterrupted.AddDynamic(this, &UBaseAttack::OnMontageInterrupted);
 	MontageTask->OnCancelled.AddDynamic(this, &UBaseAttack::OnMontageCancelled);
-
+	
 	MontageTask->ReadyForActivation();
 }
 
