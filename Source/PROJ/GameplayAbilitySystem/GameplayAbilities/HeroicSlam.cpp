@@ -102,23 +102,39 @@ void UHeroicSlam::LaunchToTarget()
 	End.Z += CachedPlayer->GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
 	
 	FVector LaunchVelocity;
-	bool bHasSolution = UGameplayStatics::SuggestProjectileVelocity(
-		this,
-		LaunchVelocity,
-		Start,
-		End,
-		1800.f,
-		false,
-		0.f,
-		0.f,
-		TraceOption,
-		ResponseParam,
-		ActorsToIgnore,
-		true,
-		false);
+	const int32 MaxRetries = 3;
+	int32 RetryCount = 0;
+	bool bHasSolution = false;
+	while (RetryCount < MaxRetries && !bHasSolution)
+	{
+		bHasSolution = UGameplayStatics::SuggestProjectileVelocity(
+			this,
+			LaunchVelocity,
+			Start,
+			End,
+			1800.f,
+			false,
+			0.f,
+			0.f,
+			TraceOption,
+			ResponseParam,
+			ActorsToIgnore,
+			true,
+			false);
+		
+		if (!bHasSolution)
+		{
+			RetryCount++;
+			End.Z += 50.f;
+		}
+	}
+	if (!bHasSolution)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("HeroicSlam: No valid launch solution after %d attempts"), MaxRetries);
+		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
+		return;
+	}
 	
-	if (!bHasSolution) return;
-
 	auto* Move = CachedPlayer->GetCharacterMovement();
 	if (!Move) return;
 
