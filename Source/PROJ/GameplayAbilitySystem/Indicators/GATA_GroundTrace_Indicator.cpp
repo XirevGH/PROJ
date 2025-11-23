@@ -52,46 +52,53 @@ FHitResult AGATA_GroundTrace_Indicator::PerformTrace(AActor* InSourceActor)
 		UE_LOG(LogTemp, Warning, TEXT("Can't deproject screen position"));
 		return Hit;
 	}
-	//DrawDebugSphere(GetWorld(),WorldOrigin, 50.0f, 24,  FColor::Red, true);
 	
-	// Trace from camera to get mouse world location on the ground
+	// First trace: camera → mouse direction
 	FVector CameraTraceEnd = WorldOrigin + WorldDirection * 100000.f;
-	FCollisionQueryParams TraceParams;
-	TraceParams.AddIgnoredActor(this);
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(this);
+	Params.bTraceComplex = true;
 
 	FHitResult MouseHit;
-	GetWorld()->LineTraceSingleByChannel(MouseHit, WorldOrigin, CameraTraceEnd, ECC_Visibility, TraceParams);
-	
-	//DrawDebugLine(GetWorld(),WorldOrigin, CameraTraceEnd, FColor::Red, true);
-	
-	// Use either the hit location or the far point
+	GetWorld()->LineTraceSingleByChannel(MouseHit, WorldOrigin, CameraTraceEnd, ECC_Visibility, Params);
+
+	// Fallback if nothing hit
 	FVector DesiredLocation = MouseHit.bBlockingHit ? MouseHit.Location : CameraTraceEnd;
+	
+	//Clamp to ability range
+	FVector PlayerPos = InSourceActor->GetActorLocation();
+	FVector Dir = DesiredLocation - PlayerPos;
+	float Dist = Dir.Size();
 
-	// Clamp to MaxRange from player/caster
-	FVector PlayerPosition = InSourceActor->GetActorLocation();
-	FVector Direction = DesiredLocation - PlayerPosition;
-	float Distance = Direction.Size();
-
-	if (Distance > MaxRange)
+	if (Dist > MaxRange)
 	{
-		Direction = Direction.GetSafeNormal();
-		DesiredLocation = PlayerPosition + Direction * MaxRange;
+		Dir = Dir.GetSafeNormal();
+		DesiredLocation = PlayerPos + Dir * MaxRange;
 	}
-	TraceParams.bTraceComplex = true;
-    TraceParams.AddIgnoredActor(MouseHit.GetActor());
+	FVector DownStart = DesiredLocation + FVector(0,0,10); 
+	FVector DownEnd   = DesiredLocation - FVector(0,0,5000);
 	
-	FVector GroundTraceStart = DesiredLocation;
-	FVector GroundTraceEnd = DesiredLocation - FVector(0, 0, MaxRange + MaxRange);   // trace down
-	GetWorld()->LineTraceSingleByChannel(Hit, GroundTraceStart, GroundTraceEnd, ECC_Visibility, TraceParams);
-	if (!Hit.GetActor())
+	// STEP 2 — If surface hit was VALID, return it (roof allowed)
+	if (MouseHit.bBlockingHit)
 	{
-		TraceParams.ClearIgnoredSourceObjects();
-		TraceParams.AddIgnoredActor(this);
-		GetWorld()->LineTraceSingleByChannel(Hit, GroundTraceStart, GroundTraceEnd, ECC_Visibility);
-	}
-	
-	DrawDebugLine(GetWorld(),GroundTraceStart, GroundTraceEnd, FColor::Green, true);
-	
+		float Angle = FMath::RadiansToDegrees(
+			acosf(FVector::DotProduct(MouseHit.ImpactNormal, FVector::UpVector))
+		);
+		UE_LOG(LogTemp, Warning, TEXT("Angle: %f"), Angle);
+		bool bWalkable = Angle <= 45.f;            // walkable terrain// acceptable roof height
 
+		if (bWalkable)
+		{
+			GetWorld()->LineTraceSingleByChannel(Hit, DownStart, DownEnd, ECC_Visibility, Params);
+			DrawDebugLine(GetWorld(),DownStart, DownEnd, FColor::Red, false);
+			return Hit;
+		}
+	}
+	// STEP 3 — INVALID surface → project downward
+	DownStart = DesiredLocation;  // lift a little for safety
+	//FVector DownEnd   = DownStart - FVector(0,0,5000);
+
+	GetWorld()->LineTraceSingleByChannel(Hit, DownStart, DownEnd, ECC_Visibility, Params);
+	DrawDebugLine(GetWorld(),DownStart, DownEnd, FColor::Green, false);
 	return Hit;
 }
