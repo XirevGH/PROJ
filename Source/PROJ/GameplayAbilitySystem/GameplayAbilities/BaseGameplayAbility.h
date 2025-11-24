@@ -7,6 +7,7 @@
 #include "PROJ/Core/PROJ.h"
 #include "BaseGameplayAbility.generated.h"
 
+class UAttackData;
 /**
  * 
  */
@@ -28,9 +29,6 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Custom Values| Input")
 	FGameplayTag InputTag;
 	
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category =  "Ability")
-	EAbilityInputID AbilityInputID{ EAbilityInputID::None };
-	
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category="Effects")
 	TArray<TSubclassOf<UGameplayEffect>> Effects;
 	
@@ -40,6 +38,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Cooldown")
 	float Cooldown = 0;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AttackData")
+	UAttackData* AttackData;
+
+	UAttackData* GetAttackData() const { return AttackData; }
+	
 	UPROPERTY()
 	FGameplayTag CooldownTag;   
 

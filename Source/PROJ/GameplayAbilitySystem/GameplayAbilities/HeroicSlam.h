@@ -21,8 +21,7 @@ class PROJ_API UHeroicSlam : public UBaseGameplayAbility
 public:
 
 	UHeroicSlam();
-
-
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<AGameplayAbilityTargetActor> IndicatorClass;
 
@@ -43,7 +42,8 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category="Slam")
 	float SlamRadius = 800.f;
-	
+	UPROPERTY()
+	bool bLeapEffectsApplied = false;
 	/*Attributes for air and launch arc*/
 	UPROPERTY()
 	float OriginalAirControl;

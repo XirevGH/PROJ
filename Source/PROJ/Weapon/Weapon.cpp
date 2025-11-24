@@ -61,35 +61,22 @@ void AWeapon::ApplyEffectToTarget(AActor* Target)
 	if (!HasAuthority() || !Target || !Ability) return;
 	
 	UAbilitySystemComponent* TargetASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Target);
-	UAbilitySystemComponent* OwnerASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GetOwner());
 	
-	if (!OwnerASC || !TargetASC) return;
+	if (!TargetASC) return;
 
-	UAttackData* Data = Ability->GetAttackData();
-	
-	for (auto& EffectClass : Data->Effects)
+	TArray<FGameplayEffectSpecHandle> Specs = Ability->MakeEffectSpecsHandles();
+
+	for (FGameplayEffectSpecHandle Spec : Specs)
 	{
-		if (!EffectClass) continue;
-		FGameplayEffectContextHandle EffectContext = OwnerASC->MakeEffectContext();
-		FGameplayEffectSpecHandle SpecHandle = OwnerASC->MakeOutgoingSpec(EffectClass,1.f, EffectContext);
-
-		if (SpecHandle.IsValid())
+		if (Spec.IsValid())
 		{
-			FGameplayTag DamageTag = FGameplayTag::RequestGameplayTag(FName("Data.Damage"));
-			
-			for (FGameplayEffectSpecHandle Spec : Ability->MakeEffectSpecsHandles())
-			{
-				TargetASC->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
-			}
-			
+			TargetASC->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
 		}
-		
 	}
 }
 
 void AWeapon::HitScanStart(float Interval)
 {
-	
 	if (!HasAuthority() || bIsHitscanActive) return;
 	
 	Targets.Empty();
