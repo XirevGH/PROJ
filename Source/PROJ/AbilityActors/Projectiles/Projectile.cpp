@@ -42,10 +42,6 @@ void AProjectile::BeginPlay()
 	GetWorldTimerManager().SetTimer(DestroyTimerHandle, this, &AProjectile::DestroySelf, ProjectileLifeTime, false);
 }
 
-bool AProjectile::ShouldSkipHit(AActor* OtherActor)
-{
-	return OtherActor == Caster || OtherActor->IsA(StaticClass());
-}
 
 // Called every frame
 void AProjectile::Tick(float DeltaTime)
