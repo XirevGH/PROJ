@@ -24,7 +24,7 @@ public:
 	void Login();
 	
 	UFUNCTION(BlueprintCallable)
-	void CreateSession(const FName& Name);
+	void CreateSession(const FName& Name, const bool bUsePresence);
 	
 	FString GetSessionName(const FOnlineSessionSearchResult& SessionSearchResult) const;
 
@@ -94,6 +94,9 @@ protected:
 
 	UFUNCTION(BlueprintCallable)
 	void DestroyCurrentSessionAndJoinCachedSession();
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	bool bClientJoiningMatch;
 
 private:
 	FName SessionName;
