@@ -4,7 +4,7 @@
 #include "BaseGameplayAbility.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
-
+#include "PROJ/AbilityActors/AbilityActor.h"
 
 
 void UBaseGameplayAbility::OnGiveAbility(const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec)
@@ -76,6 +76,20 @@ TArray<FGameplayEffectSpecHandle> UBaseGameplayAbility::MakeEffectSpecsHandles()
 	}
 
 	return Specs;
+}
+
+void UBaseGameplayAbility::InitializeAbilityActor(AAbilityActor* Actor)
+{
+	if (!Actor)
+		return;
+	
+	Actor->SetReplicates(true);	
+	Actor->SetReplicateMovement(true);
+	Actor->InitializeAbilityActor(GetAvatarActorFromActorInfo(),
+			GetAbilitySystemComponentFromActorInfo(),
+			this,
+			MakeEffectSpecsHandles()
+			);
 }
 
 FGameplayTag UBaseGameplayAbility::GetCooldownTagFromInputID(const FGameplayTag InputTag) 
