@@ -22,8 +22,8 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-	UFUNCTION(BlueprintCallable)
-	bool ShouldSkipHit(AActor* OtherActor);
+	
+	//bool ShouldSkipHit(AActor* OtherActor) override;
 	
 public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")

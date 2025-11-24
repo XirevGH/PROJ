@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "NiagaraFunctionLibrary.h"
 #include "BaseGameplayAbility.h"
 #include "HeroicSlam.generated.h"
 
@@ -29,23 +30,30 @@ public:
 	AGameplayAbilityTargetActor* Indicator;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float Range;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float Radius;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float Height;
-
-	/*UPROPERTY(EditDefaultsOnly, Category="Slam")
-	UNiagaraSystem* SlamVFX;*/
+	
+	UPROPERTY(EditDefaultsOnly, Category="Slam")
+	UNiagaraSystem* SlamVfx;
 
 	UPROPERTY(EditDefaultsOnly, Category="Slam")
 	TSubclassOf<UCameraShakeBase> SlamCameraShake;
 
 	UPROPERTY(EditDefaultsOnly, Category="Slam")
-	float SlamRadius = 500.f;
+	float SlamRadius = 800.f;
+	
+	/*Attributes for air and launch arc*/
+	UPROPERTY()
+	float OriginalAirControl;
+	UPROPERTY()
+	float OriginalBraking;
+	UPROPERTY()
+	float OriginalFriction;
 
+	UFUNCTION()
+	void RestoreAirFriction();
 	UFUNCTION(BlueprintCallable)
 	void LaunchToTarget();
 	UFUNCTION(BlueprintCallable)

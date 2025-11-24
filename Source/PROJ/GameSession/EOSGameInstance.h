@@ -1,5 +1,7 @@
 ﻿#pragma once
 
+#define SETTING_SESSIONSTATE FName(TEXT("SessionState"))
+
 #include "CoreMinimal.h"
 #include "FCustomBlueprintSessionResult.h"
 #include "Engine/GameInstance.h"
@@ -11,6 +13,15 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnSessionFoundByName,
 	bool, bWasSuccessful, const FBlueprintSessionResult&, Session);
 
 class IOnlineSubsystem;
+
+UENUM(BlueprintType)
+enum class ESessionStates : uint8
+{
+	Lobby,
+	Transition,
+	Playing,
+	Ended
+};
 
 UCLASS()
 class PROJ_API UEOSGameInstance : public UGameInstance
@@ -24,7 +35,7 @@ public:
 	void Login();
 	
 	UFUNCTION(BlueprintCallable)
-	void CreateSession(const FName& Name);
+	void CreateSession(const FName& Name, const bool bUsePresence);
 	
 	FString GetSessionName(const FOnlineSessionSearchResult& SessionSearchResult) const;
 
@@ -56,6 +67,9 @@ public:
 
 	UFUNCTION(BlueprintPure)
 	FBlueprintSessionResult GetCachedSessionToJoin() const;
+
+	UFUNCTION(BlueprintCallable)
+	void SetSessionState(ESessionStates SessionState);
 	
 	/* ----------- Custom settings -------------- */
 	UFUNCTION(BlueprintPure)
@@ -95,6 +109,9 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void DestroyCurrentSessionAndJoinCachedSession();
 
+	UFUNCTION(BlueprintCallable)
+	void SetClientIsJoiningMatch(const bool bJoining) { bClientJoiningMatch = bJoining; }
+
 private:
 	FName SessionName;
 	FString SessionNameKey;
@@ -113,6 +130,9 @@ private:
 	FDelegateHandle MatchSessionsDelegateHandle;
 	FDelegateHandle FindSessionByNameDelegateHandle;
 	FDelegateHandle DestroySessionDelegateHandle;
+	FDelegateHandle UpdateSessionDelegateHandle;
+
+	bool bClientJoiningMatch;
 
 	UFUNCTION()
 	void OnFindOpenPublicSessionsCompleted(const bool bSuccess);
@@ -120,6 +140,7 @@ private:
 	void OnFindSessionByNameCompleted(bool bWasSuccessful);
 	void FindCompatibleMatchSessions();
 	void OnDestroySessionCompleted(FName Name, bool bWasSuccessful);
+	void OnSessionHiddenBeforeDestroy(FName Name, bool bWasSuccessful);
 	
 	void LoginCompleted(int NumOfPlayers, bool bWasSuccessful, const FUniqueNetId& UniqueId, const FString& Error);
 	void CreateSessionCompleted(FName Name, bool bWasSuccessful);

@@ -46,7 +46,8 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	bool ApplyEffectToTarget(const AActor* Target);
 
-	
+	UFUNCTION(BlueprintCallable)
+	bool ShouldSkipHit(AActor* OtherActor);
 	
 public:
 	// Called every frame
