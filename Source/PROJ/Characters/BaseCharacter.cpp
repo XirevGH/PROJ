@@ -1,4 +1,3 @@
-
 #include "BaseCharacter.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
@@ -14,7 +13,6 @@
 #include "../Core/PROJ.h"
 #include "./PROJ/GameplayAbilitySystem/GameplayAbilities/BaseGameplayAbility.h"
 #include "../Weapon/Weapon.h"
-
 
 ABaseCharacter::ABaseCharacter()
 {
@@ -321,7 +319,7 @@ void ABaseCharacter::InputLook(const FInputActionValue& Value)
 	}
 }
 
-inline void ABaseCharacter::InputRotateCameraStarted(const FInputActionValue& Value)
+void ABaseCharacter::InputRotateCameraStarted(const FInputActionValue& Value)
 {
 	bIsFreeLooking = true;
 	LockedMovementRotation = GetActorRotation();
@@ -329,7 +327,7 @@ inline void ABaseCharacter::InputRotateCameraStarted(const FInputActionValue& Va
 	Server_SetFreeLooking(true);
 }
 
-inline void ABaseCharacter::InputRotateCameraCompleted(const FInputActionValue& Value)
+void ABaseCharacter::InputRotateCameraCompleted(const FInputActionValue& Value)
 {
 	bIsFreeLooking = false;
 	Server_SetFreeLooking(false);
