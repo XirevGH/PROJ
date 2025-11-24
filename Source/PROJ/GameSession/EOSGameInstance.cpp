@@ -31,6 +31,11 @@ void UEOSGameInstance::Init()
 		SessionInterface->OnCreateSessionCompleteDelegates.AddUObject(this, &ThisClass::CreateSessionCompleted);
 		SessionInterface->OnJoinSessionCompleteDelegates.AddUObject(this, &ThisClass::OnJoinSessionCompleted);
 	}
+
+	UE_LOG(LogTemp, Display, TEXT("SessionState Lobby int = %lld"), static_cast<int64>(ESessionStates::Lobby));
+	UE_LOG(LogTemp, Display, TEXT("SessionState Transition int = %lld"), static_cast<int64>(ESessionStates::Transition));
+	UE_LOG(LogTemp, Display, TEXT("SessionState Playing int = %lld"), static_cast<int64>(ESessionStates::Playing));
+	UE_LOG(LogTemp, Display, TEXT("SessionState Ended int = %lld"), static_cast<int64>(ESessionStates::Ended));
 }
 
 void UEOSGameInstance::DestroyCurrentSessionAndJoinCachedSession()
@@ -47,13 +52,31 @@ void UEOSGameInstance::DestroyCurrentSessionAndJoinCachedSession()
 		DestroySessionDelegateHandle.Reset();
 	}
 
-	// If the host of the session, mark the session as ended before destroying
-	if (UWorld* World = GetWorld())
+	// Check if is host
+	UWorld* World = GetWorld();
+	if (World && World->GetNetMode() == NM_ListenServer)
 	{
-		if (World->GetNetMode() == NM_ListenServer)
+		UE_LOG(LogTemp, Warning, TEXT("Host Leaving: Hiding session from search and then destroy"));
+		
+		if (FOnlineSessionSettings* Settings = GetSessionSettings())
 		{
-			UE_LOG(LogTemp, Display, TEXT("DestroyAndJoin: Is hosting"));
-			SessionInterface->EndSession(SessionName);
+			// 1. Bind the Delegate to wait for the update
+			if (UpdateSessionDelegateHandle.IsValid())
+			{
+				SessionInterface->ClearOnUpdateSessionCompleteDelegate_Handle(UpdateSessionDelegateHandle);
+			}
+			UpdateSessionDelegateHandle = SessionInterface->AddOnUpdateSessionCompleteDelegate_Handle(
+				FOnUpdateSessionCompleteDelegate::CreateUObject(this, &ThisClass::OnSessionHiddenBeforeDestroy));
+
+			// 2. Set Native Flags to Hide the Session
+			Settings->bShouldAdvertise = false;       // REMOVES from Search
+			Settings->bAllowJoinInProgress = false;   // PREVENTS Joining
+
+			// 3. Send to EOS
+			UpdateSessionSettings(Settings);
+
+			// 4. WAIT. Do not destroy yet.
+			return; 
 		}
 	}
 	
@@ -93,6 +116,30 @@ void UEOSGameInstance::OnDestroySessionCompleted(FName Name, bool bWasSuccessful
 		}
 		
 		JoinSavedSession();
+	}
+}
+
+void UEOSGameInstance::OnSessionHiddenBeforeDestroy(FName Name, bool bWasSuccessful)
+{
+	UE_LOG(LogTemp, Warning, TEXT("Session Hidden (Advertise=False). Success: %d. Now Destroying..."), bWasSuccessful);
+
+	IOnlineSessionPtr SessionInterface = Online::GetSessionInterface(GetWorld());
+	if (SessionInterface.IsValid())
+	{
+		SessionInterface->ClearOnUpdateSessionCompleteDelegate_Handle(UpdateSessionDelegateHandle);
+		UpdateSessionDelegateHandle.Reset();
+
+		// Setup Destroy Delegate
+		if (DestroySessionDelegateHandle.IsValid())
+		{
+			SessionInterface->ClearOnDestroySessionCompleteDelegate_Handle(DestroySessionDelegateHandle);
+		}
+		DestroySessionDelegateHandle = SessionInterface->AddOnDestroySessionCompleteDelegate_Handle(
+			FOnDestroySessionCompleteDelegate::CreateUObject(this, &ThisClass::OnDestroySessionCompleted));
+
+		// Now destroy. Since we successfully updated 'bShouldAdvertise = false', 
+		// this session is already gone from search results on the backend.
+		SessionInterface->DestroySession(SessionName);
 	}
 }
 
@@ -176,6 +223,7 @@ void UEOSGameInstance::SetSelectedGameMode(const FString& GameMode)
 {
 	if (FOnlineSessionSettings* SessionSettings = GetSessionSettings())
 	{
+		UE_LOG(LogTemp, Display, TEXT("SetSelectedGameMode: %s"), *GameMode);
 		SessionSettings->Set(FName(SelectedGameModeKey),
 			FOnlineSessionSetting(GameMode, EOnlineDataAdvertisementType::ViaOnlineService));
 		UpdateSessionSettings(SessionSettings);
@@ -188,6 +236,16 @@ void UEOSGameInstance::SetCustomSessionName(const FString& CustomSessionName)
 	{
 		SessionSettings->Set(FName(CustomSessionNameKey),
 			FOnlineSessionSetting(CustomSessionName, EOnlineDataAdvertisementType::ViaOnlineService));
+		UpdateSessionSettings(SessionSettings);
+	}
+}
+
+void UEOSGameInstance::SetSessionState(ESessionStates SessionState)
+{
+	if (FOnlineSessionSettings* SessionSettings = GetSessionSettings())
+	{
+		SessionSettings->Set(SETTING_SESSIONSTATE,
+			FOnlineSessionSetting(static_cast<int64>(SessionState), EOnlineDataAdvertisementType::ViaOnlineService));
 		UpdateSessionSettings(SessionSettings);
 	}
 }
@@ -252,8 +310,7 @@ void UEOSGameInstance::CreateSession(const FName& Name, const bool bUsePresence)
 
 		SessionSettings.Set(
 		FName(SEARCH_KEYWORDS),
-		FOnlineSessionSetting(FString("PublicSession"), EOnlineDataAdvertisementType::ViaOnlineService)
-	);
+			FOnlineSessionSetting(FString("PublicSession"), EOnlineDataAdvertisementType::ViaOnlineService));
 
 		UE_LOG(LogTemp, Display, TEXT("Creating session with name: %s"), *Name.ToString());
 		SessionInterface->CreateSession(0, Name, SessionSettings);
@@ -411,7 +468,8 @@ void UEOSGameInstance::FindCompatibleMatchSessions()
 	MatchSessionsDelegateHandle = SessionInterface->AddOnFindSessionsCompleteDelegate_Handle(
 		FOnFindSessionsCompleteDelegate::CreateUObject(
 			this, &UEOSGameInstance::OnFindMatchSessionsCompleted));
-	
+
+	UE_LOG(LogTemp, Warning, TEXT("Finding match sessions with game mode: %s"), *GetSelectedGameMode());
 	SessionInterface->FindSessions(0, MatchSearch.ToSharedRef());
 }
 
@@ -553,7 +611,8 @@ void UEOSGameInstance::OnFindOpenPublicSessionsCompleted(const bool bSuccess)
 	{
 		const int32 OpenPublicConnections = Result.Session.NumOpenPublicConnections;
 		const int32 MaxPublicConnections = Result.Session.SessionSettings.NumPublicConnections;
-		if (MaxPublicConnections - OpenPublicConnections < MaxPublicConnections / 2)
+		const int32 CurrentPlayers = MaxPublicConnections - OpenPublicConnections;
+		if (CurrentPlayers > 0 && CurrentPlayers < MaxPublicConnections / 2)
 		{
 			FBlueprintSessionResult BlueprintSessionResult;
 			BlueprintSessionResult.OnlineResult = Result;
