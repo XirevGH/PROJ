@@ -93,3 +93,8 @@ bool AAbilityActor::InitializeAbilityActor(
     
 	return true;
 }
+
+bool AAbilityActor::ShouldSkipHit(AActor* OtherActor)
+{
+	return OtherActor == Caster || OtherActor->IsA(StaticClass());
+}
