@@ -30,9 +30,6 @@ public:
 	AGameplayAbilityTargetActor* Indicator;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float Range;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float Radius;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -46,6 +43,7 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category="Slam")
 	float SlamRadius = 800.f;
+	
 	/*Attributes for air and launch arc*/
 	UPROPERTY()
 	float OriginalAirControl;
@@ -55,7 +53,7 @@ public:
 	float OriginalFriction;
 
 	UFUNCTION()
-	void RestorAirFriction();
+	void RestoreAirFriction();
 	UFUNCTION(BlueprintCallable)
 	void LaunchToTarget();
 	UFUNCTION(BlueprintCallable)

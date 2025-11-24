@@ -31,10 +31,6 @@ void UHeroicSlam::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const
 	CachedPlayer = Cast<ABaseCharacter>(ActorInfo->AvatarActor.Get());
 	if (!CachedPlayer) return;
 	
-	/*Shoot up*/
-	FVector Direction = CachedPlayer->GetActorUpVector();
-	CachedPlayer->LaunchCharacter(Direction * 1000.f, true,true);
-	
 	/*Null Check*/
 	if (!IndicatorClass) return;
 	
@@ -47,7 +43,7 @@ void UHeroicSlam::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const
 	/***/
 	Task->ValidData.AddDynamic(this, &UHeroicSlam::OnConfirm);
 	Task->Cancelled.AddDynamic(this, &UHeroicSlam::OnCancel);
-	UE_LOG(LogTemp, Warning, TEXT("Task %s"), Task->IsValidLowLevel() ? TEXT("Successfully activated") : TEXT("Failed to activate"));
+	
 	Task->ReadyForActivation();
 	
 }
@@ -79,7 +75,7 @@ void UHeroicSlam::OnConfirm(const FGameplayAbilityTargetDataHandle& Data)
 	}
 }
 
-void UHeroicSlam::RestorAirFriction()
+void UHeroicSlam::RestoreAirFriction()
 {
 	auto* Move = CachedPlayer->GetCharacterMovement();
 	Move->MaxWalkSpeed = CachedOriginalMaxSpeed;
@@ -91,7 +87,7 @@ void UHeroicSlam::RestorAirFriction()
 
 void UHeroicSlam::LaunchToTarget()
 {
-	ESuggestProjVelocityTraceOption::Type TraceOption = ESuggestProjVelocityTraceOption::OnlyTraceWhileAscending;
+	ESuggestProjVelocityTraceOption::Type TraceOption = ESuggestProjVelocityTraceOption::DoNotTrace;
 	FCollisionResponseParams& ResponseParam = FCollisionResponseParams::DefaultResponseParam;
 	TArray<AActor*> ActorsToIgnore;
 	ActorsToIgnore.Add(CachedPlayer);
@@ -101,24 +97,22 @@ void UHeroicSlam::LaunchToTarget()
 	/*Because Target location is on ground level and player start is above ground(Better calculation imo*TEST*)*/
 	End.Z += CachedPlayer->GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
 	
-	FVector LaunchVelocity;
-	bool bHasSolution = UGameplayStatics::SuggestProjectileVelocity(
-		this,
-		LaunchVelocity,
-		Start,
-		End,
-		1800.f,
-		false,
-		0.f,
-		0.f,
-		TraceOption,
-		ResponseParam,
-		ActorsToIgnore,
-		true,
-		false);
-	
-	if (!bHasSolution) return;
 
+	FVector LaunchVelocity;
+	bool bHasSolution = UGameplayStatics::SuggestProjectileVelocity_CustomArc(
+			this,
+			LaunchVelocity,
+			Start,
+			End,
+			0.f,
+			0.8);
+	
+	if (!bHasSolution)
+	{
+		TargetLocation = Start + (End - Start).GetSafeNormal() * 200.f;
+		UE_LOG(LogTemp, Warning, TEXT("NoSolution"));
+	}
+	
 	auto* Move = CachedPlayer->GetCharacterMovement();
 	if (!Move) return;
 
@@ -188,7 +182,7 @@ void UHeroicSlam::LandingCheck()
 	}
 	DrawDebugSphere(GetWorld(), Origin, SlamRadius, 32, FColor::Blue, false, 2.f);
 	/*Reset all movement attributes*/
-	RestorAirFriction();
+	RestoreAirFriction();
 	/*Reset timer*/
 	GetWorld()->GetTimerManager().ClearTimer(LandingCheckTimer);
 	
