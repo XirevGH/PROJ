@@ -38,14 +38,13 @@ FHitResult AGATA_GroundTrace_Indicator::PerformTrace(AActor* InSourceActor)
 		UE_LOG(LogTemp, Error, TEXT("No APlayerController"));
 		return Hit;
 	}
-
 	float MouseX, MouseY;
 	if (!CasterController->GetMousePosition(MouseX, MouseY))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Can't get mouse position"));
 		return Hit;
 	}
-
+	
 	FVector WorldOrigin, WorldDirection;
 	if (!CasterController->DeprojectScreenPositionToWorld(MouseX, MouseY, WorldOrigin, WorldDirection))
 	{
