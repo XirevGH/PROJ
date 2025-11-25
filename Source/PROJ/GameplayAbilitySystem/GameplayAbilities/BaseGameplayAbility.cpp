@@ -11,36 +11,6 @@ void UBaseGameplayAbility::OnGiveAbility(const FGameplayAbilityActorInfo* ActorI
 {
 	Super::OnGiveAbility(ActorInfo, Spec);
 
-	if (AttackData && AttackData->bHasDamage)
-	{
-		ActivationBlockedTags.AppendTags(AttackData->GrantedTags);
-
-		SetByCallerValues.Add(
-			FGameplayTag::RequestGameplayTag("Data.Damage"),
-			AttackData->Damage
-		);
-	}
-	if (AttackData && AttackData->bHasSlow && AttackData->SlowEffect)
-	{
-		SetByCallerValues.Add(
-			FGameplayTag::RequestGameplayTag("Data.Movement.Slow.Multiplier"),
-			AttackData->SlowAmount
-		);
-
-		SetByCallerValues.Add(
-			FGameplayTag::RequestGameplayTag("Data.Movement.Slow.Duration"),
-			AttackData->SlowDuration
-		);
-	}
-	if (AttackData && AttackData->bHasStun)
-	{
-		
-		SetByCallerValues.Add(
-			FGameplayTag::RequestGameplayTag("Data.Movement.Stun.Duration"),
-			AttackData->StunDuration
-		);
-	}
-
 	CooldownTag = GetCooldownTagFromInputID(InputTag);
 	if (CooldownTag.IsValid())
 	{
@@ -80,62 +50,27 @@ TArray<FGameplayEffectSpecHandle> UBaseGameplayAbility::MakeEffectSpecsHandles()
 	TArray<FGameplayEffectSpecHandle> Specs;
 
 	UAbilitySystemComponent* CasterASC = GetAbilitySystemComponentFromActorInfo();
-	if (!CasterASC) return Specs;
+	if (!CasterASC || !AttackData)
+		return Specs;
 
-	/*Damage*/
-	if (AttackData && AttackData->bHasDamage && AttackData->DamageEffect)
+	for (const FAttackEffectEntry& Entry : AttackData->Effects)
 	{
+		if (!Entry.Effect)
+			continue;
+
 		FGameplayEffectContextHandle Context = CasterASC->MakeEffectContext();
-		FGameplayEffectSpecHandle SpecHandle =  CasterASC->MakeOutgoingSpec(AttackData->DamageEffect,GetAbilityLevel(),Context);
-		if (SpecHandle.IsValid())
+		FGameplayEffectSpecHandle Spec = CasterASC->MakeOutgoingSpec(Entry.Effect, GetAbilityLevel(), Context);
+
+		if (!Spec.IsValid())
+			continue;
+
+		for (const auto& Pair : Entry.SetByCallerValues)
 		{
-			SpecHandle.Data->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag("Data.Damage"), AttackData->Damage);
-			Specs.Add(SpecHandle);
+			Spec.Data->SetSetByCallerMagnitude(Pair.Key, Pair.Value);
 		}
+
+		Specs.Add(Spec);
 	}
-	/*Slow*/
-	if (AttackData && AttackData->bHasSlow && AttackData->SlowEffect)
-	{
-		FGameplayEffectContextHandle Context = CasterASC->MakeEffectContext();
-		FGameplayEffectSpecHandle SpecHandle = CasterASC->MakeOutgoingSpec(AttackData->SlowEffect, GetAbilityLevel(), Context);
-		if (SpecHandle.IsValid())
-		{
-			SpecHandle.Data->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag("Data.Movement.Slow.Multiplier"), AttackData->SlowAmount);
-			SpecHandle.Data->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag("Data.Movement.Slow.Duration"), AttackData->SlowDuration);
-			Specs.Add(SpecHandle);
-		}
-	}
-	/*Stun*/
-	if (AttackData && AttackData->bHasStun && AttackData->StunEffect)
-	{
-		FGameplayEffectContextHandle Context = CasterASC->MakeEffectContext();
-		FGameplayEffectSpecHandle SpecHandle = CasterASC->MakeOutgoingSpec(AttackData->StunEffect, GetAbilityLevel(), Context);
-		if (SpecHandle.IsValid())
-		{
-			SpecHandle.Data->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag("Data.Movement.Stun.Duration"), AttackData->StunDuration);
-			Specs.Add(SpecHandle);
-		}
-	}
-	/*for (TSubclassOf<UGameplayEffect> EffectClass : AttackData->Effects)
-	{
-		if (!EffectClass) continue;
-
-		FGameplayEffectContextHandle EffectContext = CasterASC->MakeEffectContext();
-		FGameplayEffectSpecHandle SpecHandle = CasterASC->MakeOutgoingSpec(EffectClass, GetAbilityLevel(), EffectContext);
-
-		if (!SpecHandle.IsValid()) continue;
-
-		FGameplayEffectSpec* Spec = SpecHandle.Data.Get();
-		if (!Spec) continue;
-
-		// Apply values from member variable
-		for (const TPair<FGameplayTag, float>& Pair : SetByCallerValues)
-		{
-			Spec->SetSetByCallerMagnitude(Pair.Key, Pair.Value);
-		}
-		
-		Specs.Add(SpecHandle);
-	}*/
 
 	return Specs;
 }
