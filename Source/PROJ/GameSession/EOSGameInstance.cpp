@@ -36,51 +36,33 @@ void UEOSGameInstance::Init()
 void UEOSGameInstance::DestroyCurrentSessionAndJoinCachedSession()
 {
 	IOnlineSessionPtr SessionInterface = Online::GetSessionInterface(GetWorld());
-	if (!SessionInterface.IsValid() || !SessionName.IsValid() || SessionName == NAME_None)
+	if (!SessionInterface.IsValid()) return;
+    
+	// Safety check: If we don't have a session, just join immediately
+	if (SessionName == NAME_None)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("DestroyCurrentSessionAndJoinCachedSession:SessionInterface or Session name is invalid or SessionName is none"));
+		JoinSavedSession();
 		return;
 	}
 	if (DestroySessionDelegateHandle.IsValid())
 	{
 		SessionInterface->ClearOnDestroySessionCompleteDelegate_Handle(DestroySessionDelegateHandle);
-		DestroySessionDelegateHandle.Reset();
-	}
-
-	// Check if is host
-	UWorld* World = GetWorld();
-	if (World && World->GetNetMode() == NM_ListenServer)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Host Leaving: Hiding session from search and then destroy"));
-		
-		if (FOnlineSessionSettings* Settings = GetSessionSettings())
-		{
-			// 1. Bind the Delegate to wait for the update
-			if (UpdateSessionDelegateHandle.IsValid())
-			{
-				SessionInterface->ClearOnUpdateSessionCompleteDelegate_Handle(UpdateSessionDelegateHandle);
-			}
-			UpdateSessionDelegateHandle = SessionInterface->AddOnUpdateSessionCompleteDelegate_Handle(
-				FOnUpdateSessionCompleteDelegate::CreateUObject(this, &ThisClass::OnSessionHiddenBeforeDestroy));
-
-			// 2. Set Native Flags to Hide the Session
-			Settings->bShouldAdvertise = false;       // REMOVES from Search
-			Settings->bAllowJoinInProgress = false;   // PREVENTS Joining
-
-			// 3. Send to EOS
-			UpdateSessionSettings(Settings);
-
-			// 4. WAIT. Do not destroy yet.
-			return; 
-		}
 	}
 	
 	DestroySessionDelegateHandle = SessionInterface->AddOnDestroySessionCompleteDelegate_Handle(
 		FOnDestroySessionCompleteDelegate::CreateUObject(this, &ThisClass::OnDestroySessionCompleted));
 
-	UE_LOG(LogTemp, Display, TEXT("Calling destroy session with name: %s"), *SessionName.ToString());
-	SessionInterface->DestroySession(SessionName);
-	// JoinSavedSession called in OnDestroySessionCompleted
+	UE_LOG(LogTemp, Display, TEXT("Destroying session: %s"), *SessionName.ToString());
+    
+	// Direct destroy. This works for both Host (shuts down lobby) and Client (leaves lobby).
+	if (!SessionInterface->DestroySession(SessionName))
+	{
+		// If DestroySession returns false immediately (e.g. session didn't exist), 
+		// force the next step so the player isn't stuck.
+		UE_LOG(LogTemp, Warning, TEXT("DestroySession failed immediately. Proceeding to join."));
+		SessionInterface->ClearOnDestroySessionCompleteDelegate_Handle(DestroySessionDelegateHandle);
+		JoinSavedSession();
+	}
 }
 
 void UEOSGameInstance::OnDestroySessionCompleted(FName Name, bool bWasSuccessful)
@@ -111,30 +93,6 @@ void UEOSGameInstance::OnDestroySessionCompleted(FName Name, bool bWasSuccessful
 		}
 		
 		JoinSavedSession();
-	}
-}
-
-void UEOSGameInstance::OnSessionHiddenBeforeDestroy(FName Name, bool bWasSuccessful)
-{
-	UE_LOG(LogTemp, Warning, TEXT("Session Hidden (Advertise=False). Success: %d. Now Destroying..."), bWasSuccessful);
-
-	IOnlineSessionPtr SessionInterface = Online::GetSessionInterface(GetWorld());
-	if (SessionInterface.IsValid())
-	{
-		SessionInterface->ClearOnUpdateSessionCompleteDelegate_Handle(UpdateSessionDelegateHandle);
-		UpdateSessionDelegateHandle.Reset();
-
-		// Setup Destroy Delegate
-		if (DestroySessionDelegateHandle.IsValid())
-		{
-			SessionInterface->ClearOnDestroySessionCompleteDelegate_Handle(DestroySessionDelegateHandle);
-		}
-		DestroySessionDelegateHandle = SessionInterface->AddOnDestroySessionCompleteDelegate_Handle(
-			FOnDestroySessionCompleteDelegate::CreateUObject(this, &ThisClass::OnDestroySessionCompleted));
-
-		// Now destroy. Since we successfully updated 'bShouldAdvertise = false', 
-		// this session is already gone from search results on the backend.
-		SessionInterface->DestroySession(SessionName);
 	}
 }
 
@@ -231,16 +189,6 @@ void UEOSGameInstance::SetCustomSessionName(const FString& CustomSessionName)
 	{
 		SessionSettings->Set(FName(CustomSessionNameKey),
 			FOnlineSessionSetting(CustomSessionName, EOnlineDataAdvertisementType::ViaOnlineService));
-		UpdateSessionSettings(SessionSettings);
-	}
-}
-
-void UEOSGameInstance::SetSessionState(ESessionStates SessionState)
-{
-	if (FOnlineSessionSettings* SessionSettings = GetSessionSettings())
-	{
-		SessionSettings->Set(SETTING_SESSIONSTATE,
-			FOnlineSessionSetting(static_cast<int64>(SessionState), EOnlineDataAdvertisementType::ViaOnlineService));
 		UpdateSessionSettings(SessionSettings);
 	}
 }
@@ -364,7 +312,7 @@ void UEOSGameInstance::JoinLobbyByIndex(const int32 Index)
 		UE_LOG(LogTemp, Display, TEXT("Trying to join session with index %d"), Index);
 		UE_LOG(LogTemp, Display, TEXT("Session by index name is: %s"), *GetSessionName(OpenPublicSearch->SearchResults[Index]));
 		CachedSessionToJoin = OpenPublicSearch->SearchResults[Index];
-		JoinSavedSession();
+		DestroyCurrentSessionAndJoinCachedSession();
 	}
 }
 
@@ -600,7 +548,39 @@ void UEOSGameInstance::OnFindOpenPublicSessionsCompleted(const bool bSuccess)
 		return;
 	}
 
-	// Sort the results before filtering and broadcasting
+	UE_LOG(LogTemp, Warning, TEXT("Raw Sessions found: %d"), OpenPublicSearch->SearchResults.Num());
+
+	// Identify "Ghost" Sessions (Sessions owned by me)
+	IOnlineIdentityPtr IdentityInterface = Online::GetIdentityInterface(GetWorld());
+	FUniqueNetIdRepl MyUniqueId;
+	if (IdentityInterface.IsValid())
+	{
+		MyUniqueId = IdentityInterface->GetUniquePlayerId(0);
+	}
+
+	TArray<FOnlineSessionSearchResult> ValidSearchResults;
+
+	for (const FOnlineSessionSearchResult& Result : OpenPublicSearch->SearchResults)
+	{
+		const int32 OpenPublicConnections = Result.Session.NumOpenPublicConnections;
+		const int32 MaxPublicConnections = Result.Session.SessionSettings.NumPublicConnections;
+		const int32 CurrentPlayers = MaxPublicConnections - OpenPublicConnections;
+		
+		if (MaxPublicConnections <= 0) continue;
+		if (!Result.Session.OwningUserId.IsValid()) continue;
+		if (MyUniqueId.IsValid() && *Result.Session.OwningUserId == *MyUniqueId) continue;
+		if (Result.PingInMs >= 9999) continue;
+		if (!Result.Session.SessionSettings.bShouldAdvertise) continue;
+		
+		if (CurrentPlayers > 0 && CurrentPlayers < MaxPublicConnections / 2)
+		{
+			ValidSearchResults.Add(Result);
+		}
+	}
+
+	OpenPublicSearch->SearchResults = ValidSearchResults;
+
+	// Sort the results before broadcasting
 	Algo::Sort(OpenPublicSearch->SearchResults, [&](const FOnlineSessionSearchResult& A, const FOnlineSessionSearchResult& B)
 	{
 		FString NameA, NameB;
@@ -610,33 +590,14 @@ void UEOSGameInstance::OnFindOpenPublicSessionsCompleted(const bool bSuccess)
 	});
 	
 	TArray<FBlueprintSessionResult> SessionResults;
-	
 	for (const FOnlineSessionSearchResult& Result : OpenPublicSearch->SearchResults)
 	{
-		const int32 OpenPublicConnections = Result.Session.NumOpenPublicConnections;
-		const int32 MaxPublicConnections = Result.Session.SessionSettings.NumPublicConnections;
-		
-		if (MaxPublicConnections <= 0)
-			continue;
-
-		// 2. Owner lost (destroyed session)
-		if (!Result.Session.OwningUserId.IsValid())
-			continue;
-
-		// 3. Backend stale ping
-		if (Result.PingInMs >= 9999)
-			continue;
-		
-		const int32 CurrentPlayers = MaxPublicConnections - OpenPublicConnections;
-		if (CurrentPlayers > 0 && CurrentPlayers < MaxPublicConnections / 2)
-		{
-			FBlueprintSessionResult BlueprintSessionResult;
-			BlueprintSessionResult.OnlineResult = Result;
-			SessionResults.Add(BlueprintSessionResult);
-		}
+		FBlueprintSessionResult BlueprintSessionResult;
+		BlueprintSessionResult.OnlineResult = Result;
+		SessionResults.Add(BlueprintSessionResult);
 	}
-	// OpenPublicSearch.Reset();
-	UE_LOG(LogTemp, Warning, TEXT("Sessions found after filtering: %d"), SessionResults.Num());
+
+	UE_LOG(LogTemp, Warning, TEXT("Valid/Sorted Sessions broadcasted: %d"), SessionResults.Num());
 	UE_LOG(LogTemp, Warning, TEXT("FindOpenPublicSessionsCompleted"));
 	OnOpenPublicLobbiesFound.Broadcast(SessionResults);
 }
