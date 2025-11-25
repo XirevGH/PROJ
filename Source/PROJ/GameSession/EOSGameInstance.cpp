@@ -7,12 +7,12 @@
 #include "Online/OnlineSessionNames.h"
 
 UEOSGameInstance::UEOSGameInstance() :
-	bClientJoiningMatch(false),
 	SessionNameKey("SessionNameKey"),
 	CustomSessionNameKey("CustomSessionName"),
 	SelectedGameModeKey("SelectedGameMode"),
 	IsSearchingForMatchKey("IsSearchingForMatch"),
-	MaxSearchResults(100)
+	MaxSearchResults(100),
+	bClientJoiningMatch(false)
 {}
 
 void UEOSGameInstance::Init()
@@ -31,11 +31,6 @@ void UEOSGameInstance::Init()
 		SessionInterface->OnCreateSessionCompleteDelegates.AddUObject(this, &ThisClass::CreateSessionCompleted);
 		SessionInterface->OnJoinSessionCompleteDelegates.AddUObject(this, &ThisClass::OnJoinSessionCompleted);
 	}
-
-	UE_LOG(LogTemp, Display, TEXT("SessionState Lobby int = %lld"), static_cast<int64>(ESessionStates::Lobby));
-	UE_LOG(LogTemp, Display, TEXT("SessionState Transition int = %lld"), static_cast<int64>(ESessionStates::Transition));
-	UE_LOG(LogTemp, Display, TEXT("SessionState Playing int = %lld"), static_cast<int64>(ESessionStates::Playing));
-	UE_LOG(LogTemp, Display, TEXT("SessionState Ended int = %lld"), static_cast<int64>(ESessionStates::Ended));
 }
 
 void UEOSGameInstance::DestroyCurrentSessionAndJoinCachedSession()
