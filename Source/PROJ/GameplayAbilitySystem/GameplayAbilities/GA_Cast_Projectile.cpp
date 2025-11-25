@@ -58,13 +58,7 @@ void UGA_Cast_Projectile::SpawnProjectile()
 	ProjectileActor = World->SpawnActor<AProjectile>(ProjectileActorClass, SpawnLocation, SpawnRotation);
 	if (ProjectileActor)
 	{
-		ProjectileActor->SetReplicates(true);
-		ProjectileActor->SetReplicateMovement(true);
-		ProjectileActor->InitializeAbilityActor(Avatar,
-			GetAbilitySystemComponentFromActorInfo(),
-			this,
-			MakeEffectSpecsHandles()
-			);
+		InitializeAbilityActor(ProjectileActor);
 	}
 	else
 	{

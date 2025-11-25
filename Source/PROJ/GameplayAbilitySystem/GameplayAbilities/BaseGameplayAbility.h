@@ -8,6 +8,7 @@
 #include "BaseGameplayAbility.generated.h"
 
 class UAttackData;
+class AAbilityActor;
 /**
  * 
  */
@@ -22,6 +23,8 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	TArray<FGameplayEffectSpecHandle> MakeEffectSpecsHandles();
+	UFUNCTION(BlueprintCallable)
+	void InitializeAbilityActor(AAbilityActor* Actor);
 	
 	static FGameplayTag GetCooldownTagFromInputID(const FGameplayTag InputTag);
 	virtual const FGameplayTagContainer* GetCooldownTags() const override;
