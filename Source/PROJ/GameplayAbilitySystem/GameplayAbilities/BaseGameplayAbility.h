@@ -28,7 +28,7 @@ public:
 	static FGameplayTag GetCooldownTagFromInputID(const FGameplayTag InputTag);
 	virtual const FGameplayTagContainer* GetCooldownTags() const override;
 	
-	UPROPERTY(EditDefaultsOnly, Category = "Custom Values| Input")
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	FGameplayTag InputTag;
 	
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category =  "Ability")
@@ -42,6 +42,9 @@ public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Cooldown")
 	float Cooldown = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category= "Ability")
+	float CastTime = 0;
 
 	UPROPERTY()
 	FGameplayTag CooldownTag;   
