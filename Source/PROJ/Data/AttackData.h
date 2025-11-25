@@ -11,6 +11,23 @@ class UGameplayEffect;
 /**
  * 
  */
+
+USTRUCT(BlueprintType)
+struct FAttackEffectEntry
+{
+	GENERATED_BODY()
+
+public:
+
+	// Which GameplayEffect to apply
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<UGameplayEffect> Effect = nullptr;
+
+	// SetByCaller tag → magnitude
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TMap<FGameplayTag, float> SetByCallerValues;
+};
+
 UCLASS()
 class PROJ_API UAttackData : public UPrimaryDataAsset
 {
@@ -25,32 +42,10 @@ public:
 	float HitScanInterval = 0.f;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	bool bUseHitScan = false;
-	
-	/*Damage*/
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	TSubclassOf<UGameplayEffect> DamageEffect;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	bool bHasDamage;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	float Damage = 0.f;
-	
-	/*Slow*/
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	TSubclassOf<UGameplayEffect> SlowEffect;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	bool bHasSlow;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	float SlowAmount;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	float SlowDuration;
 
-	/*Stun*/
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	TSubclassOf<UGameplayEffect> StunEffect;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	bool bHasStun;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	float StunDuration;
+	/*Effects & Values from struct*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<FAttackEffectEntry> Effects;
 
 	/*Tags*/
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
