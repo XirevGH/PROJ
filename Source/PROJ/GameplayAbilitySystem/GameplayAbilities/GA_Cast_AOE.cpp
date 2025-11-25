@@ -38,7 +38,6 @@ void UGA_Cast_AOE::OnConfirm_Implementation(const FGameplayAbilityTargetDataHand
 
 void UGA_Cast_AOE::OnTargetDataReceived(const FGameplayAbilityTargetDataHandle& Data)
 {
-	CommitAbility(CachedHandle, CachedActorInfo, CachedActivationInfo);
 	UE_LOG(LogTemp, Warning, TEXT("task activate"));
 	//FTransform EndPoint = UAbilitySystemBlueprintLibrary::GetTargetDataEndPointTransform(Data, 0);
 	OnConfirm_Implementation(Data);

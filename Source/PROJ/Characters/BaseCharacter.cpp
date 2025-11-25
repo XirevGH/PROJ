@@ -135,41 +135,6 @@ void ABaseCharacter::OnManaAttributeChanged(const FOnAttributeChangeData& Data)
 	OnManaChanged(Data.NewValue, BaseAttributes->GetMaxMana());
 }
 
-void ABaseCharacter::OnPrimaryAbility(const FInputActionValue& Value)
-{
-	SendAbilityLocalInput(Value, static_cast<int32>(EAbilityInputID::Primary));
-}
-
-void ABaseCharacter::OnSecondaryAbility(const FInputActionValue& Value)
-{
-	SendAbilityLocalInput(Value, static_cast<int32>(EAbilityInputID::Secondary));
-}
-
-void ABaseCharacter::OnMovementAbility(const FInputActionValue& Value)
-{
-	SendAbilityLocalInput(Value, static_cast<int32>(EAbilityInputID::Movement));
-}
-
-void ABaseCharacter::OnUtilityAbility(const FInputActionValue& Value)
-{
-	SendAbilityLocalInput(Value, static_cast<int32>(EAbilityInputID::Utility));
-}
-
-void ABaseCharacter::SendAbilityLocalInput(const FInputActionValue& Value, int32 InputID) const
-{
-	if (!BaseAbilitySystemComp.IsValid())
-		return;
-	
-	if (Value.Get<bool>())
-	{
-		BaseAbilitySystemComp->AbilityLocalInputPressed(InputID);
-	}
-	else
-	{
-		BaseAbilitySystemComp->AbilityLocalInputReleased(InputID);
-	}
-}
-
 void ABaseCharacter::Server_SetFreeLooking_Implementation(bool bNewFreeLooking)
 {
 	bIsFreeLooking = bNewFreeLooking;
@@ -206,19 +171,23 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		EnhancedInput->BindAction(RotateCharacterAction, ETriggerEvent::Started, this, &ABaseCharacter::InputRotateCharacterStarted);
 		EnhancedInput->BindAction(RotateCharacterAction, ETriggerEvent::Triggered, this, &ABaseCharacter::InputRotateCharacterTriggered);
 		EnhancedInput->BindAction(RotateCharacterAction, ETriggerEvent::Completed, this, &ABaseCharacter::InputRotateCharacterCompleted);
-
-		EnhancedInput->BindAction(PrimaryAbilityAction, ETriggerEvent::Triggered, this, &ABaseCharacter::OnPrimaryAbility);
-		EnhancedInput->BindAction(SecondaryAbilityAction, ETriggerEvent::Triggered, this, &ABaseCharacter::OnSecondaryAbility);
-		EnhancedInput->BindAction(MovementAbilityAction, ETriggerEvent::Triggered, this, &ABaseCharacter::OnMovementAbility);
-		EnhancedInput->BindAction(UtilityAbilityAction, ETriggerEvent::Triggered, this, &ABaseCharacter::OnUtilityAbility);
-
 		
-		if (BaseAbilitySystemComp.IsValid())
+		/*APlayerController* PC = Cast<APlayerController>(GetController());
+		if (!PC) return;
+
+		ABasePlayerState* PS = PC->GetPlayerState<ABasePlayerState>();
+		if (!PS) return;
+
+		UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent();
+		if (!ASC) return;
+		
+		if (ASC)
 		{
+		 	
 			//EnhancedInput->BindAction(ConfirmAbilityAction, ETriggerEvent::Triggered, this &ABaseCharacter::LocalInputConfirm);
-			EnhancedInput->BindAction(ConfirmAbilityAction, ETriggerEvent::Triggered, BaseAbilitySystemComp.Get(), &UBaseAbilitySystemComponent::LocalInputConfirm);
-			EnhancedInput->BindAction(CancelAbilityAction, ETriggerEvent::Triggered, BaseAbilitySystemComp.Get(), &UBaseAbilitySystemComponent::LocalInputCancel);
-		}
+			EnhancedInput->BindAction(ConfirmAbilityAction, ETriggerEvent::Triggered, ASC, &UBaseAbilitySystemComponent::TargetConfirm);
+		 	EnhancedInput->BindAction(CancelAbilityAction, ETriggerEvent::Triggered, ASC, &UBaseAbilitySystemComponent::TargetCancel);
+		}*/
 	}
 }
 

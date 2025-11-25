@@ -142,13 +142,6 @@ protected:
 	virtual void OnMoveSpeedAttributeChanged(const FOnAttributeChangeData& Data);
 	virtual void OnManaAttributeChanged(const FOnAttributeChangeData& Data);
 	
-	void OnPrimaryAbility(const FInputActionValue& Value);
-	void OnSecondaryAbility(const FInputActionValue& Value);
-	void OnMovementAbility(const FInputActionValue& Value);
-	void OnUtilityAbility(const FInputActionValue& Value);
-
-	void SendAbilityLocalInput(const FInputActionValue& Value, int32 InputID) const;
-	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, category = "GAS")
 	TWeakObjectPtr<class UAbilitySystemComponent> AbilitySystemComponent;
 
