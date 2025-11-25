@@ -565,20 +565,41 @@ void UEOSGameInstance::OnFindOpenPublicSessionsCompleted(const bool bSuccess)
 		const int32 OpenPublicConnections = Result.Session.NumOpenPublicConnections;
 		const int32 MaxPublicConnections = Result.Session.SessionSettings.NumPublicConnections;
 		const int32 CurrentPlayers = MaxPublicConnections - OpenPublicConnections;
-		
-		if (MaxPublicConnections <= 0) continue;
-		if (!Result.Session.OwningUserId.IsValid()) continue;
-		if (MyUniqueId.IsValid() && *Result.Session.OwningUserId == *MyUniqueId) continue;
-		if (Result.PingInMs >= 9999) continue;
-		if (!Result.Session.SessionSettings.bShouldAdvertise) continue;
-		
-		if (CurrentPlayers > 0 && CurrentPlayers < MaxPublicConnections / 2)
+
+		// Filter ghost sessions
+		if (!Result.Session.OwningUserId.IsValid())
 		{
-			ValidSearchResults.Add(Result);
+			UE_LOG(LogTemp, Display, TEXT("Session has no valid owner"));
+			continue;
 		}
+
+		// Filter 2: Ghost Session (CRITICAL)
+		// If I own this session, hide it. It's either the one I'm in, or one I just destroyed.
+		if (MyUniqueId.IsValid() && *Result.Session.OwningUserId == *MyUniqueId)
+		{
+			UE_LOG(LogTemp, Display, TEXT("Session is my own session"));
+			continue;
+		}
+		
+		if (CurrentPlayers >= MaxPublicConnections / 2)
+		{
+			UE_LOG(LogTemp, Display, TEXT("CurrentPlayers are more than half the max amount"));
+			continue;
+		}
+
+		if (CurrentPlayers < 0)
+		{
+			UE_LOG(LogTemp, Display, TEXT("CurrentPlayers is negative"));
+			continue;
+		}
+		
+		ValidSearchResults.Add(Result);
+		UE_LOG(LogTemp, Display, TEXT("Session found and added to valid results"));
 	}
 
 	OpenPublicSearch->SearchResults = ValidSearchResults;
+
+	UE_LOG(LogTemp, Display, TEXT("Sessions found after filtering: %d"), OpenPublicSearch->SearchResults.Num());
 
 	// Sort the results before broadcasting
 	Algo::Sort(OpenPublicSearch->SearchResults, [&](const FOnlineSessionSearchResult& A, const FOnlineSessionSearchResult& B)
@@ -595,6 +616,7 @@ void UEOSGameInstance::OnFindOpenPublicSessionsCompleted(const bool bSuccess)
 		FBlueprintSessionResult BlueprintSessionResult;
 		BlueprintSessionResult.OnlineResult = Result;
 		SessionResults.Add(BlueprintSessionResult);
+		UE_LOG(LogTemp, Display, TEXT("Added session to SessionResults"));
 	}
 
 	UE_LOG(LogTemp, Warning, TEXT("Valid/Sorted Sessions broadcasted: %d"), SessionResults.Num());
