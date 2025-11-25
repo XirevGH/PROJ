@@ -599,6 +599,15 @@ void UEOSGameInstance::OnFindOpenPublicSessionsCompleted(const bool bSuccess)
 		UE_LOG(LogTemp, Warning, TEXT("FindOpenPublicSessions failed."));
 		return;
 	}
+
+	// Sort the results before filtering and broadcasting
+	Algo::Sort(OpenPublicSearch->SearchResults, [&](const FOnlineSessionSearchResult& A, const FOnlineSessionSearchResult& B)
+	{
+		FString NameA, NameB;
+		A.Session.SessionSettings.Get(FName(SessionNameKey), NameA);
+		B.Session.SessionSettings.Get(FName(SessionNameKey), NameB);
+		return NameA < NameB; 
+	});
 	
 	TArray<FBlueprintSessionResult> SessionResults;
 	
@@ -606,6 +615,18 @@ void UEOSGameInstance::OnFindOpenPublicSessionsCompleted(const bool bSuccess)
 	{
 		const int32 OpenPublicConnections = Result.Session.NumOpenPublicConnections;
 		const int32 MaxPublicConnections = Result.Session.SessionSettings.NumPublicConnections;
+		
+		if (MaxPublicConnections <= 0)
+			continue;
+
+		// 2. Owner lost (destroyed session)
+		if (!Result.Session.OwningUserId.IsValid())
+			continue;
+
+		// 3. Backend stale ping
+		if (Result.PingInMs >= 9999)
+			continue;
+		
 		const int32 CurrentPlayers = MaxPublicConnections - OpenPublicConnections;
 		if (CurrentPlayers > 0 && CurrentPlayers < MaxPublicConnections / 2)
 		{
