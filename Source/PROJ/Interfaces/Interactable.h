@@ -4,11 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
-#include "ClickableInterface.generated.h"
+#include "Interactable.generated.h"
 
 // This class does not need to be modified.
 UINTERFACE()
-class UClickableInterface : public UInterface
+class UInteractable : public UInterface
 {
 	GENERATED_BODY()
 };
@@ -16,12 +16,12 @@ class UClickableInterface : public UInterface
 /**
  * 
  */
-class PROJ_API IClickableInterface
+class PROJ_API IInteractable
 {
 	GENERATED_BODY()
 
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
-	void OnClickedByPlayer(AActor* Player, UActorComponent* ClickedActorComponent);
+	void OnInteractByPlayer(AActor* Player, UActorComponent* ClickedActorComponent);
 };
