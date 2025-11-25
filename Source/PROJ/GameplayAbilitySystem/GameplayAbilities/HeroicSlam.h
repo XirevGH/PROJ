@@ -60,8 +60,6 @@ public:
 	void OnConfirm(const FGameplayAbilityTargetDataHandle& Data);
 	UFUNCTION(BlueprintCallable)
 	void OnCancel(const FGameplayAbilityTargetDataHandle& Data);
-	UFUNCTION()
-	void ApplyEffectsToTarget(AActor* Target);
 	
 	virtual void ActivateAbility(
 		const FGameplayAbilitySpecHandle Handle,

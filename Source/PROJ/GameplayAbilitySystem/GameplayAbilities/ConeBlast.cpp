@@ -19,17 +19,14 @@ void UConeBlast::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const 
 	if (!CommitAbility(Handle,ActorInfo,ActivationInfo))
 	{
 		EndAbility(Handle,ActorInfo,ActivationInfo,true,false);
-		return;
 	}
 
 	/*Cache player*/
-	CachedPlayer = Cast<ABaseCharacter>(ActorInfo->AvatarActor.Get());
+	CachedPlayer = Cast<ABaseCharacter>(GetAvatarActorFromActorInfo());
 	if (!CachedPlayer)
 	{
 		EndAbility(Handle,ActorInfo,ActivationInfo,true,false);
-		return;
 	}
-	UE_LOG(LogTemp, Warning, TEXT("Try ExecuteCone"));
 	ExecuteConeAttack();
 	EndAbility(Handle,ActorInfo,ActivationInfo,true,false);
 }
@@ -37,7 +34,6 @@ void UConeBlast::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const 
 void UConeBlast::ExecuteConeAttack()
 {
 	if (!CachedPlayer || !CachedPlayer->HasAuthority()) return;
-	UE_LOG(LogTemp, Warning, TEXT("ExecuteCone"));
 	/*Get player origin and forward*/
 	FVector Origin = CachedPlayer->GetActorLocation();
 	FVector ForwardVector = CachedPlayer->GetActorForwardVector();
@@ -63,12 +59,13 @@ void UConeBlast::ExecuteConeAttack()
 			AActor* HitActor = Result.GetActor();
 
 			if (!HitActor || HitActor == CachedPlayer) continue;
-
+			if (CheckedActors.Contains(HitActor)) continue;
+			
 			if (IsActorInCone(Origin,ForwardVector,HitActor))
 			{
 				CheckedActors.Add(HitActor);
 				UE_LOG(LogTemp, Warning, TEXT("Cone hit: %s"), *HitActor->GetName());
-				//TODO ApplyDMG
+				ApplyEffectsToTarget(HitActor);
 			}
 		}
 		UE_LOG(LogTemp, Log, TEXT("Cone attack hit %d enemies"), CheckedActors.Num());
