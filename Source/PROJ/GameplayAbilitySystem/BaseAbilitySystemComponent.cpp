@@ -14,7 +14,7 @@ void UBaseAbilitySystemComponent::AddCharacterAbilities(const TArray<TSubclassOf
 		{
 			AbilitySpec.GetDynamicSpecSourceTags().AddTag(BaseAbility->InputTag);
 			FGameplayAbilitySpecHandle Handle = GiveAbility(AbilitySpec);
-
+			UE_LOG(LogTemp, Warning, TEXT("GA Constructor Called: %s"), *GetName());
 			GrantedAbilityHandles.Add(Handle);
 		}
 	}

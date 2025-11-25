@@ -149,7 +149,7 @@ void UHeroicSlam::LandingCheck()
 	if (!CachedPlayer->HasAuthority()) return;
 	if (!CachedPlayer) return;
 	if (!CachedPlayer->GetCharacterMovement()->IsMovingOnGround()) return;
-
+	
 	auto* Move = CachedPlayer->GetCharacterMovement();
 	FVector Vel = Move->Velocity;
 	Vel.X = 0.f,
@@ -172,11 +172,14 @@ void UHeroicSlam::LandingCheck()
 
 	if (bHit)
 	{
+		TSet<AActor*> HitActors;
 		for (auto& Result : Overlaps)
 		{
 			AActor* HitActor = Result.GetActor();
 			if (!HitActor || HitActor == CachedPlayer) continue;
+			if (HitActors.Contains(HitActor)) continue;
 
+			HitActors.Add(HitActor);
 			ApplyEffectsToTarget(HitActor);
 		}
 	}
@@ -185,33 +188,11 @@ void UHeroicSlam::LandingCheck()
 	RestoreAirFriction();
 	/*Reset timer*/
 	GetWorld()->GetTimerManager().ClearTimer(LandingCheckTimer);
-	
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
-	
 }
 void UHeroicSlam::OnCancel(const FGameplayAbilityTargetDataHandle& Data)
 {
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
-}
-
-void UHeroicSlam::ApplyEffectsToTarget(AActor* Target)
-{
-	UAbilitySystemComponent* TargetASC
-	= UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Target);
-	UAbilitySystemComponent* OwnerASC
-	= GetAbilitySystemComponentFromActorInfo();
-	
-	if (!TargetASC || !OwnerASC) return;
-	/*Must have Authority*/
-	if (!OwnerASC->GetOwner()->HasAuthority()) return;
-
-	UE_LOG(LogTemp, Warning, TEXT("Applying effects to target: %s"), *Target->GetName());
-	
-	for (auto& SpecHandle : MakeEffectSpecsHandles())
-	{
-		
-		TargetASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
-	}
 }
 
 void UHeroicSlam::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,

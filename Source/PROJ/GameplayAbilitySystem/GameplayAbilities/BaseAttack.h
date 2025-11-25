@@ -34,13 +34,12 @@ class PROJ_API UBaseAttack : public UBaseGameplayAbility
 	UAbilityTask_WaitGameplayEvent* EndTask;
 	
 	bool bIsHitscanActive = false;
-	
-	UAttackData* GetAttackData() const { return AttackData; }
+
 	
 protected:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AttackData")
-	UAttackData* AttackData;
 	
+
+	virtual void OnGiveAbility(const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec) override;
 	
 	virtual  void ActivateAbility(
 		const FGameplayAbilitySpecHandle Handle,

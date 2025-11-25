@@ -7,6 +7,7 @@
 #include "PROJ/Core/PROJ.h"
 #include "BaseGameplayAbility.generated.h"
 
+class UAttackData;
 class AAbilityActor;
 /**
  * 
@@ -28,11 +29,8 @@ public:
 	static FGameplayTag GetCooldownTagFromInputID(const FGameplayTag InputTag);
 	virtual const FGameplayTagContainer* GetCooldownTags() const override;
 	
-	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	UPROPERTY(EditDefaultsOnly, Category = "Custom Values| Input")
 	FGameplayTag InputTag;
-	
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category =  "Ability")
-	EAbilityInputID AbilityInputID{ EAbilityInputID::None };
 	
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category="Effects")
 	TArray<TSubclassOf<UGameplayEffect>> Effects;
@@ -43,9 +41,13 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Cooldown")
 	float Cooldown = 0;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category= "Ability")
-	float CastTime = 0;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AttackData")
+	UAttackData* AttackData;
 
+	UAttackData* GetAttackData() const { return AttackData; }
+	
+	UFUNCTION(BlueprintCallable)
+	void ApplyEffectsToTarget(AActor* Target);
 	UPROPERTY()
 	FGameplayTag CooldownTag;   
 

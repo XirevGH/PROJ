@@ -4,21 +4,49 @@
 #include "BaseGameplayAbility.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
+#include "PROJ/Data/AttackData.h"
 #include "PROJ/AbilityActors/AbilityActor.h"
-
 
 void UBaseGameplayAbility::OnGiveAbility(const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec)
 {
 	Super::OnGiveAbility(ActorInfo, Spec);
 
+	if (AttackData && AttackData->bHasDamage)
+	{
+		ActivationBlockedTags.AppendTags(AttackData->GrantedTags);
+
+		SetByCallerValues.Add(
+			FGameplayTag::RequestGameplayTag("Data.Damage"),
+			AttackData->Damage
+		);
+	}
+	if (AttackData && AttackData->bHasSlow && AttackData->SlowEffect)
+	{
+		SetByCallerValues.Add(
+			FGameplayTag::RequestGameplayTag("Data.Movement.Slow.Multiplier"),
+			AttackData->SlowAmount
+		);
+
+		SetByCallerValues.Add(
+			FGameplayTag::RequestGameplayTag("Data.Movement.Slow.Duration"),
+			AttackData->SlowDuration
+		);
+	}
+	if (AttackData && AttackData->bHasStun)
+	{
+		
+		SetByCallerValues.Add(
+			FGameplayTag::RequestGameplayTag("Data.Movement.Stun.Duration"),
+			AttackData->StunDuration
+		);
+	}
+
 	CooldownTag = GetCooldownTagFromInputID(InputTag);
 	if (CooldownTag.IsValid())
 	{
 		CooldownTagContainer.AddTag(CooldownTag);
+		ActivationBlockedTags.AddTag(CooldownTag);
 	}
-	
-	ActivationBlockedTags.AddTag(CooldownTag);
-	
 }
 
 void UBaseGameplayAbility::ApplyCooldown(const FGameplayAbilitySpecHandle Handle,
@@ -54,7 +82,41 @@ TArray<FGameplayEffectSpecHandle> UBaseGameplayAbility::MakeEffectSpecsHandles()
 	UAbilitySystemComponent* CasterASC = GetAbilitySystemComponentFromActorInfo();
 	if (!CasterASC) return Specs;
 
-	for (TSubclassOf<UGameplayEffect> EffectClass : Effects)
+	/*Damage*/
+	if (AttackData && AttackData->bHasDamage && AttackData->DamageEffect)
+	{
+		FGameplayEffectContextHandle Context = CasterASC->MakeEffectContext();
+		FGameplayEffectSpecHandle SpecHandle =  CasterASC->MakeOutgoingSpec(AttackData->DamageEffect,GetAbilityLevel(),Context);
+		if (SpecHandle.IsValid())
+		{
+			SpecHandle.Data->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag("Data.Damage"), AttackData->Damage);
+			Specs.Add(SpecHandle);
+		}
+	}
+	/*Slow*/
+	if (AttackData && AttackData->bHasSlow && AttackData->SlowEffect)
+	{
+		FGameplayEffectContextHandle Context = CasterASC->MakeEffectContext();
+		FGameplayEffectSpecHandle SpecHandle = CasterASC->MakeOutgoingSpec(AttackData->SlowEffect, GetAbilityLevel(), Context);
+		if (SpecHandle.IsValid())
+		{
+			SpecHandle.Data->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag("Data.Movement.Slow.Multiplier"), AttackData->SlowAmount);
+			SpecHandle.Data->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag("Data.Movement.Slow.Duration"), AttackData->SlowDuration);
+			Specs.Add(SpecHandle);
+		}
+	}
+	/*Stun*/
+	if (AttackData && AttackData->bHasStun && AttackData->StunEffect)
+	{
+		FGameplayEffectContextHandle Context = CasterASC->MakeEffectContext();
+		FGameplayEffectSpecHandle SpecHandle = CasterASC->MakeOutgoingSpec(AttackData->StunEffect, GetAbilityLevel(), Context);
+		if (SpecHandle.IsValid())
+		{
+			SpecHandle.Data->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag("Data.Movement.Stun.Duration"), AttackData->StunDuration);
+			Specs.Add(SpecHandle);
+		}
+	}
+	/*for (TSubclassOf<UGameplayEffect> EffectClass : AttackData->Effects)
 	{
 		if (!EffectClass) continue;
 
@@ -73,7 +135,7 @@ TArray<FGameplayEffectSpecHandle> UBaseGameplayAbility::MakeEffectSpecsHandles()
 		}
 		
 		Specs.Add(SpecHandle);
-	}
+	}*/
 
 	return Specs;
 }
@@ -113,4 +175,29 @@ FGameplayTag UBaseGameplayAbility::GetCooldownTagFromInputID(const FGameplayTag 
 const FGameplayTagContainer* UBaseGameplayAbility::GetCooldownTags() const
 {
 	return &CooldownTagContainer;
+}
+
+void UBaseGameplayAbility::ApplyEffectsToTarget(AActor* Target)
+{
+	UAbilitySystemComponent* TargetASC =
+		UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Target);
+
+	UAbilitySystemComponent* OwnerASC =
+		GetAbilitySystemComponentFromActorInfo();
+
+	if (!TargetASC || !OwnerASC)
+		return;
+
+	if (!OwnerASC->GetOwner()->HasAuthority())
+		return;
+
+	TArray<FGameplayEffectSpecHandle> Specs = MakeEffectSpecsHandles();
+
+	for (const FGameplayEffectSpecHandle& Spec : Specs)
+	{
+		if (Spec.IsValid())
+		{
+			TargetASC->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
+		}
+	}
 }
