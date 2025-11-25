@@ -176,3 +176,28 @@ const FGameplayTagContainer* UBaseGameplayAbility::GetCooldownTags() const
 {
 	return &CooldownTagContainer;
 }
+
+void UBaseGameplayAbility::ApplyEffectsToTarget(AActor* Target)
+{
+	UAbilitySystemComponent* TargetASC =
+		UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Target);
+
+	UAbilitySystemComponent* OwnerASC =
+		GetAbilitySystemComponentFromActorInfo();
+
+	if (!TargetASC || !OwnerASC)
+		return;
+
+	if (!OwnerASC->GetOwner()->HasAuthority())
+		return;
+
+	TArray<FGameplayEffectSpecHandle> Specs = MakeEffectSpecsHandles();
+
+	for (const FGameplayEffectSpecHandle& Spec : Specs)
+	{
+		if (Spec.IsValid())
+		{
+			TargetASC->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
+		}
+	}
+}

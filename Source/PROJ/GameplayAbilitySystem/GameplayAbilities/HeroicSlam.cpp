@@ -195,30 +195,6 @@ void UHeroicSlam::OnCancel(const FGameplayAbilityTargetDataHandle& Data)
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }
 
-void UHeroicSlam::ApplyEffectsToTarget(AActor* Target)
-{
-	UAbilitySystemComponent* TargetASC
-	= UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Target);
-	UAbilitySystemComponent* OwnerASC
-	= GetAbilitySystemComponentFromActorInfo();
-	
-	if (!TargetASC || !OwnerASC) return;
-	/*Must have Authority*/
-	if (!OwnerASC->GetOwner()->HasAuthority()) return;
-
-	UE_LOG(LogTemp, Warning, TEXT("Applying effects to target: %s"), *Target->GetName());
-	
-	TArray<FGameplayEffectSpecHandle> Specs = MakeEffectSpecsHandles();
-
-	for (FGameplayEffectSpecHandle Spec : Specs)
-	{
-		if (Spec.IsValid())
-		{
-			TargetASC->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
-		}
-	}
-}
-
 void UHeroicSlam::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
                              const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicatedEndAbility, bool bWasCancelled)
 {

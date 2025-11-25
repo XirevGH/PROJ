@@ -46,6 +46,8 @@ public:
 
 	UAttackData* GetAttackData() const { return AttackData; }
 	
+	UFUNCTION(BlueprintCallable)
+	void ApplyEffectsToTarget(AActor* Target);
 	UPROPERTY()
 	FGameplayTag CooldownTag;   
 
