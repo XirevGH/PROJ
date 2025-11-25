@@ -40,6 +40,10 @@ public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Cooldown")
 	float Cooldown = 0;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category= "Ability")
+	float CastTime = 0;
+
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AttackData")
 	UAttackData* AttackData;
