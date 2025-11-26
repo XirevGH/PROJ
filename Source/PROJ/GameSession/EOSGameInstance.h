@@ -12,6 +12,16 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnSessionFoundByName,
 
 class IOnlineSubsystem;
 
+UENUM(BlueprintType)
+enum class ESessionState : uint8
+{
+	Lobby,
+	SearchingForMatch,
+	JoiningMatch,
+	InMatch,
+	Transition
+};
+
 UCLASS()
 class PROJ_API UEOSGameInstance : public UGameInstance
 {
@@ -24,7 +34,7 @@ public:
 	void Login();
 	
 	UFUNCTION(BlueprintCallable)
-	void CreateSession(const FName& Name, const bool bUsePresence);
+	void CreateSession(const FName& Name, const bool bIsTransitionSession);
 	
 	FString GetSessionName(const FOnlineSessionSearchResult& SessionSearchResult) const;
 
@@ -33,6 +43,9 @@ public:
 	
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnMatchSessionFound(const FName Name);
+
+	UFUNCTION(BlueprintCallable)
+	bool CancelMatchSearch();
 
 	// Find sessions "lobbies" open for joining
 	// Should bind custom event in blueprint to OnOpenPublicLobbiesFound to get the array of sessions
@@ -64,26 +77,32 @@ public:
 	const FString& GetCustomSessionNameKey() const { return CustomSessionNameKey; }
 	UFUNCTION(BlueprintPure)
 	const FString& GetSelectedGameModeKey() const { return SelectedGameModeKey; }
+	// UFUNCTION(BlueprintPure)
+	// const FString& GetIsSearchingForMatchKey() const { return IsSearchingForMatchKey; }
 	UFUNCTION(BlueprintPure)
-	const FString& GetIsSearchingForMatchKey() const { return IsSearchingForMatchKey; }
+	const FString& GetSessionStateKey() const { return SessionStateKey; }
 	
-	UFUNCTION(BlueprintPure)
-	bool GetIsSearchingForMatch() const;
+	// UFUNCTION(BlueprintPure)
+	// bool GetIsSearchingForMatch() const;
 	UFUNCTION(BlueprintPure)
 	FString GetSelectedGameMode() const;
 	UFUNCTION(BlueprintPure)
 	FString GetCustomSessionName() const;
 	UFUNCTION(BlueprintPure)
 	FString GetSessionName() const;
+	UFUNCTION(BlueprintPure)
+	ESessionState GetSessionState() const;
 	
-	UFUNCTION(BlueprintCallable)
-	void SetIsSearchingForMatch(const bool bIsSearching);
+	// UFUNCTION(BlueprintCallable)
+	// void SetIsSearchingForMatch(const bool bIsSearching);
 	UFUNCTION(BlueprintCallable)
 	void SetSelectedGameMode(const FString& GameMode);
 	UFUNCTION(BlueprintCallable)
 	void SetCustomSessionName(const FString& CustomSessionName);
 	UFUNCTION(BlueprintCallable)
 	void SetSessionName(const FString& NewSessionName);
+	UFUNCTION(BlueprintCallable)
+	void SetSessionState(const ESessionState NewSessionState);
 	/* ------------------------------------------ */
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
@@ -103,8 +122,8 @@ private:
 	FString SessionNameKey;
 	FString CustomSessionNameKey;
 	FString SelectedGameModeKey;
-	FString IsSearchingForMatchKey;
-	FString IsAliveKey;
+	// FString IsSearchingForMatchKey;
+	FString SessionStateKey;
 	int32 MaxSearchResults;
 
 	TSharedPtr<FOnlineSessionSearch> MatchSearch;
@@ -120,6 +139,7 @@ private:
 	FDelegateHandle UpdateSessionDelegateHandle;
 
 	bool bClientJoiningMatch;
+	ESessionState CurrentSessionState;
 
 	UFUNCTION()
 	void OnFindOpenPublicSessionsCompleted(const bool bSuccess);
@@ -137,4 +157,10 @@ private:
 	FOnlineSessionSettings* GetSessionSettings() const;
 	
 	void ClearCachedSession();
+
+	void HandleTravelFailure(UWorld* World, ETravelFailure::Type FailureType, const FString& ErrorString);
+	void HandleNetworkFailure(UWorld* World, UNetDriver* NetDriver, ENetworkFailure::Type FailureType, const FString& ErrorString);
+
+	bool IsPlayerLoggedIn() const;
+	void CreateOwnSession();
 };

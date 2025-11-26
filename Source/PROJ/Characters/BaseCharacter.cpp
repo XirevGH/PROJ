@@ -262,6 +262,7 @@ void ABaseCharacter::BroadcastInitialValues()
 
 void ABaseCharacter::InputMove(const FInputActionValue& Value)
 {
+	if (bMovementInputBlocked) return;
 	FVector2D MoveAxis = Value.Get<FVector2D>();
 	if ((Controller != nullptr) && (MoveAxis.X != 0.0f || MoveAxis.Y != 0.0f))
 	{

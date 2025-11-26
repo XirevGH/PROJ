@@ -3,19 +3,22 @@
 
 #include "ConeBlast.h"
 
+#include "NiagaraFunctionLibrary.h"
+#include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
+#include "Components/CapsuleComponent.h"
 #include "Engine/OverlapResult.h"
 #include "PROJ/Characters/BaseCharacter.h"
+#include "PROJ/Data/AttackData.h"
 
 UConeBlast::UConeBlast()
 {
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
 }
-
 void UConeBlast::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
                                  const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("UConeBlast Fired!"));
+	
 	if (!CommitAbility(Handle,ActorInfo,ActivationInfo))
 	{
 		EndAbility(Handle,ActorInfo,ActivationInfo,true,false);
@@ -27,8 +30,72 @@ void UConeBlast::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const 
 	{
 		EndAbility(Handle,ActorInfo,ActivationInfo,true,false);
 	}
-	ExecuteConeAttack();
-	EndAbility(Handle,ActorInfo,ActivationInfo,true,false);
+	
+	PlayMontage(AttackData->Montage);
+
+	if (MontageNotifyTag.IsValid())
+	{
+		UAbilityTask_WaitGameplayEvent* NotifyTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(
+			this,
+			MontageNotifyTag,
+			nullptr,
+			false,
+			true);
+
+		NotifyTask->EventReceived.AddDynamic(this,&UConeBlast::OnMontageNotifyReceived);
+		NotifyTask->ReadyForActivation();
+	}
+}
+void UConeBlast::OnMontageNotifyReceived(FGameplayEventData Payload)
+{
+	FGameplayTag TriggeredTag = Payload.EventTag;
+
+	if (TriggeredTag.MatchesTagExact(FGameplayTag::RequestGameplayTag(TEXT("Ability.Attack.Melee"))))
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, TEXT("Montage Notify Triggered!"));
+		ExecuteConeAttack();
+
+		if (ConeBlastVFX && CachedPlayer)
+		{
+			float SpawnDistance = 100.f;
+		
+			FVector PlayerLocation = CachedPlayer->GetActorLocation();
+			FVector ForwardVector = CachedPlayer->GetActorForwardVector();
+
+			ForwardVector.Z = 0.f;
+			ForwardVector.Normalize();
+			
+			FVector SpawnLocation = PlayerLocation + ForwardVector * SpawnDistance;
+			
+			FRotator SpawnRotation = ForwardVector.Rotation();
+			SpawnRotation.Pitch = 0.f;
+			SpawnRotation.Roll = 0.f;
+			
+			UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+				GetWorld(),
+				ConeBlastVFX,
+				SpawnLocation,
+				SpawnRotation);
+		}
+	}
+}
+
+void UConeBlast::PlayMontage(UAnimMontage* Montage)
+{
+	if (CachedPlayer)
+	{
+		CachedPlayer->bMovementInputBlocked = true;
+	}
+	Super::PlayMontage(Montage);
+}
+
+void UConeBlast::OnMontageCompleted()
+{
+	if (CachedPlayer)
+	{
+		CachedPlayer->bMovementInputBlocked = false;
+	}
+	Super::OnMontageCompleted();
 }
 
 void UConeBlast::ExecuteConeAttack()
