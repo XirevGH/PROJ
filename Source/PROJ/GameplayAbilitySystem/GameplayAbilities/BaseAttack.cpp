@@ -39,7 +39,7 @@ void UBaseAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 		return;
 	}
-	PlayMontage();
+	PlayMontage(AttackData->Montage);
 	
 	if (!HasAuthority(&ActivationInfo)) return;
 
@@ -96,31 +96,6 @@ void UBaseAttack::ClearExistingTasks()
 	if (EndTask) {EndTask->EndTask(); EndTask = nullptr;};
 }
 
-
-void UBaseAttack::PlayMontage()
-{
-	if (!AttackData || !AttackData->Montage)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Attack montage missing in data."))
-		return;
-	}
-	/*Montage start*/
-	auto* MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
-	this,
-	TEXT("MyMontageTask"),
-	AttackData->Montage,
-	1.0f,
-	NAME_None,
-	true,
-	1);
-	
-	MontageTask->OnCompleted.AddDynamic(this, &UBaseAttack::OnMontageCompleted);
-	MontageTask->OnInterrupted.AddDynamic(this, &UBaseAttack::OnMontageInterrupted);
-	MontageTask->OnCancelled.AddDynamic(this, &UBaseAttack::OnMontageCancelled);
-	
-	MontageTask->ReadyForActivation();
-}
-
 void UBaseAttack::OnHitscanStart(FGameplayEventData Payload)
 {
 	if (!EquippedWeapon) return;
@@ -164,21 +139,5 @@ void UBaseAttack::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGam
 		}
 	}
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicatedEndAbility, bWasCancelled);
-}
-void UBaseAttack::OnMontageCompleted()
-{
-	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
-}
-
-void UBaseAttack::OnMontageInterrupted()
-{
-	UE_LOG(LogTemp, Warning, TEXT("Attack montage interrupted"));
-	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
-}
-
-void UBaseAttack::OnMontageCancelled()
-{
-	UE_LOG(LogTemp, Warning, TEXT("Attack montage cancelled"));
-	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }
 

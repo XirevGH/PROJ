@@ -19,11 +19,25 @@ class PROJ_API UBaseGameplayAbility : public UGameplayAbility
 	GENERATED_BODY()
 public:
 
-	 virtual void OnGiveAbility(const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec) override;
+	virtual void OnGiveAbility(const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec) override;
 	virtual void ApplyCooldown(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) const override;
 
+	/*Montage events*/
+	UFUNCTION(BlueprintCallable)
+	virtual void PlayMontage(UAnimMontage* Montage);
+	
+	UFUNCTION()
+	virtual void OnMontageCompleted();
+
+	UFUNCTION()
+	virtual void OnMontageInterrupted();
+
+	UFUNCTION()
+	virtual void OnMontageCancelled();
+	
 	UFUNCTION(BlueprintCallable)
 	TArray<FGameplayEffectSpecHandle> MakeEffectSpecsHandles();
+	
 	UFUNCTION(BlueprintCallable)
 	void InitializeAbilityActor(AAbilityActor* Actor);
 	
@@ -50,6 +64,7 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 	void ApplyEffectsToTarget(AActor* Target);
+	
 	UPROPERTY()
 	FGameplayTag CooldownTag;   
 

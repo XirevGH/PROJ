@@ -59,6 +59,9 @@ public:
 	
 	UFUNCTION(BlueprintImplementableEvent, Category = "GAS")
 	void OnManaChanged(float CurrentMana, float MaxMana);
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	bool bMovementInputBlocked = false;
 	
 	UPROPERTY(VisibleAnywhere)
 	UCharacterMovementComponent* MovementComponent;
