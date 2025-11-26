@@ -50,10 +50,12 @@ TArray<FGameplayEffectSpecHandle> UBaseGameplayAbility::MakeEffectSpecsHandles()
 	TArray<FGameplayEffectSpecHandle> Specs;
 
 	UAbilitySystemComponent* CasterASC = GetAbilitySystemComponentFromActorInfo();
-	if (!CasterASC || !AttackData)
+	if (!CasterASC)
 		return Specs;
 
-	for (const FAttackEffectEntry& Entry : AttackData->Effects)
+	const TArray<FAttackEffectEntry>& EffectsToUse = (AttackData && AttackData->Effects.Num() > 0) ? AttackData->Effects : Effects;
+	
+	for (const FAttackEffectEntry& Entry : EffectsToUse)
 	{
 		if (!Entry.Effect)
 			continue;

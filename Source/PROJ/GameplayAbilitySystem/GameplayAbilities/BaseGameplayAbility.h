@@ -7,6 +7,7 @@
 #include "PROJ/Core/PROJ.h"
 #include "BaseGameplayAbility.generated.h"
 
+struct FAttackEffectEntry;
 class UAttackData;
 class AAbilityActor;
 /**
@@ -33,10 +34,7 @@ public:
 	FGameplayTag InputTag;
 	
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category="Effects")
-	TArray<TSubclassOf<UGameplayEffect>> Effects;
-	
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category="Effects")
-	TMap<FGameplayTag, float> SetByCallerValues;
+	TArray<FAttackEffectEntry> Effects;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Cooldown")
 	float Cooldown = 0;
