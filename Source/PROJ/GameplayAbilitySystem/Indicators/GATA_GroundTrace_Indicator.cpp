@@ -89,7 +89,7 @@ FHitResult AGATA_GroundTrace_Indicator::PerformTrace(AActor* InSourceActor)
 		if (bWalkable)
 		{
 			GetWorld()->LineTraceSingleByChannel(Hit, DownStart, DownEnd, ECC_Visibility, Params);
-			DrawDebugLine(GetWorld(),DownStart, DownEnd, FColor::Red, false);
+			//DrawDebugLine(GetWorld(),DownStart, DownEnd, FColor::Red, false);
 			return Hit;
 		}
 	}
@@ -97,6 +97,6 @@ FHitResult AGATA_GroundTrace_Indicator::PerformTrace(AActor* InSourceActor)
 	DownStart = DesiredLocation;  
 
 	GetWorld()->LineTraceSingleByChannel(Hit, DownStart, DownEnd, ECC_Visibility, Params);
-	DrawDebugLine(GetWorld(),DownStart, DownEnd, FColor::Green, false);
+	//DrawDebugLine(GetWorld(),DownStart, DownEnd, FColor::Green, false);
 	return Hit;
 }
