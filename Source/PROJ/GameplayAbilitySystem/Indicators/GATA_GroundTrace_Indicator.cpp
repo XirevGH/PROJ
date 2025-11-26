@@ -74,7 +74,7 @@ FHitResult AGATA_GroundTrace_Indicator::PerformTrace(AActor* InSourceActor)
 		Dir = Dir.GetSafeNormal();
 		DesiredLocation = PlayerPos + Dir * MaxRange;
 	}
-	FVector DownStart = DesiredLocation + FVector(0,0,10); 
+	FVector DownStart = DesiredLocation + FVector(0,0,10); // lift a little for safety
 	FVector DownEnd   = DesiredLocation - FVector(0,0,5000);
 	
 	// STEP 2 — If surface hit was VALID, return it (roof allowed)
@@ -94,8 +94,7 @@ FHitResult AGATA_GroundTrace_Indicator::PerformTrace(AActor* InSourceActor)
 		}
 	}
 	// STEP 3 — INVALID surface → project downward
-	DownStart = DesiredLocation;  // lift a little for safety
-	//FVector DownEnd   = DownStart - FVector(0,0,5000);
+	DownStart = DesiredLocation;  
 
 	GetWorld()->LineTraceSingleByChannel(Hit, DownStart, DownEnd, ECC_Visibility, Params);
 	DrawDebugLine(GetWorld(),DownStart, DownEnd, FColor::Green, false);

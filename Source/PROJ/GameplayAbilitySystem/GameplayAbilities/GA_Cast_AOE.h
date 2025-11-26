@@ -53,6 +53,7 @@ protected:
 	virtual void OnCancel_Implementation(const FGameplayAbilityTargetDataHandle& Data);
 
 	
+	
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void OnConfirm(const FGameplayAbilityTargetDataHandle& Data);
 	virtual void OnConfirm_Implementation(const FGameplayAbilityTargetDataHandle& Data);
