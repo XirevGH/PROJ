@@ -48,10 +48,9 @@ void UGA_Interact::ActivateAbility(const FGameplayAbilitySpecHandle Handle, cons
 	}
 
 	// Client calls Server
-	if (GetOwningActorFromActorInfo()->HasAuthority())
-	{
+	
 		Server_Interact(Target, Component );
-	}
+	
 
 	EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 }
