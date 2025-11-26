@@ -621,65 +621,12 @@ void UEOSGameInstance::OnFindOpenPublicSessionsCompleted(const bool bSuccess)
 
 	UE_LOG(LogTemp, Warning, TEXT("Raw Sessions found: %d"), OpenPublicSearch->SearchResults.Num());
 
-	// Identify "Ghost" Sessions (Sessions owned by me)
-	IOnlineIdentityPtr IdentityInterface = Online::GetIdentityInterface(GetWorld());
-	FUniqueNetIdRepl MyUniqueId;
-	if (IdentityInterface.IsValid())
-	{
-		MyUniqueId = IdentityInterface->GetUniquePlayerId(0);
-	}
-
-	TArray<FOnlineSessionSearchResult> ValidSearchResults;
-
-	for (const FOnlineSessionSearchResult& Result : OpenPublicSearch->SearchResults)
-	{
-		const int32 OpenPublicConnections = Result.Session.NumOpenPublicConnections;
-		const int32 MaxPublicConnections = Result.Session.SessionSettings.NumPublicConnections;
-		const int32 CurrentPlayers = MaxPublicConnections - OpenPublicConnections;
-
-		// Filter ghost sessions
-		if (!Result.Session.OwningUserId.IsValid())
-		{
-			UE_LOG(LogTemp, Display, TEXT("Session has no valid owner"));
-			continue;
-		}
-
-		// Filter 2: Ghost Session (CRITICAL)
-		// If I own this session, hide it. It's either the one I'm in, or one I just destroyed.
-		if (MyUniqueId.IsValid() && *Result.Session.OwningUserId == *MyUniqueId)
-		{
-			UE_LOG(LogTemp, Display, TEXT("Session is my own session"));
-			continue;
-		}
-		
-		if (CurrentPlayers >= MaxPublicConnections / 2)
-		{
-			UE_LOG(LogTemp, Display, TEXT("CurrentPlayers are more than half the max amount"));
-			continue;
-		}
-
-		if (CurrentPlayers < 0)
-		{
-			UE_LOG(LogTemp, Display, TEXT("CurrentPlayers is negative"));
-			continue;
-		}
-		
-		ValidSearchResults.Add(Result);
-		UE_LOG(LogTemp, Display, TEXT("Session found and added to valid results"));
-	}
-
-	OpenPublicSearch->SearchResults = ValidSearchResults;
+	FilterOpenPublicSearchResults();
 
 	UE_LOG(LogTemp, Display, TEXT("Sessions found after filtering: %d"), OpenPublicSearch->SearchResults.Num());
 
 	// Sort the results before broadcasting
-	Algo::Sort(OpenPublicSearch->SearchResults, [&](const FOnlineSessionSearchResult& A, const FOnlineSessionSearchResult& B)
-	{
-		FString NameA, NameB;
-		A.Session.SessionSettings.Get(FName(SessionNameKey), NameA);
-		B.Session.SessionSettings.Get(FName(SessionNameKey), NameB);
-		return NameA < NameB; 
-	});
+	SortOpenPublicSearchResultsByName();
 	
 	TArray<FBlueprintSessionResult> SessionResults;
 	for (const FOnlineSessionSearchResult& Result : OpenPublicSearch->SearchResults)
@@ -753,4 +700,67 @@ bool UEOSGameInstance::IsPlayerLoggedIn() const
 		}
 	}
 	return false;
+}
+
+void UEOSGameInstance::FilterOpenPublicSearchResults()
+{
+	// Identify "Ghost" Sessions (Sessions owned by me)
+	IOnlineIdentityPtr IdentityInterface = Online::GetIdentityInterface(GetWorld());
+	FUniqueNetIdRepl MyUniqueId;
+	if (IdentityInterface.IsValid())
+	{
+		MyUniqueId = IdentityInterface->GetUniquePlayerId(0);
+	}
+	
+	TArray<FOnlineSessionSearchResult> ValidSearchResults;
+
+	for (const FOnlineSessionSearchResult& Result : OpenPublicSearch->SearchResults)
+	{
+		const int32 OpenPublicConnections = Result.Session.NumOpenPublicConnections;
+		const int32 MaxPublicConnections = Result.Session.SessionSettings.NumPublicConnections;
+		const int32 CurrentPlayers = MaxPublicConnections - OpenPublicConnections;
+
+		// Filter ghost sessions
+		if (!Result.Session.OwningUserId.IsValid())
+		{
+			UE_LOG(LogTemp, Display, TEXT("Session has no valid owner"));
+			continue;
+		}
+
+		// Filter 2: Ghost Session (CRITICAL)
+		// If I own this session, hide it. It's either the one I'm in, or one I just destroyed.
+		if (MyUniqueId.IsValid() && *Result.Session.OwningUserId == *MyUniqueId)
+		{
+			UE_LOG(LogTemp, Display, TEXT("Session is my own session"));
+			continue;
+		}
+		
+		if (CurrentPlayers >= MaxPublicConnections / 2)
+		{
+			UE_LOG(LogTemp, Display, TEXT("CurrentPlayers are more than half the max amount"));
+			continue;
+		}
+
+		if (CurrentPlayers < 0)
+		{
+			UE_LOG(LogTemp, Display, TEXT("CurrentPlayers is negative"));
+			continue;
+		}
+		
+		ValidSearchResults.Add(Result);
+		UE_LOG(LogTemp, Display, TEXT("Session found and added to valid results"));
+	}
+
+	OpenPublicSearch->SearchResults = ValidSearchResults;
+}
+
+void UEOSGameInstance::SortOpenPublicSearchResultsByName()
+{
+	Algo::Sort(OpenPublicSearch->SearchResults, [&](const FOnlineSessionSearchResult& A, const FOnlineSessionSearchResult& B)
+	{
+		FString NameA, NameB;
+		A.Session.SessionSettings.Get(FName(SessionNameKey), NameA);
+		B.Session.SessionSettings.Get(FName(SessionNameKey), NameB);
+		return NameA < NameB; 
+	});
 }
