@@ -163,4 +163,6 @@ private:
 
 	bool IsPlayerLoggedIn() const;
 	void CreateOwnSession();
+	void FilterOpenPublicSearchResults();
+	void SortOpenPublicSearchResultsByName();
 };
