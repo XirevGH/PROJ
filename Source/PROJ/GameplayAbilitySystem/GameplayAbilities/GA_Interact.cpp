@@ -3,6 +3,8 @@
 
 #include "GA_Interact.h"
 
+#include "PROJ/Interfaces/Interactable.h"
+
 void UGA_Interact::OnGiveAbility(const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec)
 {
 	Super::OnGiveAbility(ActorInfo, Spec);
@@ -11,7 +13,7 @@ void UGA_Interact::OnGiveAbility(const FGameplayAbilityActorInfo* ActorInfo, con
 }
 
 void UGA_Interact::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
-	const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
+                                   const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 	UE_LOG(LogTemp, Warning, TEXT("Active Ability"));
@@ -26,20 +28,49 @@ void UGA_Interact::ActivateAbility(const FGameplayAbilitySpecHandle Handle, cons
 	
 	FHitResult Hit;
 	CasterController->GetHitResultUnderCursor(ECC_GameTraceChannel2, false, Hit);
-	
-	AActor* Target = const_cast<AActor*>(TriggerEventData->Target.Get());
 
-	if (!Target)
+	AActor* Target = Hit.GetActor();
+	UActorComponent* Component = Hit.GetComponent();
+	UE_LOG(LogTemp, Error, TEXT("Hit Actor: %s"), 
+	Hit.GetActor() ? *Hit.GetActor()->GetName() : TEXT("NULL"));
+
+	UE_LOG(LogTemp, Error, TEXT("Hit Component: %s"), 
+		Hit.GetComponent() ? *Hit.GetComponent()->GetName() : TEXT("NULL"));
+
+	UE_LOG(LogTemp, Error, TEXT("Hit PhysMaterial: %s"),
+		Hit.PhysMaterial.IsValid() ? *Hit.PhysMaterial->GetName() : TEXT("NULL"));
+	
+	
+	if (!Target )
 	{
+		//UE_LOG(LogTemp, Error, TEXT("Target or Component is null"));
 		CancelAbility(Handle, ActorInfo, ActivationInfo, true);
-		return;
 	}
 
 	// Client calls Server
-	if (ActorInfo->IsLocallyControlled())
+	if (GetOwningActorFromActorInfo()->HasAuthority())
 	{
-		//ServerInteract(Target);
+		Server_Interact(Target, Component );
 	}
 
 	EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
+}
+
+
+void UGA_Interact::Server_Interact_Implementation(AActor* Target, UActorComponent* Component)
+{
+	if (!Target )
+	{
+		UE_LOG(LogTemp, Error, TEXT("Target or Component is null"));
+		return;
+	}
+	if (Target->Implements<UInteractable>())
+	{
+		IInteractable::Execute_Interact(Target, GetAvatarActorFromActorInfo(), Component);
+		UE_LOG(LogTemp, Error, TEXT("Call interact"));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Target not  Implements UInteractable"));
+	}
 }

@@ -22,5 +22,7 @@ public:
 	
 	void OnGiveAbility(const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec);
 
-	void interact();
+	UFUNCTION(Server, Reliable)
+	void Server_Interact(AActor* Target, UActorComponent* Component);
+	void Server_Interact_Implementation(AActor* Target, UActorComponent* Component);
 };
