@@ -13,7 +13,7 @@ UCLASS()
 class PROJ_API UGA_Interact : public UBaseGameplayAbility
 {
 	GENERATED_BODY()
-protected:
+public:
 	
 	virtual  void ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 		const FGameplayAbilityActorInfo* ActorInfo,
@@ -21,4 +21,6 @@ protected:
 		const FGameplayEventData* TriggerEventData) override;
 	
 	void OnGiveAbility(const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec);
+
+	void interact();
 };
