@@ -4,6 +4,7 @@
 #include "BaseGameplayAbility.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
+#include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "PROJ/Data/AttackData.h"
 #include "PROJ/AbilityActors/AbilityActor.h"
 
@@ -43,6 +44,42 @@ void UBaseGameplayAbility::ApplyCooldown(const FGameplayAbilitySpecHandle Handle
 	Spec->DynamicGrantedTags.AddTag(CooldownTag);
 	ApplyGameplayEffectSpecToOwner(Handle, ActorInfo, ActivationInfo, SpecHandle);
 
+}
+
+void UBaseGameplayAbility::PlayMontage(UAnimMontage* Montage)
+{
+	UE_LOG(LogTemp, Display, TEXT("Playing Montage"));
+	/*Montage start*/
+	auto* MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
+	this,
+	TEXT("MyMontageTask"),
+	Montage,
+	1.0f,
+	NAME_None,
+	true,
+	1);
+
+	
+	MontageTask->OnCompleted.AddDynamic(this, &UBaseGameplayAbility::OnMontageCompleted);
+	MontageTask->OnInterrupted.AddDynamic(this, &UBaseGameplayAbility::OnMontageInterrupted);
+	MontageTask->OnCancelled.AddDynamic(this, &UBaseGameplayAbility::OnMontageCancelled);
+	
+	MontageTask->ReadyForActivation();
+}
+
+void UBaseGameplayAbility::OnMontageCompleted()
+{
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
+}
+
+void UBaseGameplayAbility::OnMontageInterrupted()
+{
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
+}
+
+void UBaseGameplayAbility::OnMontageCancelled()
+{
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }
 
 TArray<FGameplayEffectSpecHandle> UBaseGameplayAbility::MakeEffectSpecsHandles()
@@ -136,3 +173,4 @@ void UBaseGameplayAbility::ApplyEffectsToTarget(AActor* Target)
 		}
 	}
 }
+

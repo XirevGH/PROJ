@@ -56,7 +56,6 @@ protected:
 	bool SetupPlayerWeapon();
 	void SetupHitScanTasks();
 	void ClearExistingTasks();
-	void PlayMontage();
 	
 	/*Events from HitScan*/
 	UFUNCTION()
@@ -64,14 +63,5 @@ protected:
 
 	UFUNCTION()
 	void OnHitscanEnd(FGameplayEventData Payload);
-
-	/*Montage events*/
-	UFUNCTION()
-	void OnMontageCompleted();
-
-	UFUNCTION()
-	void OnMontageInterrupted();
-
-	UFUNCTION()
-	void OnMontageCancelled();
+	
 };
