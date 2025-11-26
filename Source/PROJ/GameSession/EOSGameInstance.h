@@ -1,7 +1,5 @@
 ﻿#pragma once
 
-#define SETTING_SESSIONSTATE FName(TEXT("SessionState"))
-
 #include "CoreMinimal.h"
 #include "FCustomBlueprintSessionResult.h"
 #include "Engine/GameInstance.h"
@@ -13,15 +11,6 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnSessionFoundByName,
 	bool, bWasSuccessful, const FBlueprintSessionResult&, Session);
 
 class IOnlineSubsystem;
-
-UENUM(BlueprintType)
-enum class ESessionStates : uint8
-{
-	Lobby,
-	Transition,
-	Playing,
-	Ended
-};
 
 UCLASS()
 class PROJ_API UEOSGameInstance : public UGameInstance
@@ -67,9 +56,6 @@ public:
 
 	UFUNCTION(BlueprintPure)
 	FBlueprintSessionResult GetCachedSessionToJoin() const;
-
-	UFUNCTION(BlueprintCallable)
-	void SetSessionState(ESessionStates SessionState);
 	
 	/* ----------- Custom settings -------------- */
 	UFUNCTION(BlueprintPure)
@@ -118,6 +104,7 @@ private:
 	FString CustomSessionNameKey;
 	FString SelectedGameModeKey;
 	FString IsSearchingForMatchKey;
+	FString IsAliveKey;
 	int32 MaxSearchResults;
 
 	TSharedPtr<FOnlineSessionSearch> MatchSearch;
@@ -140,7 +127,6 @@ private:
 	void OnFindSessionByNameCompleted(bool bWasSuccessful);
 	void FindCompatibleMatchSessions();
 	void OnDestroySessionCompleted(FName Name, bool bWasSuccessful);
-	void OnSessionHiddenBeforeDestroy(FName Name, bool bWasSuccessful);
 	
 	void LoginCompleted(int NumOfPlayers, bool bWasSuccessful, const FUniqueNetId& UniqueId, const FString& Error);
 	void CreateSessionCompleted(FName Name, bool bWasSuccessful);
