@@ -31,21 +31,19 @@ void UGA_Interact::ActivateAbility(const FGameplayAbilitySpecHandle Handle, cons
 
 	AActor* Target = Hit.GetActor();
 	UActorComponent* Component = Hit.GetComponent();
+	
 	UE_LOG(LogTemp, Error, TEXT("Hit Actor: %s"), 
 	Hit.GetActor() ? *Hit.GetActor()->GetName() : TEXT("NULL"));
 
 	UE_LOG(LogTemp, Error, TEXT("Hit Component: %s"), 
 		Hit.GetComponent() ? *Hit.GetComponent()->GetName() : TEXT("NULL"));
-
-	UE_LOG(LogTemp, Error, TEXT("Hit PhysMaterial: %s"),
-		Hit.PhysMaterial.IsValid() ? *Hit.PhysMaterial->GetName() : TEXT("NULL"));
 	
-	
-	if (!Target )
+	if (!Target)
 	{
 		//UE_LOG(LogTemp, Error, TEXT("Target or Component is null"));
 		CancelAbility(Handle, ActorInfo, ActivationInfo, true);
 	}
+	
 
 	// Client calls Server
 	
