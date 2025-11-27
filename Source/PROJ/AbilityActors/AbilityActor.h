@@ -11,7 +11,7 @@ class UGameplayEffect;
 class UBaseGameplayAbility;
 
 
-UCLASS()
+UCLASS(Blueprintable)
 class PROJ_API AAbilityActor : public AActor
 {
 	GENERATED_BODY()
@@ -39,12 +39,11 @@ public:
 	UBaseGameplayAbility* InCastedAbility, const TArray<FGameplayEffectSpecHandle>& InEffectSpecHandles);
 	
 protected:
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 	virtual void Cleanup();
 
 	UFUNCTION(BlueprintCallable)
-	bool ApplyEffectToTarget(const AActor* Target);
+	bool ApplyEffectToTarget(AActor* Target);
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	bool ShouldSkipHit(AActor* OtherActor);

@@ -91,17 +91,15 @@ TArray<FGameplayEffectSpecHandle> UBaseGameplayAbility::MakeEffectSpecsHandles()
 		return Specs;
 
 	const TArray<FAttackEffectEntry>& EffectsToUse = (AttackData && AttackData->Effects.Num() > 0) ? AttackData->Effects : Effects;
+	FGameplayEffectContextHandle Context = CasterASC->MakeEffectContext();
 	
 	for (const FAttackEffectEntry& Entry : EffectsToUse)
 	{
-		if (!Entry.Effect)
-			continue;
+		if (!Entry.Effect) continue;
 
-		FGameplayEffectContextHandle Context = CasterASC->MakeEffectContext();
 		FGameplayEffectSpecHandle Spec = CasterASC->MakeOutgoingSpec(Entry.Effect, GetAbilityLevel(), Context);
 
-		if (!Spec.IsValid())
-			continue;
+		if (!Spec.IsValid()) continue;
 
 		for (const auto& Pair : Entry.SetByCallerValues)
 		{
@@ -119,12 +117,14 @@ void UBaseGameplayAbility::InitializeAbilityActor(AAbilityActor* Actor)
 	if (!Actor)
 		return;
 	
+	TArray<FGameplayEffectSpecHandle> Specs = MakeEffectSpecsHandles();
 	Actor->SetReplicates(true);	
 	Actor->SetReplicateMovement(true);
-	Actor->InitializeAbilityActor(GetAvatarActorFromActorInfo(),
-			GetAbilitySystemComponentFromActorInfo(),
-			this,
-			MakeEffectSpecsHandles()
+	Actor->InitializeAbilityActor(
+		GetAvatarActorFromActorInfo(),
+		GetAbilitySystemComponentFromActorInfo(),
+		this,
+		Specs
 			);
 }
 
