@@ -16,7 +16,7 @@ void UGA_Interact::ActivateAbility(const FGameplayAbilitySpecHandle Handle, cons
                                    const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
-	UE_LOG(LogTemp, Warning, TEXT("Active Ability"));
+	//UE_LOG(LogTemp, Warning, TEXT("Active Ability"));
 	
 	APawn* Pawn = Cast<APawn>(GetAvatarActorFromActorInfo());
 	APlayerController* CasterController = Pawn ? Cast<APlayerController>(Pawn->GetController()) : nullptr;
