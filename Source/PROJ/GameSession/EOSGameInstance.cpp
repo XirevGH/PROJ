@@ -40,11 +40,11 @@ void UEOSGameInstance::Init()
 		GEngine->OnNetworkFailure().AddUObject(this, &UEOSGameInstance::HandleNetworkFailure);
 	}
 
-	UE_LOG(LogTemp, Display, TEXT("SessionState lobby int: %hdd"), static_cast<int32>(ESessionState::Lobby));
-	UE_LOG(LogTemp, Display, TEXT("SessionState SearchingForMatch int: %hdd"), static_cast<int32>(ESessionState::SearchingForMatch));
-	UE_LOG(LogTemp, Display, TEXT("SessionState JoiningMatch int: %hdd"), static_cast<int32>(ESessionState::JoiningMatch));
-	UE_LOG(LogTemp, Display, TEXT("SessionState InMatch int: %hdd"), static_cast<int32>(ESessionState::InMatch));
-	UE_LOG(LogTemp, Display, TEXT("SessionState Transition int: %hdd"), static_cast<int32>(ESessionState::Transition));
+	UE_LOG(LogTemp, Display, TEXT("SessionState lobby int: %hd"), static_cast<int32>(ESessionState::Lobby));
+	UE_LOG(LogTemp, Display, TEXT("SessionState SearchingForMatch int: %hd"), static_cast<int32>(ESessionState::SearchingForMatch));
+	UE_LOG(LogTemp, Display, TEXT("SessionState JoiningMatch int: %hd"), static_cast<int32>(ESessionState::JoiningMatch));
+	UE_LOG(LogTemp, Display, TEXT("SessionState InMatch int: %hd"), static_cast<int32>(ESessionState::InMatch));
+	UE_LOG(LogTemp, Display, TEXT("SessionState Transition int: %hd"), static_cast<int32>(ESessionState::Transition));
 }
 
 void UEOSGameInstance::DestroyCurrentSessionAndJoinCachedSession()
@@ -316,7 +316,7 @@ void UEOSGameInstance::CreateOwnSession()
 	TSharedPtr<const FUniqueNetId> UniqueIdPtr = IdentityPtr->GetUniquePlayerId(0);
 	if (!UniqueIdPtr.IsValid()) return;
 	UE_LOG(LogTemp, Display, TEXT("Creating own session"));
-	CreateSession(FName(IdentityPtr->GetPlayerNickname(*UniqueIdPtr)), true);
+	CreateSession(FName(IdentityPtr->GetPlayerNickname(*UniqueIdPtr)), false);
 }
 
 void UEOSGameInstance::CreateSessionCompleted(FName Name, bool bWasSuccessful)

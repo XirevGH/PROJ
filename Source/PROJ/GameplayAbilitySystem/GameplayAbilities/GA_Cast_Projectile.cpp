@@ -40,7 +40,7 @@ void UGA_Cast_Projectile::SpawnProjectile()
 	
 	float HeightOffset = 30.f; // whatever you want
 	SpawnLocation = Avatar->GetActorLocation()
-		+ Avatar->GetActorForwardVector() * 100.f
+		+ Avatar->GetActorForwardVector()
 		+ FVector(0.f, 0.f, HeightOffset);
 
 	// can change to camera rotation
