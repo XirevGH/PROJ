@@ -69,6 +69,9 @@ public:
 
 	UFUNCTION(BlueprintPure)
 	FBlueprintSessionResult GetCachedSessionToJoin() const;
+
+	UFUNCTION(BlueprintCallable)
+	void LeaveToOwnSession();
 	
 	/* ----------- Custom settings -------------- */
 	UFUNCTION(BlueprintPure)
@@ -77,13 +80,9 @@ public:
 	const FString& GetCustomSessionNameKey() const { return CustomSessionNameKey; }
 	UFUNCTION(BlueprintPure)
 	const FString& GetSelectedGameModeKey() const { return SelectedGameModeKey; }
-	// UFUNCTION(BlueprintPure)
-	// const FString& GetIsSearchingForMatchKey() const { return IsSearchingForMatchKey; }
 	UFUNCTION(BlueprintPure)
 	const FString& GetSessionStateKey() const { return SessionStateKey; }
 	
-	// UFUNCTION(BlueprintPure)
-	// bool GetIsSearchingForMatch() const;
 	UFUNCTION(BlueprintPure)
 	FString GetSelectedGameMode() const;
 	UFUNCTION(BlueprintPure)
@@ -93,8 +92,6 @@ public:
 	UFUNCTION(BlueprintPure)
 	ESessionState GetSessionState() const;
 	
-	// UFUNCTION(BlueprintCallable)
-	// void SetIsSearchingForMatch(const bool bIsSearching);
 	UFUNCTION(BlueprintCallable)
 	void SetSelectedGameMode(const FString& GameMode);
 	UFUNCTION(BlueprintCallable)
@@ -115,14 +112,13 @@ protected:
 	void DestroyCurrentSessionAndJoinCachedSession();
 
 	UFUNCTION(BlueprintCallable)
-	void SetClientIsJoiningMatch(const bool bJoining) { bClientJoiningMatch = bJoining; }
+	void SetClientIsTransitioning(const bool bTransitioning) { bClientTransitionToOtherSession = bTransitioning; }
 
 private:
 	FName SessionName;
 	FString SessionNameKey;
 	FString CustomSessionNameKey;
 	FString SelectedGameModeKey;
-	// FString IsSearchingForMatchKey;
 	FString SessionStateKey;
 	int32 MaxSearchResults;
 
@@ -138,7 +134,8 @@ private:
 	FDelegateHandle DestroySessionDelegateHandle;
 	FDelegateHandle UpdateSessionDelegateHandle;
 
-	bool bClientJoiningMatch;
+	bool bClientTransitionToOtherSession;
+	bool bReturningToOwnLobby;
 	ESessionState CurrentSessionState;
 
 	UFUNCTION()

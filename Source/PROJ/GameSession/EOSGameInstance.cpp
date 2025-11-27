@@ -2,17 +2,19 @@
 #include "OnlineSubsystem.h"
 #include "OnlineSubsystemUtils.h"
 #include "OnlineSessionSettings.h"
+#include "GameFramework/GameStateBase.h"
 #include "Interfaces/OnlineIdentityInterface.h"
 #include "Interfaces/OnlineSessionInterface.h"
+#include "Kismet/GameplayStatics.h"
 #include "Online/OnlineSessionNames.h"
 
 UEOSGameInstance::UEOSGameInstance() :
 	SessionNameKey("SessionNameKey"),
 	CustomSessionNameKey("CustomSessionName"),
 	SelectedGameModeKey("SelectedGameMode"),
-	// IsSearchingForMatchKey("IsSearchingForMatch"),
 	MaxSearchResults(100),
-	bClientJoiningMatch(false)
+	bClientTransitionToOtherSession(false),
+	bReturningToOwnLobby(false)
 {
 	CurrentSessionState = ESessionState::Lobby;
 }
@@ -97,7 +99,15 @@ void UEOSGameInstance::OnDestroySessionCompleted(FName Name, bool bWasSuccessful
 		// Clean up the local name on success
 		SessionName = NAME_None;
 
-		if (bClientJoiningMatch)
+		if (bReturningToOwnLobby)
+		{
+			UE_LOG(LogTemp, Display, TEXT("Session destroyed. Now creating own lobby session."));
+			bReturningToOwnLobby = false;
+			CreateOwnSession();
+			return;
+		}
+
+		if (bClientTransitionToOtherSession)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("OnDestroySessionCompleted: Client creating own session before joining match"));
 			// Give session a name with random number
@@ -126,17 +136,6 @@ FString UEOSGameInstance::GetSessionName(const FOnlineSessionSearchResult& Sessi
 	SessionSearchResult.Session.SessionSettings.Get(FName(SessionNameKey), OutValue);
 	return OutValue;
 }
-
-// bool UEOSGameInstance::GetIsSearchingForMatch() const
-// {
-// 	if (const FOnlineSessionSettings* SessionSettings = GetSessionSettings())
-// 	{
-// 		bool bIsSearchingForMatch = false;
-// 		SessionSettings->Get(FName(IsSearchingForMatchKey), bIsSearchingForMatch);
-// 		return bIsSearchingForMatch;
-// 	}
-// 	return false;
-// }
 
 FString UEOSGameInstance::GetSelectedGameMode() const
 {
@@ -198,16 +197,6 @@ void UEOSGameInstance::SetSessionName(const FString& NewSessionName)
 		UpdateSessionSettings(SessionSettings);
 	}
 }
-
-// void UEOSGameInstance::SetIsSearchingForMatch(const bool bIsSearching)
-// {
-// 	if (FOnlineSessionSettings* SessionSettings = GetSessionSettings())
-// 	{
-// 		SessionSettings->Set(FName(IsSearchingForMatchKey),
-// 			FOnlineSessionSetting(bIsSearching, EOnlineDataAdvertisementType::ViaOnlineService));
-// 		UpdateSessionSettings(SessionSettings);
-// 	}
-// }
 
 void UEOSGameInstance::SetSelectedGameMode(const FString& GameMode)
 {
@@ -284,8 +273,6 @@ void UEOSGameInstance::CreateSession(const FName& Name, const bool bIsTransition
 			FOnlineSessionSetting(Name.ToString(), EOnlineDataAdvertisementType::ViaOnlineService));
 		SessionSettings.Set(FName(CustomSessionNameKey),
 			FOnlineSessionSetting(Name.ToString(), EOnlineDataAdvertisementType::ViaOnlineService));
-		// SessionSettings.Set(FName(IsSearchingForMatchKey),
-		// 	FOnlineSessionSetting(false, EOnlineDataAdvertisementType::ViaOnlineService));
 		SessionSettings.Set(FName(SelectedGameModeKey),
 			FOnlineSessionSetting(TEXT("1v1"), EOnlineDataAdvertisementType::ViaOnlineService));
 		SessionSettings.Set(
@@ -331,9 +318,9 @@ void UEOSGameInstance::CreateSessionCompleted(FName Name, bool bWasSuccessful)
 	}
 	LoadLevelAndListen(LobbyLevel);
 
-	if (bClientJoiningMatch)
+	if (bClientTransitionToOtherSession)
 	{
-		bClientJoiningMatch = false;
+		bClientTransitionToOtherSession = false;
 		UE_LOG(LogTemp, Display, TEXT("Previous client is now calling to destroy new session and join match"));
 		DestroyCurrentSessionAndJoinCachedSession();
 	}
@@ -371,6 +358,15 @@ void UEOSGameInstance::JoinLobbyByIndex(const int32 Index)
 		UE_LOG(LogTemp, Display, TEXT("Trying to join session with index %d"), Index);
 		UE_LOG(LogTemp, Display, TEXT("Session by index name is: %s"), *GetSessionName(OpenPublicSearch->SearchResults[Index]));
 		CachedSessionToJoin = OpenPublicSearch->SearchResults[Index];
+		
+		if (UWorld* World = GetWorld())
+		{
+			if (World->GetNetMode() == NM_Client)
+			{
+				bClientTransitionToOtherSession = true;
+			}
+		}
+		
 		DestroyCurrentSessionAndJoinCachedSession();
 	}
 }
@@ -433,8 +429,41 @@ void UEOSGameInstance::LoadLevelAndListen(const TSoftObjectPtr<UWorld>& LevelToL
 	{
 		UE_LOG(LogTemp, Display, TEXT("Initiate ServerTravel to lobby after creating session"));
 		const FName LevelName = FName(*FPackageName::ObjectPathToPackageName(LevelToLoad.ToString()));
-		GetWorld()->ServerTravel(LevelName.ToString() + "?listen");
+		// GetWorld()->ServerTravel(LevelName.ToString() + "?listen");
+		UGameplayStatics::OpenLevel(GetWorld(), LevelName, true, "?listen");
 	}
+}
+
+void UEOSGameInstance::LeaveToOwnSession()
+{
+	IOnlineSessionPtr SessionInterface = Online::GetSessionInterface(GetWorld());
+	if (!SessionInterface.IsValid()) return;
+
+	UE_LOG(LogTemp, Display, TEXT("Leave to own session"));
+
+	int32 NumPlayers = 0;
+	bool bIsHost = false;
+
+	if (const UWorld* World = GetWorld())
+	{
+		if (const AGameStateBase* GameState = World->GetGameState())
+		{
+			NumPlayers = GameState->PlayerArray.Num();
+		}
+		if (World->GetNetMode() != NM_Client)
+		{
+			bIsHost = true;
+		}
+	}
+
+	if (bIsHost && NumPlayers <= 1)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("LeaveToOwnSession: Already host of an empty lobby. Aborting to prevent reload."));
+		return;
+	}
+
+	bReturningToOwnLobby = true;
+	DestroyCurrentSessionAndJoinCachedSession();
 }
 
 void UEOSGameInstance::SearchForMatch()
@@ -461,7 +490,6 @@ void UEOSGameInstance::FindCompatibleMatchSessions()
 	MatchSearch->QuerySettings.Set(SEARCH_LOBBIES, true, EOnlineComparisonOp::Equals);
 	MatchSearch->QuerySettings.Set(SEARCH_KEYWORDS,FString("PublicSession"),EOnlineComparisonOp::Equals);
 	MatchSearch->QuerySettings.Set(FName(SessionStateKey), static_cast<int32>(ESessionState::SearchingForMatch), EOnlineComparisonOp::Equals);
-	// MatchSearch->QuerySettings.Set(FName(IsSearchingForMatchKey), true, EOnlineComparisonOp::Equals);
 	MatchSearch->QuerySettings.Set(FName(SelectedGameModeKey), GetSelectedGameMode(), EOnlineComparisonOp::Equals);
 	MatchSearch->QuerySettings.Set(FName(CustomSessionNameKey), SessionName.ToString(), EOnlineComparisonOp::NotEquals);
 	
@@ -591,7 +619,6 @@ void UEOSGameInstance::FindOpenPublicSessions()
 	OpenPublicSearch->QuerySettings.Set(SEARCH_KEYWORDS,FString("PublicSession"),EOnlineComparisonOp::Equals);
 	// Only find sessions that are just in the lobby without searching for match or joining a match
 	OpenPublicSearch->QuerySettings.Set(FName(SessionStateKey), static_cast<int32>(ESessionState::Lobby), EOnlineComparisonOp::Equals);
-	// OpenPublicSearch->QuerySettings.Set(FName(IsSearchingForMatchKey), false, EOnlineComparisonOp::Equals);
 	OpenPublicSearch->QuerySettings.Set(FName(CustomSessionNameKey), SessionName.ToString(), EOnlineComparisonOp::NotEquals);
 	OpenPublicSearch->MaxSearchResults = MaxSearchResults;
 	
