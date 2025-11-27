@@ -34,7 +34,7 @@ public:
 	void Login();
 	
 	UFUNCTION(BlueprintCallable)
-	void CreateSession(const FName& Name, const bool bIsTransitionSession);
+	void CreateSession(const FName& Name, const bool bNotTransition);
 	
 	FString GetSessionName(const FOnlineSessionSearchResult& SessionSearchResult) const;
 
