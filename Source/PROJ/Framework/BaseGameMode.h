@@ -19,6 +19,8 @@ class PROJ_API ABaseGameMode : public AGameMode
 public:
 	UFUNCTION()
 	UCharacterClassInfo* GetCharacterClassDefaultInfo() const;
+
+	virtual void HandleSeamlessTravelPlayer(AController*& C) override;
 private:
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Custom Values|Class Defaults")
