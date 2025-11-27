@@ -83,7 +83,7 @@ FHitResult AGATA_GroundTrace_Indicator::PerformTrace(AActor* InSourceActor)
 		float Angle = FMath::RadiansToDegrees(
 			acosf(FVector::DotProduct(MouseHit.ImpactNormal, FVector::UpVector))
 		);
-		UE_LOG(LogTemp, Warning, TEXT("Angle: %f"), Angle);
+		//UE_LOG(LogTemp, Warning, TEXT("Angle: %f"), Angle);
 		bool bWalkable = Angle <= 45.f;            // walkable terrain// acceptable roof height
 
 		if (bWalkable)
