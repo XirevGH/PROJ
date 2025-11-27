@@ -5,7 +5,6 @@
 
 #include "NiagaraFunctionLibrary.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
-#include "Components/CapsuleComponent.h"
 #include "Engine/OverlapResult.h"
 #include "PROJ/Characters/BaseCharacter.h"
 #include "PROJ/Data/AttackData.h"

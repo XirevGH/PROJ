@@ -67,6 +67,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void JoinLobbyByIndex(const int32 Index);
 
+	UFUNCTION(BlueprintCallable)
+	void JoinLobbyByResult(const FBlueprintSessionResult& Result);
+
 	UFUNCTION(BlueprintPure)
 	FBlueprintSessionResult GetCachedSessionToJoin() const;
 

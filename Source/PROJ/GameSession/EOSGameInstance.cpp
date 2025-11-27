@@ -371,6 +371,31 @@ void UEOSGameInstance::JoinLobbyByIndex(const int32 Index)
 	}
 }
 
+void UEOSGameInstance::JoinLobbyByResult(const FBlueprintSessionResult& Result)
+{
+	if (!Result.OnlineResult.IsValid())
+	{
+		UE_LOG(LogTemp, Error, TEXT("JoinSessionByResult: Session is invalid"));
+		return;
+	}
+
+	UE_LOG(LogTemp, Display, TEXT("Joining specific session: %s"),
+		*Result.OnlineResult.Session.SessionSettings.Settings.FindRef(FName(SessionNameKey)).Data.ToString());
+
+	// Set the cached session to this specific result provided by the UI
+	CachedSessionToJoin = Result.OnlineResult;
+
+	if (const UWorld* World = GetWorld())
+	{
+		if (World->GetNetMode() == NM_Client)
+		{
+			SetClientIsTransitioning(true);
+		}
+	}
+
+	DestroyCurrentSessionAndJoinCachedSession();
+}
+
 FBlueprintSessionResult UEOSGameInstance::GetCachedSessionToJoin() const
 {
 	if (!CachedSessionToJoin.IsValid())

@@ -21,9 +21,10 @@ class PROJ_API ABasePlayerController : public APlayerController, public IAbility
 public:
 
 	virtual void SetupInputComponent() override;
-	
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	FString TeamID;
 protected:
 
 	virtual void BeginPlay() override;
