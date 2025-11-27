@@ -4,6 +4,8 @@
 #include "AbilityActor.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
+#include "PROJ/Characters/BaseCharacter.h"
+#include "PROJ/Framework/BasePlayerController.h"
 #include "./PROJ/GameplayAbilitySystem/GameplayAbilities/BaseGameplayAbility.h"
 
 
@@ -77,6 +79,20 @@ bool AAbilityActor::ApplyEffectToTarget(const AActor* Target)
 
 bool AAbilityActor::ShouldSkipHit_Implementation(AActor* OtherActor)
 {
+	if (Caster)
+	{
+		if (ABasePlayerController* PC = Cast<ABasePlayerController>(Cast<ABaseCharacter>(Caster)->GetController()))
+		{
+			if (ABaseCharacter* OtherCharacter = Cast<ABaseCharacter>(OtherActor))
+			{
+				if (ABasePlayerController* OtherPC = Cast<ABasePlayerController>(OtherCharacter->GetController()))
+				{
+					return PC->TeamID.Equals(OtherPC->TeamID);
+				}
+			}
+		}
+	}
+
 	return OtherActor == Caster || OtherActor->IsA(StaticClass());
 }
 
