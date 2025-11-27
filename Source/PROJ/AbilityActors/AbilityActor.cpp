@@ -74,6 +74,13 @@ bool AAbilityActor::ApplyEffectToTarget(const AActor* Target)
 	
 	return true;
 }
+
+bool AAbilityActor::ShouldSkipHit_Implementation(AActor* OtherActor)
+{
+	return OtherActor == Caster || OtherActor->IsA(StaticClass());
+}
+
+
 bool AAbilityActor::InitializeAbilityActor(
 	AActor* InCaster, 
 	UAbilitySystemComponent* InCasterASC,
@@ -94,7 +101,3 @@ bool AAbilityActor::InitializeAbilityActor(
 	return true;
 }
 
-bool AAbilityActor::ShouldSkipHit(AActor* OtherActor)
-{
-	return OtherActor == Caster || OtherActor->IsA(StaticClass());
-}
