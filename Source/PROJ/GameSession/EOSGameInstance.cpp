@@ -5,6 +5,7 @@
 #include "GameFramework/GameStateBase.h"
 #include "Interfaces/OnlineIdentityInterface.h"
 #include "Interfaces/OnlineSessionInterface.h"
+#include "Kismet/GameplayStatics.h"
 #include "Online/OnlineSessionNames.h"
 
 UEOSGameInstance::UEOSGameInstance() :
@@ -428,14 +429,15 @@ void UEOSGameInstance::LoadLevelAndListen(const TSoftObjectPtr<UWorld>& LevelToL
 	{
 		UE_LOG(LogTemp, Display, TEXT("Initiate ServerTravel to lobby after creating session"));
 		const FName LevelName = FName(*FPackageName::ObjectPathToPackageName(LevelToLoad.ToString()));
-		GetWorld()->ServerTravel(LevelName.ToString() + "?listen");
+		// GetWorld()->ServerTravel(LevelName.ToString() + "?listen");
+		UGameplayStatics::OpenLevel(GetWorld(), LevelName, true, "?listen");
 	}
 }
 
 void UEOSGameInstance::LeaveToOwnSession()
 {
 	IOnlineSessionPtr SessionInterface = Online::GetSessionInterface(GetWorld());
-	if (SessionInterface.IsValid()) return;
+	if (!SessionInterface.IsValid()) return;
 
 	UE_LOG(LogTemp, Display, TEXT("Leave to own session"));
 
