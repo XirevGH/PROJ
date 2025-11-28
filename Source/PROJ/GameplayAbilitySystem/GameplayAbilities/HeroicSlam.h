@@ -10,6 +10,7 @@
 class AGameplayAbilityTargetActor;
 class ABaseCharacter;
 class UNiagaraSystem;
+class AGameplayCueNotify_Actor;
 /**
  * 
  */
@@ -51,7 +52,9 @@ public:
 	float OriginalBraking;
 	UPROPERTY()
 	float OriginalFriction;
-
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="VFX")
+	TSubclassOf<AGameplayCueNotify_Actor> SlamGameplayCue;
+	
 	UFUNCTION()
 	void RestoreAirFriction();
 	UFUNCTION(BlueprintCallable)

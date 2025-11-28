@@ -23,11 +23,18 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ConduitActor")
 	TSubclassOf<AAbilityActor> ConduitActor;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ConduitActorLifeTime")
+	float ConduitLifeTime = 10.f;
+	
+	FTimerHandle LandingCheckTimer;
 	
 	virtual void PlayMontage(UAnimMontage* Montage) override;
+	virtual void OnMontageCompleted() override;
 	
 	UFUNCTION()
 	void OnMontageNotifyReceived(FGameplayEventData Payload);
+
 	
 	virtual void ActivateAbility(
 		const FGameplayAbilitySpecHandle Handle,
@@ -35,6 +42,13 @@ public:
 		const FGameplayAbilityActivationInfo ActivationInfo,
 		const FGameplayEventData* TriggerEventData) override;
 
+	virtual bool CanActivateAbility(
+		const FGameplayAbilitySpecHandle Handle,
+		const FGameplayAbilityActorInfo* ActorInfo,
+		const FGameplayTagContainer* SourceTags = nullptr,
+		const FGameplayTagContainer* TargetTags = nullptr,
+		FGameplayTagContainer* OptionalRelevantTags = nullptr) const override;
+	
 	void SpawnConduit();
 private:
 	
