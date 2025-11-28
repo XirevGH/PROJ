@@ -16,7 +16,7 @@ void UGA_Interact::ActivateAbility(const FGameplayAbilitySpecHandle Handle, cons
                                    const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
-	UE_LOG(LogTemp, Warning, TEXT("Active Ability"));
+	//UE_LOG(LogTemp, Warning, TEXT("Active Ability"));
 	
 	APawn* Pawn = Cast<APawn>(GetAvatarActorFromActorInfo());
 	APlayerController* CasterController = Pawn ? Cast<APlayerController>(Pawn->GetController()) : nullptr;
@@ -32,11 +32,11 @@ void UGA_Interact::ActivateAbility(const FGameplayAbilitySpecHandle Handle, cons
 	AActor* Target = Hit.GetActor();
 	UActorComponent* Component = Hit.GetComponent();
 	
-	UE_LOG(LogTemp, Error, TEXT("Hit Actor: %s"), 
-	Hit.GetActor() ? *Hit.GetActor()->GetName() : TEXT("NULL"));
+	//UE_LOG(LogTemp, Error, TEXT("Hit Actor: %s"), 
+	//Hit.GetActor() ? *Hit.GetActor()->GetName() : TEXT("NULL"));
 
-	UE_LOG(LogTemp, Error, TEXT("Hit Component: %s"), 
-		Hit.GetComponent() ? *Hit.GetComponent()->GetName() : TEXT("NULL"));
+	//UE_LOG(LogTemp, Error, TEXT("Hit Component: %s"), 
+	//	Hit.GetComponent() ? *Hit.GetComponent()->GetName() : TEXT("NULL"));
 	
 	if (!Target)
 	{
@@ -58,16 +58,16 @@ void UGA_Interact::Server_Interact_Implementation(AActor* Target, UActorComponen
 {
 	if (!Target )
 	{
-		UE_LOG(LogTemp, Error, TEXT("Target or Component is null"));
+		//UE_LOG(LogTemp, Error, TEXT("Target or Component is null"));
 		return;
 	}
 	if (Target->Implements<UInteractable>())
 	{
 		IInteractable::Execute_Interact(Target, GetAvatarActorFromActorInfo(), Component);
-		UE_LOG(LogTemp, Error, TEXT("Call interact"));
+		//UE_LOG(LogTemp, Error, TEXT("Call interact"));
 	}
 	else
 	{
-		UE_LOG(LogTemp, Error, TEXT("Target not  Implements UInteractable"));
+		//UE_LOG(LogTemp, Error, TEXT("Target not  Implements UInteractable"));
 	}
 }

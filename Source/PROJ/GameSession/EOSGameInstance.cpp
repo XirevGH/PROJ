@@ -250,7 +250,7 @@ void UEOSGameInstance::LoginCompleted(int numOfPlayers, bool bWasSuccessful, con
 	}
 }
 
-void UEOSGameInstance::CreateSession(const FName& Name, const bool bIsTransitionSession)
+void UEOSGameInstance::CreateSession(const FName& Name, const bool bNotTransition)
 {
 	IOnlineSessionPtr SessionInterface = Online::GetSessionInterface(GetWorld());
 	if (SessionInterface.IsValid())
@@ -263,9 +263,9 @@ void UEOSGameInstance::CreateSession(const FName& Name, const bool bIsTransition
 		SessionSettings.bIsLANMatch = false;
 		SessionSettings.bShouldAdvertise = true;
 		SessionSettings.bUseLobbiesIfAvailable = true;
-		SessionSettings.bUsesPresence = bIsTransitionSession;
+		SessionSettings.bUsesPresence = bNotTransition;
 		SessionSettings.bAllowJoinInProgress = true;
-		SessionSettings.bAllowJoinViaPresence = bIsTransitionSession;
+		SessionSettings.bAllowJoinViaPresence = bNotTransition;
 		SessionSettings.NumPublicConnections = 6;
 
 		// Custom settings
@@ -279,7 +279,7 @@ void UEOSGameInstance::CreateSession(const FName& Name, const bool bIsTransition
 		FName(SEARCH_KEYWORDS),
 			FOnlineSessionSetting(FString("PublicSession"), EOnlineDataAdvertisementType::ViaOnlineService));
 		
-		if (bIsTransitionSession)
+		if (!bNotTransition)
 		{
 			SessionSettings.Set(FName(SessionStateKey),
 				FOnlineSessionSetting(static_cast<int32>(ESessionState::Transition), EOnlineDataAdvertisementType::ViaOnlineService));
@@ -303,7 +303,7 @@ void UEOSGameInstance::CreateOwnSession()
 	TSharedPtr<const FUniqueNetId> UniqueIdPtr = IdentityPtr->GetUniquePlayerId(0);
 	if (!UniqueIdPtr.IsValid()) return;
 	UE_LOG(LogTemp, Display, TEXT("Creating own session"));
-	CreateSession(FName(IdentityPtr->GetPlayerNickname(*UniqueIdPtr)), false);
+	CreateSession(FName(IdentityPtr->GetPlayerNickname(*UniqueIdPtr)), true);
 }
 
 void UEOSGameInstance::CreateSessionCompleted(FName Name, bool bWasSuccessful)
@@ -366,9 +366,33 @@ void UEOSGameInstance::JoinLobbyByIndex(const int32 Index)
 				bClientTransitionToOtherSession = true;
 			}
 		}
-		
 		DestroyCurrentSessionAndJoinCachedSession();
 	}
+}
+
+void UEOSGameInstance::JoinLobbyByResult(const FBlueprintSessionResult& Result)
+{
+	if (!Result.OnlineResult.IsValid())
+	{
+		UE_LOG(LogTemp, Error, TEXT("JoinSessionByResult: Session is invalid"));
+		return;
+	}
+
+	UE_LOG(LogTemp, Display, TEXT("Joining specific session: %s"),
+		*Result.OnlineResult.Session.SessionSettings.Settings.FindRef(FName(SessionNameKey)).Data.ToString());
+
+	// Set the cached session to this specific result provided by the UI
+	CachedSessionToJoin = Result.OnlineResult;
+
+	if (const UWorld* World = GetWorld())
+	{
+		if (World->GetNetMode() == NM_Client)
+		{
+			SetClientIsTransitioning(true);
+		}
+	}
+
+	DestroyCurrentSessionAndJoinCachedSession();
 }
 
 FBlueprintSessionResult UEOSGameInstance::GetCachedSessionToJoin() const

@@ -34,7 +34,7 @@ public:
 	void Login();
 	
 	UFUNCTION(BlueprintCallable)
-	void CreateSession(const FName& Name, const bool bIsTransitionSession);
+	void CreateSession(const FName& Name, const bool bNotTransition);
 	
 	FString GetSessionName(const FOnlineSessionSearchResult& SessionSearchResult) const;
 
@@ -66,6 +66,9 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void JoinLobbyByIndex(const int32 Index);
+
+	UFUNCTION(BlueprintCallable)
+	void JoinLobbyByResult(const FBlueprintSessionResult& Result);
 
 	UFUNCTION(BlueprintPure)
 	FBlueprintSessionResult GetCachedSessionToJoin() const;
