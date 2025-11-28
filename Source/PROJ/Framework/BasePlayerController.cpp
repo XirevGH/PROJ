@@ -5,6 +5,7 @@
 #include "../GameplayAbilitySystem/BaseAbilitySystemComponent.h"
 #include "BasePlayerState.h"
 #include "../Input/BaseEnhancedInputComponent.h"
+#include "Net/UnrealNetwork.h"
 
 void ABasePlayerController::SetupInputComponent()
 {
@@ -31,6 +32,14 @@ UAbilitySystemComponent* ABasePlayerController::GetAbilitySystemComponent() cons
 void ABasePlayerController::BeginPlay()
 {
 	Super::BeginPlay();
+}
+
+void ABasePlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	// This command is what actually makes the engine send the data
+	DOREPLIFETIME(ABasePlayerController, TeamID);
 }
 
 void ABasePlayerController::AbilityInputPressed(FGameplayTag InputTag)
