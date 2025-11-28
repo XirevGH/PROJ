@@ -23,7 +23,7 @@ public:
 	virtual void SetupInputComponent() override;
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Replicated)
 	FString TeamID;
 protected:
 
