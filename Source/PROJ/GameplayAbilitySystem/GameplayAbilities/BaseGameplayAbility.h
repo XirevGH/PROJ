@@ -13,6 +13,7 @@ class AAbilityActor;
 /**
  * 
  */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FMyMontageDelegate, FGameplayTag, EventTag);
 UCLASS()
 class PROJ_API UBaseGameplayAbility : public UGameplayAbility
 {

@@ -48,6 +48,8 @@ void UBaseGameplayAbility::ApplyCooldown(const FGameplayAbilitySpecHandle Handle
 
 void UBaseGameplayAbility::PlayMontage(UAnimMontage* Montage)
 {
+	if (!Montage) return;
+	
 	UE_LOG(LogTemp, Display, TEXT("Playing Montage"));
 	/*Montage start*/
 	auto* MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(

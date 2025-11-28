@@ -9,6 +9,7 @@
 AAbilityActor::AAbilityActor()
 {
 	PrimaryActorTick.bCanEverTick = true;
+	bReplicates = true;
 }
 
 void AAbilityActor::BeginPlay()

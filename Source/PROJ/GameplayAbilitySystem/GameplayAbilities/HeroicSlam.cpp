@@ -77,6 +77,16 @@ void UHeroicSlam::OnConfirm(const FGameplayAbilityTargetDataHandle& Data)
 
 void UHeroicSlam::RestoreAirFriction()
 {
+	/*Play VFX*/
+	if (SlamVfx && CachedPlayer)
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+				GetWorld(),
+				SlamVfx,
+				CachedPlayer->GetActorLocation(),
+				FRotator::ZeroRotator,
+				FVector(10.f));
+	}
 	auto* Move = CachedPlayer->GetCharacterMovement();
 	Move->MaxWalkSpeed = CachedOriginalMaxSpeed;
 	Move->AirControl = OriginalAirControl;
@@ -158,7 +168,7 @@ void UHeroicSlam::LandingCheck()
 	
 	FVector Origin = CachedPlayer->GetActorLocation();
 	TArray<FOverlapResult> Overlaps;
-
+	
 	FCollisionQueryParams Params;
 	Params.AddIgnoredActor(CachedPlayer);
 
@@ -183,7 +193,6 @@ void UHeroicSlam::LandingCheck()
 			ApplyEffectsToTarget(HitActor);
 		}
 	}
-	DrawDebugSphere(GetWorld(), Origin, SlamRadius, 32, FColor::Blue, false, 2.f);
 	/*Reset all movement attributes*/
 	RestoreAirFriction();
 	/*Reset timer*/
