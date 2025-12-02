@@ -1,4 +1,7 @@
 ﻿#include "EOSGameInstance.h"
+
+#include <string>
+
 #include "OnlineSubsystem.h"
 #include "OnlineSubsystemUtils.h"
 #include "OnlineSessionSettings.h"
@@ -188,6 +191,20 @@ void UEOSGameInstance::SetSessionState(const ESessionState NewSessionState)
 	}
 }
 
+void UEOSGameInstance::SetNumPublicConnections(const int NewAmount)
+{
+	if (NewAmount <= 0)
+	{
+		UE_LOG(LogTemp, Display, TEXT("NumPublicConnections cannot be set to 0 or less than 0"));
+		return;
+	}
+	if (FOnlineSessionSettings* SessionSettings = GetSessionSettings())
+	{
+		SessionSettings->NumPublicConnections = NewAmount;
+		UpdateSessionSettings(SessionSettings);
+	}
+}
+
 void UEOSGameInstance::SetSessionName(const FString& NewSessionName)
 {
 	if (FOnlineSessionSettings* SessionSettings = GetSessionSettings())
@@ -290,9 +307,15 @@ void UEOSGameInstance::CreateSession(const FName& Name, const bool bNotTransitio
 				FOnlineSessionSetting(static_cast<int32>(ESessionState::Lobby), EOnlineDataAdvertisementType::ViaOnlineService));
 			CurrentSessionState = ESessionState::Lobby;
 		}
+		
+		IOnlineIdentityPtr IdentityPtr = Online::GetIdentityInterface(GetWorld());
+		if (!IdentityPtr.IsValid()) return;
+		TSharedPtr<const FUniqueNetId> UniqueIdPtr = IdentityPtr->GetUniquePlayerId(0);
+		if (!UniqueIdPtr.IsValid()) return;
 
-		UE_LOG(LogTemp, Display, TEXT("Creating session with name: %s"), *Name.ToString());
-		SessionInterface->CreateSession(0, Name, SessionSettings);
+		const FName NewName = FName(FString::Printf(TEXT("%s %d"), *Name.ToString(), FMath::Rand()));
+		UE_LOG(LogTemp, Display, TEXT("Creating session with name: %s"), *NewName.ToString());
+		SessionInterface->CreateSession(*UniqueIdPtr, NewName, SessionSettings);
 	}
 }
 
@@ -493,6 +516,23 @@ void UEOSGameInstance::LeaveToOwnSession()
 void UEOSGameInstance::SearchForMatch()
 {
 	SetSessionState(ESessionState::SearchingForMatch);
+	
+	FString GameMode = GetSelectedGameMode();
+	if (GameMode == "0")
+	{
+		SetNumPublicConnections(2);
+	}
+	else if (GameMode == "1")
+	{
+		SetNumPublicConnections(4);
+	}
+	else
+	{
+		SetNumPublicConnections(6);
+	}
+	
+	UE_LOG(LogTemp, Warning, TEXT("NumPublicConnections set to %d"), GetSessionSettings()->NumPublicConnections);
+	
 	UE_LOG(LogTemp, Warning, TEXT("StartMatchmakingSearch"));
 	FindCompatibleMatchSessions();
 }
