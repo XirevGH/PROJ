@@ -168,4 +168,5 @@ private:
 	void CreateOwnSession();
 	void FilterOpenPublicSearchResults();
 	void SortOpenPublicSearchResultsByName();
+	void SetStartMatchSearchVariables(ESessionState NewSessionState, int NewPublicConnections);
 };
