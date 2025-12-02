@@ -324,7 +324,11 @@ void UEOSGameInstance::CreateOwnSession()
 	if (!IdentityPtr.IsValid()) return;
 	TSharedPtr<const FUniqueNetId> UniqueIdPtr = IdentityPtr->GetUniquePlayerId(0);
 	if (!UniqueIdPtr.IsValid()) return;
+	
 	SessionName = NAME_None;
+	ClearCachedSession();
+	CurrentSessionState = ESessionState::Lobby;
+	
 	UE_LOG(LogTemp, Display, TEXT("Creating own session"));
 	CreateSession(FName(IdentityPtr->GetPlayerNickname(*UniqueIdPtr)), true);
 }
@@ -463,6 +467,9 @@ void UEOSGameInstance::OnJoinSessionCompleted(FName Name, EOnJoinSessionComplete
 		}
 		SessionName = Name;
 		ClearCachedSession();
+	}else
+	{
+		CreateOwnSession();
 	}
 }
 
@@ -811,17 +818,6 @@ void UEOSGameInstance::HandleNetworkFailure(UWorld* World, UNetDriver* NetDriver
 	// If we are a client and the connection timed out or the host closed the connection
 	if (FailureType == ENetworkFailure::ConnectionTimeout || FailureType == ENetworkFailure::ConnectionLost)
 	{
-		// 1. Clear the local SessionName variable so we don't think we are still in the old session
-		SessionName = NAME_None;
-        
-		// 2. Clear any cached search results
-		ClearCachedSession();
-
-		// 3. Force the session state back to Lobby (locally)
-		CurrentSessionState = ESessionState::Lobby;
-
-		// 4. Create a new session for this client so they become their own host
-		// Important: Ensure we are not already in the process of creating one
 		CreateOwnSession(); 
 	}
 }
