@@ -100,6 +100,7 @@ TArray<FGameplayEffectSpecHandle> UBaseGameplayAbility::MakeEffectSpecsHandles()
 		if (!Entry.Effect) continue;
 
 		FGameplayEffectSpecHandle Spec = CasterASC->MakeOutgoingSpec(Entry.Effect, GetAbilityLevel(), Context);
+		
 
 		if (!Spec.IsValid()) continue;
 
