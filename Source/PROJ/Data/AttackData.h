@@ -12,6 +12,13 @@ class UGameplayEffect;
  * 
  */
 
+UENUM(BlueprintType)
+enum class EEffectApplicationPolicy : uint8
+{
+	ApplyToTarget     UMETA(DisplayName = "Apply To Target"),
+	ApplyToSelf       UMETA(DisplayName = "Apply To Self"),
+	ApplyToBoth       UMETA(DisplayName = "Apply To Self & Target")
+};
 USTRUCT(BlueprintType)
 struct FAttackEffectEntry
 {
@@ -23,9 +30,13 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<UGameplayEffect> Effect = nullptr;
 
-	// SetByCaller tag → magnitude
+	// SetByCaller tag magnitude
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TMap<FGameplayTag, float> SetByCallerValues;
+
+	//Apply effect policy (who want the effect to ☠️effect☠️)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	EEffectApplicationPolicy ApplicationPolicy = EEffectApplicationPolicy::ApplyToTarget;
 };
 
 UCLASS()
@@ -50,4 +61,5 @@ public:
 	/*Tags*/
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	FGameplayTagContainer GrantedTags;
+	
 };

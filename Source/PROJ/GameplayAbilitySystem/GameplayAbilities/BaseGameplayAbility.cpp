@@ -84,15 +84,16 @@ void UBaseGameplayAbility::OnMontageCancelled()
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }
 
-TArray<FGameplayEffectSpecHandle> UBaseGameplayAbility::MakeEffectSpecsHandles()
+FAbilityEffectSpecs UBaseGameplayAbility::MakeEffectSpecsHandles()
 {
-	TArray<FGameplayEffectSpecHandle> Specs;
+	FAbilityEffectSpecs Specs;
 
 	UAbilitySystemComponent* CasterASC = GetAbilitySystemComponentFromActorInfo();
 	if (!CasterASC)
 		return Specs;
 
 	const TArray<FAttackEffectEntry>& EffectsToUse = (AttackData && AttackData->Effects.Num() > 0) ? AttackData->Effects : Effects;
+	
 	FGameplayEffectContextHandle Context = CasterASC->MakeEffectContext();
 	
 	for (const FAttackEffectEntry& Entry : EffectsToUse)
@@ -109,7 +110,22 @@ TArray<FGameplayEffectSpecHandle> UBaseGameplayAbility::MakeEffectSpecsHandles()
 			Spec.Data->SetSetByCallerMagnitude(Pair.Key, Pair.Value);
 		}
 
-		Specs.Add(Spec);
+		/*Apply to correct target/s created a struct for the different specs and an enum to sort them*/
+		switch(Entry.ApplicationPolicy)
+		{
+		case EEffectApplicationPolicy::ApplyToTarget:
+			Specs.TargetSpecs.Add(Spec);
+		break;
+			
+		case EEffectApplicationPolicy::ApplyToSelf:
+			Specs.SelfSpecs.Add(Spec);
+		break;
+			
+		case EEffectApplicationPolicy::ApplyToBoth:
+			Specs.TargetSpecs.Add(Spec);
+			Specs.SelfSpecs.Add(Spec);
+		break;	
+		}
 	}
 
 	return Specs;
@@ -119,15 +135,21 @@ void UBaseGameplayAbility::InitializeAbilityActor(AAbilityActor* Actor)
 {
 	if (!Actor)
 		return;
+
 	
-	TArray<FGameplayEffectSpecHandle> Specs = MakeEffectSpecsHandles();
+	 FAbilityEffectSpecs SpecStruct = MakeEffectSpecsHandles();
+	
+	/*Merg specs (since i dont know if we want our actors to know difference between self / target*/
+	TArray<FGameplayEffectSpecHandle> AllSpecs = SpecStruct.SelfSpecs;
+	AllSpecs.Append(SpecStruct.TargetSpecs);
+	
 	Actor->SetReplicates(true);	
 	Actor->SetReplicateMovement(true);
 	Actor->InitializeAbilityActor(
 		GetAvatarActorFromActorInfo(),
 		GetAbilitySystemComponentFromActorInfo(),
 		this,
-		Specs
+		AllSpecs
 			);
 }
 
@@ -168,9 +190,18 @@ void UBaseGameplayAbility::ApplyEffectsToTarget(AActor* Target)
 	if (!OwnerASC->GetOwner()->HasAuthority())
 		return;
 
-	TArray<FGameplayEffectSpecHandle> Specs = MakeEffectSpecsHandles();
+	FAbilityEffectSpecs Specs = MakeEffectSpecsHandles();
 
-	for (const FGameplayEffectSpecHandle& Spec : Specs)
+	/*Apply to self*/
+	for (const FGameplayEffectSpecHandle& Spec : Specs.SelfSpecs)
+	{
+		if (Spec.IsValid())
+		{
+			OwnerASC->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
+		}
+	}
+	/*Apply to Target*/
+	for (const FGameplayEffectSpecHandle& Spec : Specs.TargetSpecs)
 	{
 		if (Spec.IsValid())
 		{
@@ -178,4 +209,5 @@ void UBaseGameplayAbility::ApplyEffectsToTarget(AActor* Target)
 		}
 	}
 }
+
 
