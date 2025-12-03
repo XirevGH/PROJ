@@ -104,6 +104,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SetSessionState(const ESessionState NewSessionState);
 	/* ------------------------------------------ */
+	
+	UFUNCTION(BlueprintCallable)
+	void SetNumPublicConnections(const int NewAmount);
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TSoftObjectPtr<UWorld> LobbyLevel;
@@ -165,4 +168,5 @@ private:
 	void CreateOwnSession();
 	void FilterOpenPublicSearchResults();
 	void SortOpenPublicSearchResultsByName();
+	void SetStartMatchSearchVariables(ESessionState NewSessionState, int NewPublicConnections);
 };

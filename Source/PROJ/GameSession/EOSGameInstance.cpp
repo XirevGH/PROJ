@@ -1,4 +1,7 @@
 ﻿#include "EOSGameInstance.h"
+
+#include <string>
+
 #include "OnlineSubsystem.h"
 #include "OnlineSubsystemUtils.h"
 #include "OnlineSessionSettings.h"
@@ -188,6 +191,20 @@ void UEOSGameInstance::SetSessionState(const ESessionState NewSessionState)
 	}
 }
 
+void UEOSGameInstance::SetNumPublicConnections(const int NewAmount)
+{
+	if (NewAmount <= 0)
+	{
+		UE_LOG(LogTemp, Display, TEXT("NumPublicConnections cannot be set to 0 or less than 0"));
+		return;
+	}
+	if (FOnlineSessionSettings* SessionSettings = GetSessionSettings())
+	{
+		SessionSettings->NumPublicConnections = NewAmount;
+		UpdateSessionSettings(SessionSettings);
+	}
+}
+
 void UEOSGameInstance::SetSessionName(const FString& NewSessionName)
 {
 	if (FOnlineSessionSettings* SessionSettings = GetSessionSettings())
@@ -255,8 +272,6 @@ void UEOSGameInstance::CreateSession(const FName& Name, const bool bNotTransitio
 	IOnlineSessionPtr SessionInterface = Online::GetSessionInterface(GetWorld());
 	if (SessionInterface.IsValid())
 	{
-		SessionName = Name;
-		
 		FOnlineSessionSettings SessionSettings;
 		SessionSettings.bAllowInvites = true;
 		SessionSettings.bIsDedicated = false;
@@ -290,9 +305,16 @@ void UEOSGameInstance::CreateSession(const FName& Name, const bool bNotTransitio
 				FOnlineSessionSetting(static_cast<int32>(ESessionState::Lobby), EOnlineDataAdvertisementType::ViaOnlineService));
 			CurrentSessionState = ESessionState::Lobby;
 		}
+		
+		IOnlineIdentityPtr IdentityPtr = Online::GetIdentityInterface(GetWorld());
+		if (!IdentityPtr.IsValid()) return;
+		TSharedPtr<const FUniqueNetId> UniqueIdPtr = IdentityPtr->GetUniquePlayerId(0);
+		if (!UniqueIdPtr.IsValid()) return;
 
-		UE_LOG(LogTemp, Display, TEXT("Creating session with name: %s"), *Name.ToString());
-		SessionInterface->CreateSession(0, Name, SessionSettings);
+		const FName NewName = FName(FString::Printf(TEXT("%s_%d"), *Name.ToString(), FMath::Rand()));
+		UE_LOG(LogTemp, Display, TEXT("Creating session with name: %s"), *NewName.ToString());
+		SessionName = NewName;
+		SessionInterface->CreateSession(*UniqueIdPtr, NewName, SessionSettings);
 	}
 }
 
@@ -302,6 +324,11 @@ void UEOSGameInstance::CreateOwnSession()
 	if (!IdentityPtr.IsValid()) return;
 	TSharedPtr<const FUniqueNetId> UniqueIdPtr = IdentityPtr->GetUniquePlayerId(0);
 	if (!UniqueIdPtr.IsValid()) return;
+	
+	SessionName = NAME_None;
+	ClearCachedSession();
+	CurrentSessionState = ESessionState::Lobby;
+	
 	UE_LOG(LogTemp, Display, TEXT("Creating own session"));
 	CreateSession(FName(IdentityPtr->GetPlayerNickname(*UniqueIdPtr)), true);
 }
@@ -440,6 +467,9 @@ void UEOSGameInstance::OnJoinSessionCompleted(FName Name, EOnJoinSessionComplete
 		}
 		SessionName = Name;
 		ClearCachedSession();
+	}else
+	{
+		CreateOwnSession();
 	}
 }
 
@@ -492,7 +522,23 @@ void UEOSGameInstance::LeaveToOwnSession()
 
 void UEOSGameInstance::SearchForMatch()
 {
-	SetSessionState(ESessionState::SearchingForMatch);
+	UE_LOG(LogTemp, Display, TEXT("SearchForMatch called"));
+	FString GameMode = GetSelectedGameMode();
+	if (GameMode == "0")
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Game mode 1v1"));
+		SetStartMatchSearchVariables(ESessionState::SearchingForMatch, 2);
+	}
+	else if (GameMode == "1")
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Game mode 2v2"));
+		SetStartMatchSearchVariables(ESessionState::SearchingForMatch, 4);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Game mode 3v3 or game mode none"));
+		SetStartMatchSearchVariables(ESessionState::SearchingForMatch, 6);
+	}
 	UE_LOG(LogTemp, Warning, TEXT("StartMatchmakingSearch"));
 	FindCompatibleMatchSessions();
 }
@@ -552,8 +598,44 @@ void UEOSGameInstance::OnFindMatchSessionsCompleted(bool bSuccess)
 		return;
 	}
 	
-	const int32 RandomIndex = FMath::RandRange(0, MatchSearch->SearchResults.Num() - 1);
+	IOnlineIdentityPtr IdentityPtr = Online::GetIdentityInterface(GetWorld());
+	TSharedPtr<const FUniqueNetId> LocalUserId;
+        
+	if (IdentityPtr.IsValid())
+	{
+		LocalUserId = IdentityPtr->GetUniquePlayerId(0);
+	}
 	
+	// Iterate backwards so we can remove safely
+	for (int32 i = MatchSearch->SearchResults.Num() - 1; i >= 0; i--)
+	{
+		const FOnlineSessionSearchResult& Result = MatchSearch->SearchResults[i];
+
+		// 1. Check if the session is valid
+		if (!Result.IsValid())
+		{
+			MatchSearch->SearchResults.RemoveAt(i);
+			continue;
+		}
+
+		// 2. Filter out sessions hosted by the local player (Self)
+		if (MatchSearch.IsValid() && Result.Session.OwningUserId.IsValid())
+		{
+			// Compare the ID of the session owner with the local ID
+			if (*Result.Session.OwningUserId == *LocalUserId)
+			{
+				MatchSearch->SearchResults.RemoveAt(i);
+			}
+		}
+	}
+	
+	if (MatchSearch->SearchResults.Num() == 0)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("No matches found after filtering local player"));
+		return;
+	}
+	
+	const int32 RandomIndex = FMath::RandRange(0, MatchSearch->SearchResults.Num() - 1);
 	CachedSessionToJoin = MatchSearch->SearchResults[RandomIndex];
 
 	MatchSearch.Reset();
@@ -732,6 +814,12 @@ void UEOSGameInstance::HandleNetworkFailure(UWorld* World, UNetDriver* NetDriver
 	ENetworkFailure::Type FailureType, const FString& ErrorString)
 {
 	UE_LOG(LogTemp, Display, TEXT("Network failure: %s"), *ErrorString);
+	
+	// If we are a client and the connection timed out or the host closed the connection
+	if (FailureType == ENetworkFailure::ConnectionTimeout || FailureType == ENetworkFailure::ConnectionLost)
+	{
+		CreateOwnSession(); 
+	}
 }
 
 bool UEOSGameInstance::IsPlayerLoggedIn() const
@@ -814,4 +902,25 @@ void UEOSGameInstance::SortOpenPublicSearchResultsByName()
 		B.Session.SessionSettings.Get(FName(SessionNameKey), NameB);
 		return NameA < NameB; 
 	});
+}
+
+void UEOSGameInstance::SetStartMatchSearchVariables(ESessionState NewSessionState, int NewPublicConnections)
+{
+	if (NewPublicConnections <= 0)
+	{
+		UE_LOG(LogTemp, Display, TEXT("NumPublicConnections cannot be set to 0 or less than 0"));
+		return;
+	}
+	if (FOnlineSessionSettings* SessionSettings = GetSessionSettings())
+	{
+		SessionSettings->NumPublicConnections = NewPublicConnections;
+		CurrentSessionState = NewSessionState;
+		
+		SessionSettings->Set(FName(SessionStateKey),
+			FOnlineSessionSetting(static_cast<int32>(NewSessionState), EOnlineDataAdvertisementType::ViaOnlineService));
+		
+		UE_LOG(LogTemp, Warning, TEXT("NumPublicConnections set to %d"), GetSessionSettings()->NumPublicConnections);
+		UE_LOG(LogTemp, Display, TEXT("SessionState set to: %hhd"), NewSessionState);
+		UpdateSessionSettings(SessionSettings);
+	}
 }
