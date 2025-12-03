@@ -13,6 +13,19 @@ class AAbilityActor;
 /**
  * 
  */
+
+USTRUCT(BlueprintType)
+struct FAbilityEffectSpecs
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	TArray<FGameplayEffectSpecHandle> TargetSpecs;
+
+	UPROPERTY()
+	TArray<FGameplayEffectSpecHandle> SelfSpecs;
+};
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FMyMontageDelegate, FGameplayTag, EventTag);
 UCLASS()
 class PROJ_API UBaseGameplayAbility : public UGameplayAbility
@@ -37,7 +50,7 @@ public:
 	virtual void OnMontageCancelled();
 	
 	UFUNCTION(BlueprintCallable)
-	TArray<FGameplayEffectSpecHandle> MakeEffectSpecsHandles();
+	FAbilityEffectSpecs MakeEffectSpecsHandles();
 	
 	UFUNCTION(BlueprintCallable)
 	void InitializeAbilityActor(AAbilityActor* Actor);
@@ -67,6 +80,7 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 	void ApplyEffectsToTarget(AActor* Target);
+	
 	
 	UPROPERTY()
 	FGameplayTag CooldownTag;   

@@ -50,7 +50,6 @@ public:
 	virtual void OnRep_AttachmentReplication() override;
 
 	FTimerHandle AttachTimerHandle;
-
 	
 	UPROPERTY()
 	TSet<AActor*> Targets;
@@ -63,8 +62,6 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category="Effects")
 	TArray<TSubclassOf<UGameplayEffect>> Effects;
-	UFUNCTION()
-	void ApplyEffectToTarget(AActor* Target);
 	
 	UFUNCTION(BlueprintCallable)
 	void HitScan();

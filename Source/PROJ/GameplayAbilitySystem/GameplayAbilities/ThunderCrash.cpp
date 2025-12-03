@@ -79,11 +79,7 @@ void UThunderCrash::SpawnConduit()
 		
 		if (SpawnedActor)
 		{
-			SpawnedActor->InitializeAbilityActor(
-				CachedPlayer,
-				CachedPlayer->GetAbilitySystemComponent(),
-				this,
-				MakeEffectSpecsHandles());
+			InitializeAbilityActor(SpawnedActor);
 			SpawnedActor->SetLifeSpan(ConduitLifeTime);
 		}
 	}

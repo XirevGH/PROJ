@@ -2,12 +2,9 @@
 
 #include "Weapon.h"
 #include "AbilitySystemComponent.h"
-#include "GameplayEffect.h"
 #include "GameplayEffectTypes.h"
 #include "AbilitySystemGlobals.h"
-#include "Components/CapsuleComponent.h"
 #include "PROJ/Characters/BaseCharacter.h"
-#include "PROJ/Data/AttackData.h"
 #include "PROJ/GameplayAbilitySystem/GameplayAbilities/BaseAttack.h"
 #include "PROJ/GameplayAbilitySystem/GameplayAbilities/BaseGameplayAbility.h"
 
@@ -56,24 +53,6 @@ void AWeapon::AttachWeapon()
 		Mesh->SetRelativeRotation(RotationOffset);
 	}
 }
-void AWeapon::ApplyEffectToTarget(AActor* Target)
-{
-	if (!HasAuthority() || !Target || !Ability) return;
-	
-	UAbilitySystemComponent* TargetASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Target);
-	
-	if (!TargetASC) return;
-
-	TArray<FGameplayEffectSpecHandle> Specs = Ability->MakeEffectSpecsHandles();
-
-	for (FGameplayEffectSpecHandle Spec : Specs)
-	{
-		if (Spec.IsValid())
-		{
-			TargetASC->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
-		}
-	}
-}
 
 void AWeapon::HitScanStart(float Interval)
 {
@@ -112,7 +91,7 @@ void AWeapon::HitScan()
 			if (!HitActor || Targets.Contains(HitActor)) continue;
 
 			Targets.Add(HitActor);
-			ApplyEffectToTarget(HitActor);
+			Ability->ApplyEffectsToTarget(HitActor);
 		}
 	}
 #if	WITH_EDITOR

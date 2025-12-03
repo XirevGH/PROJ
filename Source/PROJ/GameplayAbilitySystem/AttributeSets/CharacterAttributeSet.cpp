@@ -34,6 +34,15 @@ void UCharacterAttributeSet::OnRep_Mana(const FGameplayAttributeData& OldValue) 
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UCharacterAttributeSet, Mana, OldValue);
 }
+void UCharacterAttributeSet::OnRep_ConduitCharges(const FGameplayAttributeData& OldValue) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UCharacterAttributeSet, ConduitCharges, OldValue);
+}
+
+void UCharacterAttributeSet::OnRep_MaxConduitCharges(const FGameplayAttributeData& OldValue) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UCharacterAttributeSet, MaxConduitCharges, OldValue);
+}
 
 void UCharacterAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
@@ -44,8 +53,11 @@ void UCharacterAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty
 	DOREPLIFETIME_CONDITION_NOTIFY(UCharacterAttributeSet, CurrentMoveSpeed, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UCharacterAttributeSet, MaxMoveSpeed, COND_None, REPNOTIFY_Always);
 	
-	DOREPLIFETIME_CONDITION_NOTIFY(UCharacterAttributeSet, MaxMana, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UCharacterAttributeSet, Mana, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UCharacterAttributeSet, MaxMana, COND_None, REPNOTIFY_Always);
+
+	DOREPLIFETIME_CONDITION_NOTIFY(UCharacterAttributeSet,ConduitCharges, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UCharacterAttributeSet,MaxConduitCharges, COND_None, REPNOTIFY_Always);
 }
 
 void UCharacterAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data)
@@ -55,7 +67,7 @@ void UCharacterAttributeSet::PostGameplayEffectExecute(const struct FGameplayEff
 	if (Data.EvaluatedData.Attribute == GetCurrentHealthAttribute())
 	{
 		SetCurrentHealth(FMath::Clamp(GetCurrentHealth(),0.f,GetMaxHealth()));
-		UE_LOG(LogTemp, Warning, TEXT("HEalth Attribute is now: %f"), GetCurrentHealth());
+		UE_LOG(LogTemp, Warning, TEXT("Health Attribute is now: %f"), GetCurrentHealth());
 	}
 
 	if (Data.EvaluatedData.Attribute == GetCurrentMoveSpeedAttribute())
@@ -68,6 +80,14 @@ void UCharacterAttributeSet::PostGameplayEffectExecute(const struct FGameplayEff
 	{
 		SetMana(FMath::Clamp(GetMana(),0.f,GetMaxMana()));
 	}
-	
+
+	if (Data.EvaluatedData.Attribute == GetConduitChargesAttribute())
+	{
+		float NewCharges = FMath::Clamp(GetConduitCharges(),0.f,GetMaxConduitCharges());
+		SetConduitCharges(NewCharges);
+		UE_LOG(LogTemp, Warning, TEXT("Conduction Charges = %f"), NewCharges);
+	}
 }
+
+
 

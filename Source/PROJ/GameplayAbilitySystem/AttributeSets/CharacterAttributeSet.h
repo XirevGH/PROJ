@@ -49,9 +49,23 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Attribute", ReplicatedUsing = OnRep_Mana)
 	FGameplayAttributeData Mana;
 	ATTRIBUTE_ACCESSORS(UCharacterAttributeSet, Mana)
+
+	UPROPERTY(BlueprintReadOnly, Category = "Conduit", ReplicatedUsing = OnRep_ConduitCharges)
+	FGameplayAttributeData ConduitCharges;
+	ATTRIBUTE_ACCESSORS(UCharacterAttributeSet, ConduitCharges)
+
+	UPROPERTY(BlueprintReadOnly, Category = "Conduit", ReplicatedUsing = OnRep_MaxConduitCharges)
+	FGameplayAttributeData MaxConduitCharges;
+	ATTRIBUTE_ACCESSORS(UCharacterAttributeSet, MaxConduitCharges)
 	
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data) override;
+
+	UFUNCTION()
+	void OnRep_ConduitCharges(const FGameplayAttributeData& OldValue) const;
+
+	UFUNCTION()
+	void OnRep_MaxConduitCharges(const FGameplayAttributeData& OldValue) const;
 	
 	UFUNCTION()
 	void OnRep_CurrentHealth(const FGameplayAttributeData& OldValue) const;
