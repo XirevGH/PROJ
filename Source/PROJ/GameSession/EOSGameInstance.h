@@ -34,7 +34,7 @@ public:
 	void Login();
 	
 	UFUNCTION(BlueprintCallable)
-	void CreateSession(const FName& Name, const bool bNotTransition);
+	void CreateSession(const FName& Name, const bool bNotTransition, const bool bUseExactName);
 	
 	FString GetSessionName(const FOnlineSessionSearchResult& SessionSearchResult) const;
 
@@ -65,9 +65,6 @@ public:
 	void JoinSavedSession();
 
 	UFUNCTION(BlueprintCallable)
-	void JoinLobbyByIndex(const int32 Index);
-
-	UFUNCTION(BlueprintCallable)
 	void JoinLobbyByResult(const FBlueprintSessionResult& Result);
 
 	UFUNCTION(BlueprintPure)
@@ -77,31 +74,31 @@ public:
 	void LeaveToOwnSession();
 	
 	/* ----------- Custom settings -------------- */
-	UFUNCTION(BlueprintPure)
+	UFUNCTION(BlueprintPure, Category = "Settings")
 	const FString& GetSessionNameKey() const { return SessionNameKey; }
-	UFUNCTION(BlueprintPure)
+	UFUNCTION(BlueprintPure, Category = "Settings")
 	const FString& GetCustomSessionNameKey() const { return CustomSessionNameKey; }
-	UFUNCTION(BlueprintPure)
+	UFUNCTION(BlueprintPure, Category = "Settings")
 	const FString& GetSelectedGameModeKey() const { return SelectedGameModeKey; }
-	UFUNCTION(BlueprintPure)
+	UFUNCTION(BlueprintPure, Category = "Settings")
 	const FString& GetSessionStateKey() const { return SessionStateKey; }
 	
-	UFUNCTION(BlueprintPure)
+	UFUNCTION(BlueprintPure, Category = "Settings")
 	FString GetSelectedGameMode() const;
-	UFUNCTION(BlueprintPure)
+	UFUNCTION(BlueprintPure, Category = "Settings")
 	FString GetCustomSessionName() const;
-	UFUNCTION(BlueprintPure)
+	UFUNCTION(BlueprintPure, Category = "Settings")
 	FString GetSessionName() const;
-	UFUNCTION(BlueprintPure)
+	UFUNCTION(BlueprintPure, Category = "Settings")
 	ESessionState GetSessionState() const;
 	
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Settings")
 	void SetSelectedGameMode(const FString& GameMode);
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Settings")
 	void SetCustomSessionName(const FString& CustomSessionName);
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Settings")
 	void SetSessionName(const FString& NewSessionName);
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Settings")
 	void SetSessionState(const ESessionState NewSessionState);
 	/* ------------------------------------------ */
 	
@@ -110,6 +107,18 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TSoftObjectPtr<UWorld> LobbyLevel;
+
+	UFUNCTION(BlueprintCallable, Category = "Migration")
+	void Client_ExecuteLeaderMigration(FString TargetSessionName);
+
+	UFUNCTION(BlueprintCallable, Category = "Migration")
+	void Client_ExecuteMemberMigration(FString TargetSessionName);
+
+	UFUNCTION(BlueprintPure, Category = "Team")
+	bool GetIsTeamLeader() const { return bIsTeamLeader; }
+
+	UFUNCTION(BlueprintCallable, Category = "Settings")
+	void ResetLobbySettings(); 
 	
 protected:
 	virtual void Init() override;
@@ -140,6 +149,11 @@ private:
 	FDelegateHandle DestroySessionDelegateHandle;
 	FDelegateHandle UpdateSessionDelegateHandle;
 
+	bool bIsTeamLeader;
+	bool bIsMigratingLeader;
+	bool bIsMigratingMember;
+	FString MigrationTargetName;
+	
 	bool bClientTransitionToOtherSession;
 	bool bReturningToOwnLobby;
 	ESessionState CurrentSessionState;
