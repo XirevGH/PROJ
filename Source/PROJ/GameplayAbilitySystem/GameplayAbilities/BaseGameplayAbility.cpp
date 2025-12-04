@@ -135,22 +135,14 @@ void UBaseGameplayAbility::InitializeAbilityActor(AAbilityActor* Actor)
 {
 	if (!Actor)
 		return;
-
-	
-	 FAbilityEffectSpecs SpecStruct = MakeEffectSpecsHandles();
-	
-	/*Merg specs (since i dont know if we want our actors to know difference between self / target*/
-	TArray<FGameplayEffectSpecHandle> AllSpecs = SpecStruct.SelfSpecs;
-	AllSpecs.Append(SpecStruct.TargetSpecs);
 	
 	Actor->SetReplicates(true);	
 	Actor->SetReplicateMovement(true);
 	Actor->InitializeAbilityActor(
 		GetAvatarActorFromActorInfo(),
 		GetAbilitySystemComponentFromActorInfo(),
-		this,
-		AllSpecs
-			);
+		MakeEffectSpecsHandles());
+	
 }
 
 FGameplayTag UBaseGameplayAbility::GetCooldownTagFromInputID(const FGameplayTag InputTag) 
