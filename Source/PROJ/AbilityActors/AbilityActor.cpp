@@ -27,31 +27,27 @@ void AAbilityActor::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
-bool AAbilityActor::ApplyEffectToTarget(AActor* Target)
+void AAbilityActor::ApplyEffectToTarget(AActor* Target)
 {
-	if (!HasAuthority() || !CasterASC || !CastedAbility)
+	if (!HasAuthority())
 	{
-		UE_LOG(LogTemp, Error, TEXT("No Auhtory OR Caster ASC OR CastedAbility is NULL"));
-		return false;
+		UE_LOG(LogTemp, Error, TEXT("No Authority"));
+		return;
+	}
+	if (CasterASC)
+	{
+		ApplySpecArrayToASC(EffectSpecHandles.SelfSpecs, CasterASC);
 	}
 	
 	UAbilitySystemComponent* TargetASC =
 		UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Target);
-	if (!TargetASC)
-	{
-		UE_LOG(LogTemp, Error, TEXT("Target ASC is NULL! %s has no ASC"), *GetNameSafe(Target));
-		return false;
-	}
-
-	for (auto& SpecHandle : EffectSpecHandles)
-	{
-		if (!SpecHandle.IsValid()) continue;
-		
-		TargetASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
-		UE_LOG(LogTemp, Warning, TEXT("Applied: %s to %s"),*SpecHandle.Data->GetContext().ToString(),  *TargetASC->GetAvatarActor()->GetName());
-	}
 	
-	return true;
+	if (TargetASC)
+	{
+		// Apply effects to target
+		ApplySpecArrayToASC(EffectSpecHandles.TargetSpecs, TargetASC);
+		UE_LOG(LogTemp, Error, TEXT("Target ASC is NULL! %s has no ASC"), *GetNameSafe(Target));
+	}
 }
 
 bool AAbilityActor::ShouldSkipHit_Implementation(AActor* OtherActor)
@@ -77,10 +73,9 @@ bool AAbilityActor::ShouldSkipHit_Implementation(AActor* OtherActor)
 bool AAbilityActor::InitializeAbilityActor(
 	AActor* InCaster, 
 	UAbilitySystemComponent* InCasterASC,
-	UBaseGameplayAbility* InCastedAbility,
-	const TArray<FGameplayEffectSpecHandle>& InEffectSpecHandles)
+	const FAbilityEffectSpecs& InEffectSpecHandles)
 {
-	if (!InCaster || !InCasterASC || !InCastedAbility)
+	if (!InCaster || !InCasterASC)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("InitializeAbilityActor failed: invalid input"));
 		return false;
@@ -88,9 +83,23 @@ bool AAbilityActor::InitializeAbilityActor(
 
 	Caster = InCaster;
 	CasterASC = InCasterASC;
-	CastedAbility = InCastedAbility;
+	//should check if struct is valid
 	EffectSpecHandles = InEffectSpecHandles;
     
 	return true;
+}
+
+void AAbilityActor::ApplySpecArrayToASC(const TArray<FGameplayEffectSpecHandle>& Specs, UAbilitySystemComponent* ASC)
+{
+	if (!ASC)
+		return;
+
+	for (const FGameplayEffectSpecHandle& Spec : Specs)
+	{
+		if (Spec.IsValid())
+		{
+			ASC->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
+		}
+	}
 }
 

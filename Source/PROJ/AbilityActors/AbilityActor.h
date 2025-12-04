@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "PROJ/GameplayAbilitySystem/GameplayAbilities/BaseGameplayAbility.h"
 #include "AbilityActor.generated.h"
 
 struct FGameplayEffectSpecHandle;
@@ -26,24 +27,25 @@ public:
 
 	// The caster's AbilitySystemComponent
 	UPROPERTY(BlueprintReadOnly)
-	class UAbilitySystemComponent* CasterASC;
+	UAbilitySystemComponent* CasterASC;
 	
 	UPROPERTY(BlueprintReadOnly)
-	UBaseGameplayAbility *CastedAbility;
+	FAbilityEffectSpecs EffectSpecHandles;
 	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Effects")
-	TArray<FGameplayEffectSpecHandle> EffectSpecHandles;
-
 	UFUNCTION(BlueprintCallable)
 	bool InitializeAbilityActor(AActor* InCaster, UAbilitySystemComponent* InCasterASC,
-	UBaseGameplayAbility* InCastedAbility, const TArray<FGameplayEffectSpecHandle>& InEffectSpecHandles);
+		const FAbilityEffectSpecs& InEffectSpecHandles);
+
+private:
+	//should not call this in bp or anywhere else but inside ApplyEffectToTarget(AActor* Target)
+	void ApplySpecArrayToASC(const TArray<FGameplayEffectSpecHandle>& Specs, UAbilitySystemComponent* ASC);
 	
 protected:
 	virtual void BeginPlay() override;
 	virtual void Cleanup();
 
 	UFUNCTION(BlueprintCallable)
-	bool ApplyEffectToTarget(AActor* Target);
+	void ApplyEffectToTarget(AActor* Target);
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	bool ShouldSkipHit(AActor* OtherActor);
