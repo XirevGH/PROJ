@@ -9,7 +9,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "PROJ/AbilityActors/AbilityActor.h"
 #include "PROJ/Characters/BaseCharacter.h"
-#include "PROJ/Data/AttackData.h"
+#include "PROJ/Data/AbilityData.h"
 
 UThunderCrash::UThunderCrash()
 { 
@@ -29,7 +29,7 @@ void UThunderCrash::ActivateAbility(const FGameplayAbilitySpecHandle Handle, con
 	CachedPlayer = Cast<ABaseCharacter>(GetAvatarActorFromActorInfo());
 	if (!CachedPlayer) return;
 
-	PlayMontage(AttackData->Montage);
+	PlayMontage(AbilityData->Montage);
 	MakeMontageWaitEvent();
 	
 }

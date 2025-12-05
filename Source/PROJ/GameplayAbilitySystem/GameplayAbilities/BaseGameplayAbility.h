@@ -8,7 +8,7 @@
 #include "BaseGameplayAbility.generated.h"
 
 struct FAttackEffectEntry;
-class UAttackData;
+class UAbilityData;
 class AAbilityActor;
 /**
  * 
@@ -39,6 +39,10 @@ public:
 	/*Montage events*/
 	UFUNCTION(BlueprintCallable)
 	virtual void PlayMontage(UAnimMontage* Montage);
+	
+	UFUNCTION(BlueprintCallable)
+	float GetMontagePlayRate(UAnimMontage* Montage);
+	
 	
 	UFUNCTION()
 	virtual void OnMontageCompleted();
@@ -74,9 +78,9 @@ public:
 	FString AbilityName;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AttackData")
-	UAttackData* AttackData;
+	UAbilityData* AbilityData;
 
-	UAttackData* GetAttackData() const { return AttackData; }
+	UAbilityData* GetAttackData() const { return AbilityData; }
 	
 	UFUNCTION(BlueprintCallable)
 	void ApplyEffectsToTarget(AActor* Target);

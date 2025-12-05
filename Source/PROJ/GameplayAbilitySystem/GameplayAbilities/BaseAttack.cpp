@@ -4,7 +4,7 @@
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "PROJ/Characters/BaseCharacter.h"
-#include "PROJ/Data/AttackData.h"
+#include "PROJ/Data/AbilityData.h"
 #include "PROJ/Weapon/Weapon.h"
 
 UBaseAttack::UBaseAttack()
@@ -33,18 +33,18 @@ void UBaseAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
-	if (!AttackData)
+	if (!AbilityData)
 	{
 		UE_LOG(LogTemp, Error, TEXT("AttackData not set on ability BaseAttack"))
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 		return;
 	}
-	PlayMontage(AttackData->Montage);
+	PlayMontage(AbilityData->Montage);
 	
 	if (!HasAuthority(&ActivationInfo)) return;
 
 	if (!SetupPlayerWeapon()) return;
-	if (AttackData->bUseHitScan)
+	if (AbilityData->bUseHitScan)
 		SetupHitScanTasks();
 }
 bool UBaseAttack::SetupPlayerWeapon()
@@ -100,7 +100,7 @@ void UBaseAttack::OnHitscanStart(FGameplayEventData Payload)
 {
 	if (!EquippedWeapon) return;
 
-	float Interval = AttackData->HitScanInterval;
+	float Interval = AbilityData->HitScanInterval;
 	
 	if (!EquippedWeapon->bIsHitscanActive)
 	{

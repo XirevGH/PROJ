@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "Engine/DataAsset.h"
-#include "AttackData.generated.h"
+#include "AbilityData.generated.h"
 
 class UGameplayEffect;
 /**
@@ -40,7 +40,7 @@ public:
 };
 
 UCLASS()
-class PROJ_API UAttackData : public UPrimaryDataAsset
+class PROJ_API UAbilityData : public UPrimaryDataAsset
 {
 	GENERATED_BODY()
 public:
