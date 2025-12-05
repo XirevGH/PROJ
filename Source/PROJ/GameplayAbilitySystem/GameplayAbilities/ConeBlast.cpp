@@ -7,7 +7,7 @@
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "Engine/OverlapResult.h"
 #include "PROJ/Characters/BaseCharacter.h"
-#include "PROJ/Data/AttackData.h"
+#include "PROJ/Data/AbilityData.h"
 
 UConeBlast::UConeBlast()
 {
@@ -30,7 +30,7 @@ void UConeBlast::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const 
 		EndAbility(Handle,ActorInfo,ActivationInfo,true,false);
 	}
 	
-	PlayMontage(AttackData->Montage);
+	PlayMontage(AbilityData->Montage);
 
 	if (MontageNotifyTag.IsValid())
 	{

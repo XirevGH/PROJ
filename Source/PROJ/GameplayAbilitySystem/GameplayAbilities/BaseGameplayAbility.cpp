@@ -5,7 +5,7 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
-#include "PROJ/Data/AttackData.h"
+#include "PROJ/Data/AbilityData.h"
 #include "PROJ/AbilityActors/AbilityActor.h"
 
 void UBaseGameplayAbility::OnGiveAbility(const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec)
@@ -69,6 +69,26 @@ void UBaseGameplayAbility::PlayMontage(UAnimMontage* Montage)
 	MontageTask->ReadyForActivation();
 }
 
+float UBaseGameplayAbility::GetMontagePlayRate(UAnimMontage* Montage)
+{
+	if (!Montage)
+		return 0.f;
+
+	TArray<FAnimNotifyEvent> NotifyEvents;
+	Montage->GetAnimNotifiesFromDeltaPositions(0, Montage->Tim);
+	GetAllNotifies(NotifyEvents);
+
+	for (const FAnimNotifyEvent& Event : NotifyEvents)
+	{
+		if (Event.NotifyName == "CastPoint")
+		{
+			return Event.GetTriggerTime();
+		}
+	}
+
+	return 0.f;
+}
+
 void UBaseGameplayAbility::OnMontageCompleted()
 {
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
@@ -92,7 +112,7 @@ FAbilityEffectSpecs UBaseGameplayAbility::MakeEffectSpecsHandles()
 	if (!CasterASC)
 		return Specs;
 
-	const TArray<FAttackEffectEntry>& EffectsToUse = (AttackData && AttackData->Effects.Num() > 0) ? AttackData->Effects : Effects;
+	const TArray<FAttackEffectEntry>& EffectsToUse = (AbilityData && AbilityData->Effects.Num() > 0) ? AbilityData->Effects : Effects;
 	
 	FGameplayEffectContextHandle Context = CasterASC->MakeEffectContext();
 	

@@ -3,7 +3,8 @@
 #include "BaseAttack.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "PROJ/Characters/BaseCharacter.h"
-#include "PROJ/Data/AttackData.h"
+#include "PROJ/Data/AbilityData.h"
+#include "PROJ/Weapon/Weapon.h"
 
 UBaseAttack::UBaseAttack()
 {
@@ -32,7 +33,7 @@ void UBaseAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
-	if (!AttackData)
+	if (!AbilityData)
 	{
 		UE_LOG(LogTemp, Error, TEXT("AttackData not set on ability BaseAttack"))
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
@@ -45,9 +46,9 @@ void UBaseAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 
 	UE_LOG(LogTemp, Warning, TEXT("[UBaseAttack] PlayMontage called. IsAuthority=%d"),
 	HasAuthority(&CurrentActivationInfo));
-	PlayMontage(AttackData->Montage);
+	PlayMontage(AbilityData->Montage);
 	
-	if (AttackData->bUseHitScan)
+	if (AbilityData->bUseHitScan)
 		SetupHitScanTasks();
 }
 
@@ -98,12 +99,12 @@ void UBaseAttack::StartHitScan()
 	
 	UE_LOG(LogTemp, Warning, TEXT("[UBaseAttack] SERVER: Performing initial hitscan immediately"));
 	PerformHitScan();
-	UE_LOG(LogTemp, Warning, TEXT("[UBaseAttack] SERVER: Starting HitScan Timer with interval %f"), AttackData->HitScanInterval);
+	UE_LOG(LogTemp, Warning, TEXT("[UBaseAttack] SERVER: Starting HitScan Timer with interval %f"), AbilityData->HitScanInterval);
 	GetWorld()->GetTimerManager().SetTimer(
 		HitScanTimerHandle,
 		this,
 		&UBaseAttack::PerformHitScan,
-		AttackData->HitScanInterval,
+		AbilityData->HitScanInterval,
 		true);
 	
 	bIsHitscanActive = true;
@@ -190,7 +191,7 @@ void UBaseAttack::PerformHitScan()
 
 			Targets.Add(HitActor);
 			
-			if (AttackData)
+			if (AbilityData)
 			{
 				ApplyEffectsToTarget(HitActor);
 			}

@@ -6,7 +6,7 @@
 #include "BaseGameplayAbility.h"
 #include "BaseAttack.generated.h"
 
-class UAttackData;
+class UAbilityData;
 class UAbilityTask_WaitGameplayEvent;
 class AWeapon;
 class UAbilityTask_PlayMontageAndWait;

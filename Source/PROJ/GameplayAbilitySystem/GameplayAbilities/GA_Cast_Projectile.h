@@ -23,6 +23,10 @@ class PROJ_API UGA_Cast_Projectile : public UBaseGameplayAbility
 	FVector SpawnLocation;
 	UPROPERTY()
 	FRotator SpawnRotation;
+	
+	
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	FName SpawnSocketName;
 
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	TSubclassOf<AProjectile> ProjectileActorClass;
