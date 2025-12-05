@@ -74,3 +74,9 @@ int32 ABaseGameMode::GetTeamSize(FString TeamID)
 	UE_LOG(LogTemp, Warning, TEXT("Team %s does not exist"), *TeamID);
 	return 0;
 }
+
+void ABaseGameMode::HandleSeamlessTravelPlayer(AController*& C)
+{
+	Super::HandleSeamlessTravelPlayer(C);
+	OnPlayerArrived(C);
+}
