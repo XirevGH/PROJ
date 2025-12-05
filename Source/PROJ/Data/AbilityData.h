@@ -48,6 +48,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	UAnimMontage* Montage;
 	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	float NotifyBeginTime;
+	
 	/*HitScan*/
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	float HitScanInterval = 0.f;

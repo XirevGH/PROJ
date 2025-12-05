@@ -40,6 +40,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	virtual void PlayMontage(UAnimMontage* Montage);
 	
+	UFUNCTION(BlueprintCallable)
+	float CalculateAbilityMontagePlayRate();
+	
 	UFUNCTION()
 	virtual void OnMontageCompleted();
 
@@ -73,7 +76,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category= "Ability")
 	FString AbilityName;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AttackData")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AbilityData")
 	UAbilityData* AbilityData;
 
 	UAbilityData* GetAttackData() const { return AbilityData; }
