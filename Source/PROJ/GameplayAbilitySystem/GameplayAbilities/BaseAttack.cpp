@@ -4,13 +4,13 @@
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "PROJ/Characters/BaseCharacter.h"
 #include "PROJ/Data/AbilityData.h"
-#include "PROJ/Weapon/Weapon.h"
 
 UBaseAttack::UBaseAttack()
 {
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
+	bIsHitscanActive = false;
+	bHasRequestedHitScanStart = false;
 }
-
 void UBaseAttack::OnGiveAbility(const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec)
 {
 	Super::OnGiveAbility(ActorInfo, Spec);
@@ -39,22 +39,14 @@ void UBaseAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 		return;
 	}
-	UE_LOG(LogTemp, Warning, TEXT("[UBaseAttack] ActivateAbility: Owner=%s, IsAuthority=%d, Avatar=%s"),
-	*GetAvatarActorFromActorInfo()->GetName(),
-	HasAuthority(&ActivationInfo),
-	*GetAvatarActorFromActorInfo()->GetName());
-
-	UE_LOG(LogTemp, Warning, TEXT("[UBaseAttack] PlayMontage called. IsAuthority=%d"),
-	HasAuthority(&CurrentActivationInfo));
+	
 	PlayMontage(AbilityData->Montage);
 	
-	if (AbilityData->bUseHitScan)
-		SetupHitScanTasks();
+	SetupHitScanTasks();
 }
 
 void UBaseAttack::SetupHitScanTasks()
 {
-	UE_LOG(LogTemp, Warning, TEXT("[UBaseAttack] SetupHitScanTasks done. IsAuthority=%d"), HasAuthority(&CurrentActivationInfo));
 	ClearExistingTasks();
 
 	/*Wait for start*/
@@ -85,83 +77,69 @@ void UBaseAttack::ClearExistingTasks()
 	if (StartTask) {StartTask->EndTask(); StartTask = nullptr;};
 	if (EndTask) {EndTask->EndTask(); EndTask = nullptr;};
 }
-
 void UBaseAttack::StartHitScan()
 {
-	
-	if (bIsHitscanActive)
-	{
-		UE_LOG(LogTemp, Verbose, TEXT("[UBaseAttack] StartHitScan: already active"));
-		return;
-	}
-
-	Targets.Empty();
-	
-	UE_LOG(LogTemp, Warning, TEXT("[UBaseAttack] SERVER: Performing initial hitscan immediately"));
-	PerformHitScan();
-	UE_LOG(LogTemp, Warning, TEXT("[UBaseAttack] SERVER: Starting HitScan Timer with interval %f"), AbilityData->HitScanInterval);
-	GetWorld()->GetTimerManager().SetTimer(
-		HitScanTimerHandle,
-		this,
-		&UBaseAttack::PerformHitScan,
-		AbilityData->HitScanInterval,
-		true);
+	if (!HasAuthority(&CurrentActivationInfo) || bIsHitscanActive) return;
 	
 	bIsHitscanActive = true;
+	Targets.Empty();
+	
+	PerformHitScan();
+	
+	if (!GetWorld()->GetTimerManager().IsTimerActive(HitScanTimerHandle))
+	{
+		GetWorld()->GetTimerManager().SetTimer(
+			HitScanTimerHandle,
+			this,
+			&UBaseAttack::PerformHitScan,
+			AbilityData->HitScanInterval,
+			true);
+	}
 }
 
 void UBaseAttack::EndHitScan()
 {
-	if (!CurrentActorInfo || !CurrentActorInfo->IsNetAuthority())
-	{
-		UE_LOG(LogTemp, Verbose, TEXT("[UBaseAttack] EndHitScan aborted: not server"));
-		return;
-	}
-
-	if (!bIsHitscanActive)
+	UE_LOG(LogTemp, Warning, TEXT("[UBaseAttack] EndHitScan called. bIsHitscanActive=%d"), (int)bIsHitscanActive);
+	if (!bIsHitscanActive ||HasAuthority(&CurrentActivationInfo))
 	{
 		UE_LOG(LogTemp, Verbose, TEXT("[UBaseAttack] EndHitScan: not active"));
 		return;
 	}
+	if (!CurrentActorInfo || !CurrentActorInfo->IsNetAuthority())
+		return;
+		
+	bIsHitscanActive = false;
 	
 	Targets.Empty();
 	
-	GetWorld()->GetTimerManager().ClearTimer(HitScanTimerHandle);
-	
-	bIsHitscanActive = false;
-	UE_LOG(LogTemp, Warning, TEXT("[UBaseAttack] SERVER: HitScan stopped"));
-}
-
-
-void UBaseAttack::OnHitscanStart(FGameplayEventData Payload)
-{
-	UE_LOG(LogTemp, Warning, TEXT("[UBaseAttack] OnHitscanStart RECEIVED. RunningOnServer=%d. Tag=%s"),
-	   HasAuthority(&CurrentActivationInfo),
-	   *Payload.EventTag.ToString());
-	
 	if (CurrentActorInfo && CurrentActorInfo->IsNetAuthority())
 	{
-		StartHitScan();
+		GetWorld()->GetTimerManager().ClearTimer(HitScanTimerHandle);
+		UE_LOG(LogTemp, Warning, TEXT("[UBaseAttack] SERVER: HitScan stopped"));
 	}
-	else
+}
+void UBaseAttack::OnHitscanStart(FGameplayEventData Payload)
+{
+	if (!bIsHitscanActive)
 	{
-		Server_HitScanStart();
+		if (CurrentActorInfo->IsNetAuthority())
+		{
+			StartHitScan();
+		}
+		else
+		{
+			Server_HitScanStart();
+		}
 	}
-	
 }
 
 void UBaseAttack::OnHitscanEnd(FGameplayEventData Payload)
 {
-	UE_LOG(LogTemp, Warning, TEXT("[UBaseAttack] OnHitscanEnd RECEIVED. RunningOnServer=%d"),
-		HasAuthority(&CurrentActivationInfo));
+	UE_LOG(LogTemp, Warning, TEXT("[UBaseAttack] OnHitscanEnd received"));
 	
 	if (CurrentActorInfo && CurrentActorInfo->IsNetAuthority())
 	{
 		EndHitScan();
-	}
-	else
-	{
-		Server_EndHitScan();
 	}
 }
 void UBaseAttack::PerformHitScan()
@@ -170,7 +148,8 @@ void UBaseAttack::PerformHitScan()
 		(CurrentActorInfo ? CurrentActorInfo->IsNetAuthority() : 0),
 		(int)bIsHitscanActive);
 	
-	if (!CurrentActorInfo || !CurrentActorInfo->IsNetAuthority()) return;
+	//if (!CurrentActorInfo || !CurrentActorInfo->IsNetAuthority()) return;
+	if (!bIsHitscanActive) return;
 	
 	FVector Start = GetSocketLocation(WeaponStartSocket);
 	FVector End = GetSocketLocation(WeaponEndSocket);
@@ -204,7 +183,8 @@ void UBaseAttack::PerformHitScan()
 }
 
 void UBaseAttack::Server_HitScanStart_Implementation()
-{
+{	
+	UE_LOG(LogTemp, Error, TEXT("SERVER_HitScanStart CALLED!"));
 	StartHitScan();
 }
 
@@ -224,15 +204,16 @@ FVector UBaseAttack::GetSocketLocation(const FName& SocketName) const
 	}
 	return FVector::ZeroVector;
 }
+
 void UBaseAttack::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
 	const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicatedEndAbility, bool bWasCancelled)
 {
-	if (CurrentActorInfo && CurrentActorInfo->IsNetAuthority())
-	{
+	
 		ClearExistingTasks();
 		EndHitScan();
 		bIsHitscanActive = false;
-	}
+		bHasRequestedHitScanStart = false;
+	
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicatedEndAbility, bWasCancelled);
 }
 

@@ -20,9 +20,9 @@ class PROJ_API UBaseAttack : public UBaseGameplayAbility
 
 	public:
 	UBaseAttack();
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Ability|Animation")
-	UAnimMontage* MyMontage;
+
+	UPROPERTY()
+	UAbilityTask_PlayMontageAndWait* MontageTask;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FName WeaponStartSocket = "WeaponStartSocket";
@@ -36,13 +36,14 @@ class PROJ_API UBaseAttack : public UBaseGameplayAbility
 	FTimerHandle HitScanTimerHandle;
 	
 	bool bIsHitscanActive = false;
+	bool bHasRequestedHitScanStart = false;
 
 	UPROPERTY()
 	UAbilityTask_WaitGameplayEvent* StartTask;
 
 	UPROPERTY()
 	UAbilityTask_WaitGameplayEvent* EndTask;
-	
+
 protected:
 	
 
