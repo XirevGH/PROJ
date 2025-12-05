@@ -8,7 +8,10 @@
 #include "Projectile.generated.h"
 
 
+class UProjectileDataAsset;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnProjectileHit, const FHitResult&, Hit);
+class UStaticMeshComponent;
+class UParticleSystemComponent;
 
 UCLASS()
 class PROJ_API AProjectile : public AAbilityActor
@@ -28,26 +31,20 @@ protected:
 public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
 	class UProjectileMovementComponent* ProjectileMovement;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components")
-	UStaticMeshComponent* Mesh;
-
+	
+	UPROPERTY(BlueprintReadOnly)
+	UParticleSystemComponent* ProjectileParticle;
+	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components")
 	class USphereComponent* CollisionComp;
 	
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Projectile Stats")
-	float ProjectileSpeed;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Projectile Stats")
-	float ProjectileLifeTime;
+	UPROPERTY()
+	UProjectileDataAsset* ProjectileData;
 	
 	FTimerHandle DestroyTimerHandle;
 	
 	UPROPERTY(BlueprintAssignable)
 	FOnProjectileHit OnProjectileHitDelegate;
-	
-	TArray<ACharacter*> OverlapCharacters;
 
 
 	// Called every frame
@@ -55,6 +52,9 @@ public:
 
 	UFUNCTION()
 	void DestroySelf();
+	
+	UFUNCTION(BlueprintCallable)
+	void InitializeProjectile();
 	
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void OnProjectileHit(

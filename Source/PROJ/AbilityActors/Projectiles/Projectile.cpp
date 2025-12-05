@@ -5,6 +5,8 @@
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Components/SphereComponent.h"
 #include "GameplayEffectTypes.h"
+#include "Particles/ParticleSystemComponent.h"
+#include "PROJ/Data/ProjectileDataAsset.h"
 
 // Sets default values
 AProjectile::AProjectile()
@@ -13,33 +15,17 @@ AProjectile::AProjectile()
 	PrimaryActorTick.bCanEverTick = true;
 	CollisionComp = CreateDefaultSubobject<USphereComponent>(TEXT("Collision"));
 	RootComponent = CollisionComp;
-	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
-	Mesh->SetupAttachment(CollisionComp);
+	ProjectileParticle = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("Projectile"));
+	ProjectileParticle->SetupAttachment(CollisionComp);
 	ProjectileMovement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovement"));
-	
 }
 
 // Called when the game starts or when spawned
 void AProjectile::BeginPlay()
 {
 	Super::BeginPlay();
-	Mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	ProjectileMovement->InitialSpeed = ProjectileSpeed;
-	ProjectileMovement->MaxSpeed = ProjectileSpeed;
-	ProjectileMovement->bRotationFollowsVelocity = true;
-	ProjectileMovement->ProjectileGravityScale = 0.f;
-	ProjectileMovement->SetIsReplicated(true);
-	//SetReplicates(true);  
-	//SetReplicateMovement(false);
 	
-	CollisionComp->SetNotifyRigidBodyCollision(true);
-	ProjectileMovement->Velocity = GetActorForwardVector() * ProjectileSpeed;
-	CollisionComp->SetGenerateOverlapEvents(true);
-	CollisionComp->SetCollisionProfileName(TEXT("Projectile"));
-	CollisionComp->OnComponentBeginOverlap.AddDynamic(this, &AProjectile::OnBeginOverlap);
-	CollisionComp->OnComponentHit.AddDynamic(this, &AProjectile::OnProjectileHit);
 	
-	GetWorldTimerManager().SetTimer(DestroyTimerHandle, this, &AProjectile::DestroySelf, ProjectileLifeTime, false);
 }
 
 
@@ -54,9 +40,31 @@ void AProjectile::DestroySelf()
 	Destroy();
 }
 
+void AProjectile::InitializeProjectile()
+{
+	ProjectileParticle->SetTemplate(ProjectileData->ProjectileParticle);
+	ProjectileMovement->InitialSpeed = ProjectileData->ProjectileSpeed;
+	ProjectileMovement->MaxSpeed = ProjectileData->ProjectileSpeed;
+	ProjectileMovement->bRotationFollowsVelocity = true;
+	ProjectileMovement->ProjectileGravityScale = 0.f;
+	ProjectileMovement->SetIsReplicated(true);
+	//SetReplicates(true);  
+	//SetReplicateMovement(false);
+	
+	CollisionComp->SetNotifyRigidBodyCollision(true);
+	ProjectileMovement->Velocity = GetActorForwardVector() * ProjectileData->ProjectileSpeed;
+	CollisionComp->SetGenerateOverlapEvents(true);
+	CollisionComp->SetCollisionProfileName(TEXT("Projectile"));
+	CollisionComp->OnComponentBeginOverlap.AddDynamic(this, &AProjectile::OnBeginOverlap);
+	CollisionComp->OnComponentHit.AddDynamic(this, &AProjectile::OnProjectileHit);
+	
+	GetWorldTimerManager().SetTimer(DestroyTimerHandle, this, &AProjectile::DestroySelf, ProjectileData->ProjectileLifeTime, false);
+	
+}
+
 
 void AProjectile::OnProjectileHit_Implementation(UPrimitiveComponent* HitComp, AActor* OtherActor,
-                                  UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
+                                                 UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
 	if (ShouldSkipHit(OtherActor))
 	{

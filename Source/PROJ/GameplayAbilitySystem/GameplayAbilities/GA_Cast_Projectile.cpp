@@ -4,6 +4,7 @@
 #include "GA_Cast_Projectile.h"
 #include "AbilitySystemComponent.h"
 #include "PROJ/AbilityActors/Projectiles/Projectile.h"
+#include "PROJ/Data/ProjectileDataAsset.h"
 
 UGA_Cast_Projectile::UGA_Cast_Projectile()
 {
@@ -67,10 +68,15 @@ void UGA_Cast_Projectile::SpawnProjectile()
 
 
 		
-	ProjectileActor = World->SpawnActor<AProjectile>(ProjectileActorClass, SpawnLocation, SpawnRotation);
+	ProjectileActor = World->SpawnActor<AProjectile>(ProjectileData->ProjectileActorClass, SpawnLocation, SpawnRotation);
 	if (ProjectileActor)
 	{
 		InitializeAbilityActor(ProjectileActor);
+		
+		//UE_LOG(LogTemp, Warning, TEXT("Data asset in ability %s"), ProjectileData ? TEXT("is valid now"): TEXT("Not valid now"));
+		ProjectileActor->ProjectileData = ProjectileData;
+		ProjectileActor->InitializeProjectile();
+		
 	}
 	else
 	{

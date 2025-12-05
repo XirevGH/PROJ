@@ -36,6 +36,7 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 	FVector SpawnLocation;
 	
+	
 protected:
 
 	FGameplayAbilitySpecHandle CachedHandle;
