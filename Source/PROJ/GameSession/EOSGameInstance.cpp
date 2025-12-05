@@ -133,7 +133,7 @@ void UEOSGameInstance::OnDestroySessionCompleted(FName Name, bool bWasSuccessful
 	{
 		bIsMigratingLeader = false;
 		UE_LOG(LogTemp, Display, TEXT("Destroy Complete. Creating Migration Lobby..."));
-		CreateSession(FName(*MigrationTargetName), false, true);
+		CreateSession(FName(*MigrationTargetName), true, true);
 		return;
 	}
 

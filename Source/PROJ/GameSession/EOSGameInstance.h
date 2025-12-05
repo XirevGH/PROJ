@@ -18,7 +18,6 @@ enum class ESessionState : uint8
 	Lobby,
 	SearchingForMatch,
 	JoiningMatch,
-	StartingMatch,
 	InMatch,
 	Transition
 };
