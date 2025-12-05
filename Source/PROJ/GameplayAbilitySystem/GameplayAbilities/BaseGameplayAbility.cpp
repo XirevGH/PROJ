@@ -69,26 +69,6 @@ void UBaseGameplayAbility::PlayMontage(UAnimMontage* Montage)
 	MontageTask->ReadyForActivation();
 }
 
-float UBaseGameplayAbility::GetMontagePlayRate(UAnimMontage* Montage)
-{
-	if (!Montage)
-		return 0.f;
-
-	TArray<FAnimNotifyEvent> NotifyEvents;
-	Montage->GetAnimNotifiesFromDeltaPositions(0, Montage->Tim);
-	GetAllNotifies(NotifyEvents);
-
-	for (const FAnimNotifyEvent& Event : NotifyEvents)
-	{
-		if (Event.NotifyName == "CastPoint")
-		{
-			return Event.GetTriggerTime();
-		}
-	}
-
-	return 0.f;
-}
-
 void UBaseGameplayAbility::OnMontageCompleted()
 {
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);

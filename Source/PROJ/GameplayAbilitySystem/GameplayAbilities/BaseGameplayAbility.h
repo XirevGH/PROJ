@@ -40,10 +40,6 @@ public:
 	UFUNCTION(BlueprintCallable)
 	virtual void PlayMontage(UAnimMontage* Montage);
 	
-	UFUNCTION(BlueprintCallable)
-	float GetMontagePlayRate(UAnimMontage* Montage);
-	
-	
 	UFUNCTION()
 	virtual void OnMontageCompleted();
 
