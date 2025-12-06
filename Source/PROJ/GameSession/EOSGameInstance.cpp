@@ -3,6 +3,7 @@
 #include "OnlineSubsystem.h"
 #include "OnlineSubsystemUtils.h"
 #include "OnlineSessionSettings.h"
+#include "SkeletalDebugRendering.h"
 #include "GameFramework/GameStateBase.h"
 #include "Interfaces/OnlineIdentityInterface.h"
 #include "Interfaces/OnlineSessionInterface.h"
@@ -1061,12 +1062,24 @@ bool UEOSGameInstance::IsPlayerLoggedIn() const
 
 void UEOSGameInstance::FilterOpenPublicSearchResults()
 {
-	// Identify "Ghost" Sessions (Sessions owned by me)
 	IOnlineIdentityPtr IdentityInterface = Online::GetIdentityInterface(GetWorld());
+	IOnlineSessionPtr SessionInterface = Online::GetSessionInterface(GetWorld());
+	
 	FUniqueNetIdRepl MyUniqueId;
 	if (IdentityInterface.IsValid())
 	{
 		MyUniqueId = IdentityInterface->GetUniquePlayerId(0);
+	}
+
+	FUniqueNetIdRepl CurrentSessionId;
+	if (SessionInterface.IsValid())
+	{
+		// 'SessionName' is the local name stored in your class (e.g. NAME_GameSession)
+		FNamedOnlineSession* CurrentSession = SessionInterface->GetNamedSession(SessionName);
+		if (CurrentSession && CurrentSession->SessionInfo.IsValid())
+		{
+			CurrentSessionId = CurrentSession->SessionInfo->GetSessionId();
+		}
 	}
 	
 	TArray<FOnlineSessionSearchResult> ValidSearchResults;
@@ -1083,13 +1096,22 @@ void UEOSGameInstance::FilterOpenPublicSearchResults()
 			UE_LOG(LogTemp, Display, TEXT("Session has no valid owner"));
 			continue;
 		}
-
-		// Filter 2: Ghost Session (CRITICAL)
+		
 		// If I own this session, hide it. It's either the one I'm in, or one I just destroyed.
 		if (MyUniqueId.IsValid() && *Result.Session.OwningUserId == *MyUniqueId)
 		{
 			UE_LOG(LogTemp, Display, TEXT("Session is my own session"));
 			continue;
+		}
+
+		// Compare the unique Session ID of the result with the session we are currently in
+		if (CurrentSessionId.IsValid() && Result.Session.SessionInfo.IsValid())
+		{
+			if (*CurrentSessionId == Result.Session.SessionInfo->GetSessionId())
+			{
+				UE_LOG(LogTemp, Display, TEXT("Filtered out the session I am currently joined to"));
+				continue;
+			}
 		}
 		
 		if (CurrentPlayers >= MaxPublicConnections / 2)
