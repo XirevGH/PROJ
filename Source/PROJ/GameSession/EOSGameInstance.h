@@ -7,8 +7,8 @@
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnOpenPublicLobbiesFound,
 	const TArray<FBlueprintSessionResult>&, Sessions);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnSessionFoundByName,
-	bool, bWasSuccessful, const FBlueprintSessionResult&, Session);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSessionFoundByName,
+	bool, bWasSuccessful);
 
 class IOnlineSubsystem;
 
@@ -22,6 +22,11 @@ enum class ESessionState : uint8
 	Transition
 };
 
+static const FName KEY_SESSION_NAME = FName("SessionNameKey");
+static const FName KEY_CUSTOM_NAME = FName("CustomSessionName");
+static const FName KEY_GAME_MODE = FName("SelectedGameMode");
+static const FName KEY_SESSION_STATE = FName("SessionState");
+
 UCLASS()
 class PROJ_API UEOSGameInstance : public UGameInstance
 {
@@ -29,6 +34,9 @@ class PROJ_API UEOSGameInstance : public UGameInstance
 
 public:
 	UEOSGameInstance();
+
+	virtual void Init() override;
+	virtual void Shutdown() override;
 	
 	UFUNCTION(BlueprintCallable)
 	void Login();
@@ -75,13 +83,13 @@ public:
 	
 	/* ----------- Custom settings -------------- */
 	UFUNCTION(BlueprintPure, Category = "Settings")
-	const FString& GetSessionNameKey() const { return SessionNameKey; }
+	static FString GetSessionNameKey() { return KEY_SESSION_NAME.ToString(); }
 	UFUNCTION(BlueprintPure, Category = "Settings")
-	const FString& GetCustomSessionNameKey() const { return CustomSessionNameKey; }
+	static FString GetCustomSessionNameKey() { return KEY_CUSTOM_NAME.ToString(); }
 	UFUNCTION(BlueprintPure, Category = "Settings")
-	const FString& GetSelectedGameModeKey() const { return SelectedGameModeKey; }
+	static FString GetSelectedGameModeKey() { return KEY_GAME_MODE.ToString(); }
 	UFUNCTION(BlueprintPure, Category = "Settings")
-	const FString& GetSessionStateKey() const { return SessionStateKey; }
+	static FString GetSessionStateKey() { return KEY_SESSION_STATE.ToString(); }
 	
 	UFUNCTION(BlueprintPure, Category = "Settings")
 	FString GetSelectedGameMode() const;
@@ -108,6 +116,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TSoftObjectPtr<UWorld> LobbyLevel;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TSoftObjectPtr<UWorld> TransitionLevel;
+
 	UFUNCTION(BlueprintCallable, Category = "Migration")
 	void Client_ExecuteLeaderMigration(FString TargetSessionName);
 
@@ -118,36 +129,23 @@ public:
 	bool GetIsTeamLeader() const { return bIsTeamLeader; }
 
 	UFUNCTION(BlueprintCallable, Category = "Settings")
-	void ResetLobbySettings(); 
+	void ResetLobbySettings();
 	
 protected:
-	virtual void Init() override;
-
 	UFUNCTION(BlueprintCallable)
 	void DestroyCurrentSessionAndJoinCachedSession();
 
 	UFUNCTION(BlueprintCallable)
 	void SetClientIsTransitioning(const bool bTransitioning) { bClientTransitionToOtherSession = bTransitioning; }
 
+	virtual void LoadComplete(const float LoadTime, const FString& MapName) override;
+
 private:
 	FName SessionName;
-	FString SessionNameKey;
-	FString CustomSessionNameKey;
-	FString SelectedGameModeKey;
-	FString SessionStateKey;
 	int32 MaxSearchResults;
-
-	TSharedPtr<FOnlineSessionSearch> MatchSearch;
-	TSharedPtr<FOnlineSessionSearch> OpenPublicSearch;
-	TSharedPtr<FOnlineSessionSearch> NameSearch;
-
+	
 	FOnlineSessionSearchResult CachedSessionToJoin;
-
-	FDelegateHandle OpenPublicSessionsDelegateHandle;
-	FDelegateHandle MatchSessionsDelegateHandle;
-	FDelegateHandle FindSessionByNameDelegateHandle;
-	FDelegateHandle DestroySessionDelegateHandle;
-	FDelegateHandle UpdateSessionDelegateHandle;
+	FString CachedGameMode;
 
 	bool bIsTeamLeader;
 	bool bIsMigratingLeader;
@@ -157,6 +155,20 @@ private:
 	bool bClientTransitionToOtherSession;
 	bool bReturningToOwnLobby;
 	ESessionState CurrentSessionState;
+
+	int32 SessionCreationRetryCount;
+
+	TSharedPtr<FOnlineSessionSearch> MatchSearch;
+	TSharedPtr<FOnlineSessionSearch> OpenPublicSearch;
+	TSharedPtr<FOnlineSessionSearch> NameSearch;
+
+	FDelegateHandle CreateSessionDelegateHandle;
+	FDelegateHandle JoinSessionDelegateHandle;
+	FDelegateHandle OpenPublicSessionsDelegateHandle;
+	FDelegateHandle MatchSessionsDelegateHandle;
+	FDelegateHandle FindSessionByNameDelegateHandle;
+	FDelegateHandle DestroySessionDelegateHandle;
+	FDelegateHandle UpdateSessionDelegateHandle;
 
 	UFUNCTION()
 	void OnFindOpenPublicSessionsCompleted(const bool bSuccess);

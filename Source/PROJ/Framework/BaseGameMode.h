@@ -33,6 +33,12 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "Teams")
 	FOnTeamEmptyDelegate OnTeamEmpty;
+
+	virtual void HandleSeamlessTravelPlayer(AController*& C) override;
+
+protected:
+	UFUNCTION(BlueprintImplementableEvent, Category = "Seamless Travel")
+	void OnPlayerArrived(AController* C);
 	
 private:
 	
