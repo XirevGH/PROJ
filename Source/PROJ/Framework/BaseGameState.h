@@ -15,7 +15,4 @@ class PROJ_API ABaseGameState : public AGameState
 {
 	GENERATED_BODY()
 
-public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TMap<FString,TArray<ABasePlayerState*>> PlayerStateTeams;
 };
