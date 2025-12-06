@@ -38,14 +38,16 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components")
 	class USphereComponent* CollisionComp;
 	
-	UPROPERTY()
-	UProjectileDataAsset* ProjectileData;
-	
 	FTimerHandle DestroyTimerHandle;
 	
 	UPROPERTY(BlueprintAssignable)
 	FOnProjectileHit OnProjectileHitDelegate;
 
+	UPROPERTY(ReplicatedUsing=OnRep_ProjectileData)
+	UProjectileDataAsset* ProjectileData;
+	
+	UFUNCTION()
+	void OnRep_ProjectileData();
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -54,7 +56,7 @@ public:
 	void DestroySelf();
 	
 	UFUNCTION(BlueprintCallable)
-	void InitializeProjectile();
+	void InitializeProjectile(UProjectileDataAsset* InData);
 	
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void OnProjectileHit(
@@ -86,4 +88,3 @@ public:
 	bool bFromSweep,
 	const FHitResult& SweepResult);
 };
-

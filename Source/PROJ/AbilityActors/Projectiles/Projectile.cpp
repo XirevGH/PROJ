@@ -5,6 +5,8 @@
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Components/SphereComponent.h"
 #include "GameplayEffectTypes.h"
+#include "Kismet/GameplayStatics.h"
+#include "Net/UnrealNetwork.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "PROJ/Data/ProjectileDataAsset.h"
 
@@ -24,8 +26,9 @@ AProjectile::AProjectile()
 void AProjectile::BeginPlay()
 {
 	Super::BeginPlay();
-	
-	
+	PrimaryActorTick.bCanEverTick = true;
+	SetReplicateMovement(true);
+	ProjectileMovement->SetIsReplicated(true);
 }
 
 
@@ -39,29 +42,36 @@ void AProjectile::DestroySelf()
 {
 	Destroy();
 }
-
-void AProjectile::InitializeProjectile()
+void AProjectile::OnRep_ProjectileData()
 {
-	ProjectileParticle->SetTemplate(ProjectileData->ProjectileParticle);
-	ProjectileMovement->InitialSpeed = ProjectileData->ProjectileSpeed;
-	ProjectileMovement->MaxSpeed = ProjectileData->ProjectileSpeed;
+	InitializeProjectile(ProjectileData);
+}
+
+void AProjectile::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AProjectile, ProjectileData);
+}
+
+void AProjectile::InitializeProjectile(UProjectileDataAsset* InData)
+{
+	ProjectileData = InData;
+	ProjectileParticle->SetTemplate(InData->ProjectileParticle);
+	ProjectileMovement->InitialSpeed = InData->ProjectileSpeed;
+	ProjectileMovement->MaxSpeed = InData->ProjectileSpeed;
 	ProjectileMovement->bRotationFollowsVelocity = true;
 	ProjectileMovement->ProjectileGravityScale = 0.f;
-	ProjectileMovement->SetIsReplicated(true);
-	//SetReplicates(true);  
-	//SetReplicateMovement(false);
+	
+
 	
 	CollisionComp->SetNotifyRigidBodyCollision(true);
-	ProjectileMovement->Velocity = GetActorForwardVector() * ProjectileData->ProjectileSpeed;
+	ProjectileMovement->Velocity = GetActorForwardVector() * InData->ProjectileSpeed;
 	CollisionComp->SetGenerateOverlapEvents(true);
 	CollisionComp->SetCollisionProfileName(TEXT("Projectile"));
 	CollisionComp->OnComponentBeginOverlap.AddDynamic(this, &AProjectile::OnBeginOverlap);
 	CollisionComp->OnComponentHit.AddDynamic(this, &AProjectile::OnProjectileHit);
-	
-	GetWorldTimerManager().SetTimer(DestroyTimerHandle, this, &AProjectile::DestroySelf, ProjectileData->ProjectileLifeTime, false);
-	
+	GetWorldTimerManager().SetTimer(DestroyTimerHandle, this, &AProjectile::DestroySelf, InData->ProjectileLifeTime, false);
 }
-
 
 void AProjectile::OnProjectileHit_Implementation(UPrimitiveComponent* HitComp, AActor* OtherActor,
                                                  UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
@@ -72,7 +82,9 @@ void AProjectile::OnProjectileHit_Implementation(UPrimitiveComponent* HitComp, A
 	}
 	
 	OnProjectileHitDelegate.Broadcast(Hit);
-	
+
+	UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ProjectileData->WorldHitParticle,  Hit.ImpactPoint,
+	Hit.ImpactNormal.Rotation());
 	
 	UE_LOG(LogTemp, Warning, TEXT("Hit %s via OnHit"), *OtherActor->GetActorNameOrLabel());
 	
@@ -90,7 +102,7 @@ void AProjectile::OnBeginOverlap_Implementation(UPrimitiveComponent* OverlappedC
 	
 	OnProjectileHitDelegate.Broadcast(SweepResult);
 	
-	
+	UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ProjectileData->CharacterHitParticle, GetActorLocation());
 		//ApplyEffectToTarget(OtherActor);
 	
 	
