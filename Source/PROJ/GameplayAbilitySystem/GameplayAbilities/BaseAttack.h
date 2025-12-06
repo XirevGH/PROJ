@@ -20,22 +20,30 @@ class PROJ_API UBaseAttack : public UBaseGameplayAbility
 
 	public:
 	UBaseAttack();
+
+	UPROPERTY()
+	UAbilityTask_PlayMontageAndWait* MontageTask;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Ability|Animation")
-	UAnimMontage* MyMontage;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FName WeaponStartSocket = "WeaponStartSocket";
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FName WeaponEndSocket = "WeaponEndSocket";
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Ability| Weapon")
-	AWeapon* EquippedWeapon;
+	UPROPERTY()
+	TArray<AActor*> Targets;
+
+	FTimerHandle HitScanTimerHandle;
+	
+	bool bIsHitscanActive = false;
+	bool bHasRequestedHitScanStart = false;
 
 	UPROPERTY()
 	UAbilityTask_WaitGameplayEvent* StartTask;
 
 	UPROPERTY()
 	UAbilityTask_WaitGameplayEvent* EndTask;
-	
-	bool bIsHitscanActive = false;
 
-	
 protected:
 	
 
@@ -53,11 +61,21 @@ protected:
 		bool bReplicatedEndAbility,
 		bool bWasCancelled) override;
 	
-	bool SetupPlayerWeapon();
 	void SetupHitScanTasks();
 	void ClearExistingTasks();
 	
 	/*Events from HitScan*/
+	void StartHitScan();
+	void EndHitScan();
+	void PerformHitScan();
+	
+	UFUNCTION(Server, Reliable)
+	void Server_HitScanStart();
+	UFUNCTION(Server, Reliable)
+	void Server_EndHitScan();
+
+	FVector GetSocketLocation(const FName& SocketName) const;
+	
 	UFUNCTION()
 	void OnHitscanStart(FGameplayEventData Payload);
 

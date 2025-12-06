@@ -30,8 +30,9 @@ void UThunderCrash::ActivateAbility(const FGameplayAbilitySpecHandle Handle, con
 	if (!CachedPlayer) return;
 
 	PlayMontage(AbilityData->Montage);
-	MakeMontageWaitEvent();
 	
+	if (!HasAuthority(&ActivationInfo)) return;
+	MakeMontageWaitEvent();
 }
 
 bool UThunderCrash::CanActivateAbility(const FGameplayAbilitySpecHandle Handle,
