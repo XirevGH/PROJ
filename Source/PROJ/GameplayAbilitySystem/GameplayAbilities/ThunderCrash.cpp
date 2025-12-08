@@ -31,7 +31,6 @@ void UThunderCrash::ActivateAbility(const FGameplayAbilitySpecHandle Handle, con
 
 	PlayMontage(AbilityData->Montage);
 	
-	if (!HasAuthority(&ActivationInfo)) return;
 	MakeMontageWaitEvent();
 }
 
