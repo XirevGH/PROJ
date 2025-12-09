@@ -57,11 +57,12 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 	void InitializeAbilityActor(AAbilityActor* Actor);
-	
+
+	UFUNCTION(BlueprintCallable)
 	static FGameplayTag GetCooldownTagFromInputID(const FGameplayTag InputTag);
 	virtual const FGameplayTagContainer* GetCooldownTags() const override;
 	
-	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
 	FGameplayTag InputTag;
 	
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category="Effects")

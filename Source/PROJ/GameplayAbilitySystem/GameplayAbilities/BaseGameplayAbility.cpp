@@ -7,6 +7,7 @@
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "PROJ/Data/AbilityData.h"
 #include "PROJ/AbilityActors/AbilityActor.h"
+#include "PROJ/GameplayAbilitySystem/AttributeSets/CharacterAttributeSet.h"
 
 void UBaseGameplayAbility::OnGiveAbility(const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec)
 {
@@ -117,9 +118,17 @@ FAbilityEffectSpecs UBaseGameplayAbility::MakeEffectSpecsHandles()
 
 		if (!Spec.IsValid()) continue;
 
+		float DamageMultiplier = 1.0f + CasterASC->GetNumericAttribute(
+			UCharacterAttributeSet::GetDamageMultiplierAttribute());
+		
 		for (const auto& Pair : Entry.SetByCallerValues)
 		{
-			Spec.Data->SetSetByCallerMagnitude(Pair.Key, Pair.Value);
+			float Magnitude = Pair.Value;
+			if (Pair.Key == FGameplayTag::RequestGameplayTag("Data.Damage"))
+			{
+				Magnitude *= DamageMultiplier;
+			}
+			Spec.Data->SetSetByCallerMagnitude(Pair.Key, Magnitude);
 		}
 
 		/*Apply to correct target/s created a struct for the different specs and an enum to sort them*/
