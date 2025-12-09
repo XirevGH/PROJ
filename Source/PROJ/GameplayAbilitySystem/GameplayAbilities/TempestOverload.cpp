@@ -3,6 +3,7 @@
 
 #include "TempestOverload.h"
 #include "PROJ/Characters/BaseCharacter.h"
+#include "PROJ/Data/AbilityData.h"
 
 void UTempestOverload::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
                                        const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
@@ -23,7 +24,10 @@ void UTempestOverload::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	UE_LOG(LogTemp, Warning, TEXT("Conduit Charges = %f"), Charges);
 	
 	if (Charges <= 0) return;
-
+	
+	/*PlayMontage*/
+	PlayMontage(AbilityData->Montage);
+	
 	/*Consume charges*/
 	ASC->ApplyModToAttribute(
 		UCharacterAttributeSet::GetConduitChargesAttribute(),
