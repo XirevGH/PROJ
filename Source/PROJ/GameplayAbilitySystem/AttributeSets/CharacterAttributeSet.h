@@ -57,10 +57,17 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Conduit", ReplicatedUsing = OnRep_MaxConduitCharges)
 	FGameplayAttributeData MaxConduitCharges;
 	ATTRIBUTE_ACCESSORS(UCharacterAttributeSet, MaxConduitCharges)
+
+	UPROPERTY(BlueprintReadOnly, Category = "Damage Multiplier", ReplicatedUsing = OnRep_DamageMultiplier)
+	FGameplayAttributeData DamageMultiplier;
+	ATTRIBUTE_ACCESSORS(UCharacterAttributeSet, DamageMultiplier)
 	
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data) override;
 
+	UFUNCTION()
+	void OnRep_DamageMultiplier(const FGameplayAttributeData& OldValue) const;
+	
 	UFUNCTION()
 	void OnRep_ConduitCharges(const FGameplayAttributeData& OldValue) const;
 

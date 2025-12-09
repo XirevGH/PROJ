@@ -43,7 +43,10 @@ void UCharacterAttributeSet::OnRep_MaxConduitCharges(const FGameplayAttributeDat
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UCharacterAttributeSet, MaxConduitCharges, OldValue);
 }
-
+void UCharacterAttributeSet::OnRep_DamageMultiplier(const FGameplayAttributeData& OldValue) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UCharacterAttributeSet, DamageMultiplier, OldValue);
+}
 void UCharacterAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -58,6 +61,8 @@ void UCharacterAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty
 
 	DOREPLIFETIME_CONDITION_NOTIFY(UCharacterAttributeSet,ConduitCharges, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UCharacterAttributeSet,MaxConduitCharges, COND_None, REPNOTIFY_Always);
+	
+	DOREPLIFETIME_CONDITION_NOTIFY(UCharacterAttributeSet,DamageMultiplier, COND_None, REPNOTIFY_Always);
 }
 
 void UCharacterAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data)
@@ -88,6 +93,8 @@ void UCharacterAttributeSet::PostGameplayEffectExecute(const struct FGameplayEff
 		UE_LOG(LogTemp, Warning, TEXT("Conduction Charges = %f"), NewCharges);
 	}
 }
+
+
 
 
 
