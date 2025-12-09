@@ -32,7 +32,7 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
 	class UProjectileMovementComponent* ProjectileMovement;
 	
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	UParticleSystemComponent* ProjectileParticle;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components")
@@ -57,6 +57,10 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 	void InitializeProjectile(UProjectileDataAsset* InData);
+
+	UFUNCTION(NetMulticast, Unreliable)
+	void MulticastSpawnImpactFX( UParticleSystem* Particle, FVector Location, FRotator Rotation);
+	void MulticastSpawnImpactFX_Implementation(UParticleSystem* Particle, FVector Location, FRotator Rotation);
 	
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void OnProjectileHit(

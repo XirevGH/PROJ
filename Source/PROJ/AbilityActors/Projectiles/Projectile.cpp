@@ -2,6 +2,8 @@
 
 
 #include "Projectile.h"
+
+#include "AbilitySystemComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Components/SphereComponent.h"
 #include "GameplayEffectTypes.h"
@@ -81,12 +83,16 @@ void AProjectile::OnProjectileHit_Implementation(UPrimitiveComponent* HitComp, A
 		return;
 	}
 	
-	OnProjectileHitDelegate.Broadcast(Hit);
+	if (HasAuthority()) // SERVER ONLY
+	{
+		FVector IncomingDirection = -ProjectileMovement->Velocity.GetSafeNormal();
+		MulticastSpawnImpactFX(ProjectileData->WorldHitParticle,  Hit.ImpactPoint,
+		IncomingDirection.Rotation());
+		
+		UE_LOG(LogTemp, Warning, TEXT("Hit %s via OnHit"), *OtherActor->GetActorNameOrLabel());
 
-	UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ProjectileData->WorldHitParticle,  Hit.ImpactPoint,
-	Hit.ImpactNormal.Rotation());
-	
-	UE_LOG(LogTemp, Warning, TEXT("Hit %s via OnHit"), *OtherActor->GetActorNameOrLabel());
+
+	}
 	
 	//Destroy();
 }
@@ -101,14 +107,26 @@ void AProjectile::OnBeginOverlap_Implementation(UPrimitiveComponent* OverlappedC
 	}
 	
 	OnProjectileHitDelegate.Broadcast(SweepResult);
+	if (HasAuthority()) // SERVER ONLY
+	{
+		MulticastSpawnImpactFX(ProjectileData->CharacterHitParticle, GetActorLocation(), GetActorRotation());
+	}
 	
-	UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ProjectileData->CharacterHitParticle, GetActorLocation());
+	//UGameplayStatics::SpawnEmitterAtLocation
 		//ApplyEffectToTarget(OtherActor);
 	
 	
 	//UE_LOG(LogTemp, Warning, TEXT("Hit %s via OnBeginOverlap"), *OtherActor->GetActorNameOrLabel());
 	
 	//Destroy();
+	
+}
+
+void AProjectile::MulticastSpawnImpactFX_Implementation(UParticleSystem* Particle, FVector Location, FRotator Rotation)
+{
+	
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(),  Particle,  Location,
+	Rotation);
 	
 }
 

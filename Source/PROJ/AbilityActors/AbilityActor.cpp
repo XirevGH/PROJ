@@ -31,7 +31,6 @@ void AAbilityActor::ApplyEffectToTarget(AActor* Target)
 {
 	if (!HasAuthority())
 	{
-		UE_LOG(LogTemp, Error, TEXT("No Authority"));
 		return;
 	}
 	if (CasterASC)
@@ -46,7 +45,6 @@ void AAbilityActor::ApplyEffectToTarget(AActor* Target)
 	{
 		// Apply effects to target
 		ApplySpecArrayToASC(EffectSpecHandles.TargetSpecs, TargetASC);
-		UE_LOG(LogTemp, Error, TEXT("Target ASC is NULL! %s has no ASC"), *GetNameSafe(Target));
 	}
 }
 

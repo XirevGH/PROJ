@@ -47,9 +47,12 @@ void UGA_Cast_Projectile::SpawnProjectile()
 
 		// Optional: get location
 		SpawnLocation = SpawnTransform.GetLocation();
-		//could set rotation to socket rotation, but it won't always be Avatar->GetActorRotation()
-		SpawnRotation = Avatar->GetActorRotation();
 
+		//could set rotation to socket rotation, but it won't always be Avatar->GetActorRotation()
+		//SpawnRotation = SpawnTransform.GetRotation().Rotator();
+
+		SpawnRotation = Avatar->GetActorRotation();
+		
 		// Debug: Draw a sphere at the spawn location
 		//DrawDebugSphere(GetWorld(), SpawnLocation,10.f,12, FColor::Red,true);
 	}
