@@ -4,7 +4,7 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
 #include "PROJ/Characters/BaseCharacter.h"
-#include "PROJ/Framework/BasePlayerController.h"
+#include "PROJ/Framework/BasePlayerState.h"
 #include "./PROJ/GameplayAbilitySystem/GameplayAbilities/BaseGameplayAbility.h"
 
 
@@ -58,13 +58,13 @@ bool AAbilityActor::ShouldSkipHit_Implementation(AActor* OtherActor)
 {
 	if (Caster)
 	{
-		if (ABasePlayerController* PC = Cast<ABasePlayerController>(Cast<ABaseCharacter>(Caster)->GetController()))
+		if (ABasePlayerState* PS = Cast<ABasePlayerState>(Cast<ABaseCharacter>(Caster)->GetPlayerState()))
 		{
 			if (ABaseCharacter* OtherCharacter = Cast<ABaseCharacter>(OtherActor))
 			{
-				if (ABasePlayerController* OtherPC = Cast<ABasePlayerController>(OtherCharacter->GetController()))
+				if (ABasePlayerState* OtherPS = Cast<ABasePlayerState>(OtherCharacter->GetPlayerState()))
 				{
-					return PC->TeamID.Equals(OtherPC->TeamID);
+					return PS->TeamID.Equals(OtherPS->TeamID);
 				}
 			}
 		}
