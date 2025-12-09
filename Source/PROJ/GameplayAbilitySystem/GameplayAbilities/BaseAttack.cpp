@@ -144,9 +144,9 @@ void UBaseAttack::OnHitscanEnd(FGameplayEventData Payload)
 }
 void UBaseAttack::PerformHitScan()
 {
-	UE_LOG(LogTemp, Warning, TEXT("[UBaseAttack] PerformHitScan tick. IsNetAuthority=%d, bIsHitscanActive=%d"),
+	/*UE_LOG(LogTemp, Warning, TEXT("[UBaseAttack] PerformHitScan tick. IsNetAuthority=%d, bIsHitscanActive=%d"),
 		(CurrentActorInfo ? CurrentActorInfo->IsNetAuthority() : 0),
-		(int)bIsHitscanActive);
+		(int)bIsHitscanActive);*/
 	
 	//if (!CurrentActorInfo || !CurrentActorInfo->IsNetAuthority()) return;
 	if (!bIsHitscanActive) return;
@@ -154,8 +154,8 @@ void UBaseAttack::PerformHitScan()
 	FVector Start = GetSocketLocation(WeaponStartSocket);
 	FVector End = GetSocketLocation(WeaponEndSocket);
 
-	UE_LOG(LogTemp, Verbose, TEXT("[UBaseAttack] Trace owner: %s, Start:%s End:%s"),
-		*GetAvatarActorFromActorInfo()->GetName(), *Start.ToString(), *End.ToString());
+	/*UE_LOG(LogTemp, Verbose, TEXT("[UBaseAttack] Trace owner: %s, Start:%s End:%s"),
+		*GetAvatarActorFromActorInfo()->GetName(), *Start.ToString(), *End.ToString());*/
 
 	FCollisionQueryParams TraceParams(FName(TEXT("WeaponTrace")), true, GetAvatarActorFromActorInfo());
 	TraceParams.bReturnPhysicalMaterial = false;
@@ -177,9 +177,9 @@ void UBaseAttack::PerformHitScan()
 		}
 	}
 
-#if WITH_EDITOR
+/*#if WITH_EDITOR
 	DrawDebugLine(GetWorld(), Start, End, FColor::Green, false, 1.f, 0, 2.f);
-#endif
+#endif*/
 }
 
 void UBaseAttack::Server_HitScanStart_Implementation()
