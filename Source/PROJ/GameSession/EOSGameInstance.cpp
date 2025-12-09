@@ -922,7 +922,19 @@ bool UEOSGameInstance::CancelMatchSearch()
 		UE_LOG(LogTemp, Warning, TEXT("CancelMatchSearch failed due to joining match"));
 		return false;
 	}
-	SetSessionState(ESessionState::Lobby);
+	if (FOnlineSessionSettings* Settings = GetSessionSettings())
+	{
+		Settings->NumPublicConnections = 6;
+		Settings->Set(KEY_SESSION_STATE, FOnlineSessionSetting(
+			static_cast<int32>(ESessionState::Lobby), EOnlineDataAdvertisementType::ViaOnlineService));
+		UpdateSessionSettings(Settings);
+		CurrentSessionState = ESessionState::Lobby;
+	}
+	IOnlineSessionPtr SessionInterface = Online::GetSessionInterface(GetWorld());
+	if (SessionInterface.IsValid())
+	{
+		SessionInterface->CancelFindSessions();
+	}
 	return true;
 }
 
