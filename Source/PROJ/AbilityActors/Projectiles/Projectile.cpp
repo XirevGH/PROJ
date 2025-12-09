@@ -72,6 +72,7 @@ void AProjectile::InitializeProjectile(UProjectileDataAsset* InData)
 	CollisionComp->SetCollisionProfileName(TEXT("Projectile"));
 	CollisionComp->OnComponentBeginOverlap.AddDynamic(this, &AProjectile::OnBeginOverlap);
 	CollisionComp->OnComponentHit.AddDynamic(this, &AProjectile::OnProjectileHit);
+	SetLifeSpan(InData->ProjectileLifeTime);
 	GetWorldTimerManager().SetTimer(DestroyTimerHandle, this, &AProjectile::DestroySelf, InData->ProjectileLifeTime, false);
 }
 
