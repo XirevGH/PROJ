@@ -5,6 +5,7 @@
 #include "AbilitySystemComponent.h"
 #include "PROJ/AbilityActors/Projectiles/Projectile.h"
 #include "PROJ/Data/ProjectileDataAsset.h"
+#include "GameFramework/PlayerController.h"
 
 UGA_Cast_Projectile::UGA_Cast_Projectile()
 {
@@ -38,7 +39,22 @@ void UGA_Cast_Projectile::SpawnProjectile()
 
 	UWorld* World = Avatar->GetWorld();
 	if (!World) return;
+
 	
+	/*APlayerController* PC = GetActorInfo().PlayerController.Get();
+	if (PC)
+	{
+		int32 ViewportX, ViewportY;
+		PC->GetViewportSize(ViewportX, ViewportY);
+		FVector2D ScreenCenter(ViewportX * 0.5f, ViewportY * 0.5f);
+
+		FVector WorldLocation;
+		FVector WorldDirection;
+
+		PC->DeprojectScreenPositionToWorld(ScreenCenter.X, ScreenCenter.Y, WorldLocation, WorldDirection);
+		FRotator AimRotation = WorldDirection.Rotation();
+		SpawnRotation = AimRotation;
+	}*/
 	
 	if (GetActorInfo().SkeletalMeshComponent->DoesSocketExist(SpawnSocketName))
 	{
@@ -51,6 +67,7 @@ void UGA_Cast_Projectile::SpawnProjectile()
 		//could set rotation to socket rotation, but it won't always be Avatar->GetActorRotation()
 		//SpawnRotation = SpawnTransform.GetRotation().Rotator();
 
+		
 		SpawnRotation = Avatar->GetActorRotation();
 		
 		// Debug: Draw a sphere at the spawn location
