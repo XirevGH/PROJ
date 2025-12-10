@@ -79,19 +79,13 @@ void AProjectile::InitializeProjectile(UProjectileDataAsset* InData)
 void AProjectile::OnProjectileHit_Implementation(UPrimitiveComponent* HitComp, AActor* OtherActor,
                                                  UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
-	if (ShouldSkipHit(OtherActor))
-	{
-		return;
-	}
-	
-	if (HasAuthority()) // SERVER ONLY
+	if (!ShouldSkipHit(OtherActor))
 	{
 		FVector IncomingDirection = -ProjectileMovement->Velocity.GetSafeNormal();
 		MulticastSpawnImpactFX(ProjectileData->WorldHitParticle,  Hit.ImpactPoint,
 		IncomingDirection.Rotation());
 		
 		UE_LOG(LogTemp, Warning, TEXT("Hit %s via OnHit"), *OtherActor->GetActorNameOrLabel());
-
 
 	}
 	
@@ -102,16 +96,11 @@ void AProjectile::OnProjectileHit_Implementation(UPrimitiveComponent* HitComp, A
 void AProjectile::OnBeginOverlap_Implementation(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (ShouldSkipHit(OtherActor))
-	{
-		return;
-	}
-	
-	OnProjectileHitDelegate.Broadcast(SweepResult);
-	if (HasAuthority()) // SERVER ONLY
+	if (!ShouldSkipHit(OtherActor))
 	{
 		MulticastSpawnImpactFX(ProjectileData->CharacterHitParticle, GetActorLocation(), GetActorRotation());
 	}
+	
 	
 	//UGameplayStatics::SpawnEmitterAtLocation
 		//ApplyEffectToTarget(OtherActor);
