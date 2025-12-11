@@ -8,7 +8,7 @@
 #include "BaseGameplayAbility.generated.h"
 
 struct FAttackEffectEntry;
-class UAttackData;
+class UAbilityData;
 class AAbilityActor;
 /**
  * 
@@ -40,6 +40,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	virtual void PlayMontage(UAnimMontage* Montage);
 	
+	UFUNCTION(BlueprintCallable)
+	float CalculateAbilityMontagePlayRate();
+	
 	UFUNCTION()
 	virtual void OnMontageCompleted();
 
@@ -54,11 +57,12 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 	void InitializeAbilityActor(AAbilityActor* Actor);
-	
+
+	UFUNCTION(BlueprintCallable)
 	static FGameplayTag GetCooldownTagFromInputID(const FGameplayTag InputTag);
 	virtual const FGameplayTagContainer* GetCooldownTags() const override;
 	
-	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
 	FGameplayTag InputTag;
 	
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category="Effects")
@@ -73,10 +77,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category= "Ability")
 	FString AbilityName;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AttackData")
-	UAttackData* AttackData;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AbilityData")
+	UAbilityData* AbilityData;
 
-	UAttackData* GetAttackData() const { return AttackData; }
+	UAbilityData* GetAttackData() const { return AbilityData; }
 	
 	UFUNCTION(BlueprintCallable)
 	void ApplyEffectsToTarget(AActor* Target);

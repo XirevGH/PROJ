@@ -95,7 +95,10 @@ FHitResult AGATA_GroundTrace_Indicator::PerformTrace(AActor* InSourceActor)
 	}
 	// STEP 3 — INVALID surface → project downward
 	DownStart = DesiredLocation;  
-	Params.AddIgnoredActor(MouseHit.GetActor());
+
+	//This does not work with stairs/ mesh with complex shape
+	//Params.AddIgnoredActor(MouseHit.GetActor());
+	
 	GetWorld()->LineTraceSingleByChannel(Hit, DownStart, DownEnd, ECC_Visibility, Params);
 	//DrawDebugLine(GetWorld(),DownStart, DownEnd, FColor::Green, false);
 	return Hit;

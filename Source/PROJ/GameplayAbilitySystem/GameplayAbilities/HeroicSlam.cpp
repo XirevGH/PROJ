@@ -22,11 +22,7 @@ void UHeroicSlam::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const
                                   const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
-
-	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
-	{
-		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
-	}
+	
 	/*Get and Check CachedPlayer*/
 	CachedPlayer = Cast<ABaseCharacter>(ActorInfo->AvatarActor.Get());
 	if (!CachedPlayer) return;
@@ -50,6 +46,11 @@ void UHeroicSlam::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const
 
 void UHeroicSlam::OnConfirm(const FGameplayAbilityTargetDataHandle& Data)
 {
+	if (!CommitAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo))
+	{
+		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
+	}
+	
 	/*Get Location Marked With Indicator*/
 	if (Data.Num() > 0)
 	{
@@ -105,7 +106,7 @@ void UHeroicSlam::LaunchToTarget()
 	FVector Start = CachedPlayer->GetActorLocation();
 	FVector End = TargetLocation;
 	/*Because Target location is on ground level and player start is above ground(Better calculation imo*TEST*)*/
-	End.Z += CachedPlayer->GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
+	End.Z += /*CachedPlayer->GetCapsuleComponent()->GetScaledCapsuleHalfHeight() +*/ 500.f;
 	
 
 	FVector LaunchVelocity;
@@ -115,7 +116,7 @@ void UHeroicSlam::LaunchToTarget()
 			Start,
 			End,
 			0.f,
-			0.8);
+			0.7);
 	
 	if (!bHasSolution)
 	{

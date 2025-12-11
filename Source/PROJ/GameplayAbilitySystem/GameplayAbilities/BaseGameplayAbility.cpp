@@ -5,8 +5,9 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
-#include "PROJ/Data/AttackData.h"
+#include "PROJ/Data/AbilityData.h"
 #include "PROJ/AbilityActors/AbilityActor.h"
+#include "PROJ/GameplayAbilitySystem/AttributeSets/CharacterAttributeSet.h"
 
 void UBaseGameplayAbility::OnGiveAbility(const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec)
 {
@@ -69,6 +70,18 @@ void UBaseGameplayAbility::PlayMontage(UAnimMontage* Montage)
 	MontageTask->ReadyForActivation();
 }
 
+float UBaseGameplayAbility::CalculateAbilityMontagePlayRate()
+{
+	if (!AbilityData) return 1.f;
+	if (!AbilityData->Montage) return 1.f;
+
+	float NotifyTime =AbilityData->NotifyBeginTime;
+	if (NotifyTime <= 0.f || CastTime <= 0.f)
+		return 1.f;
+
+	return NotifyTime / CastTime;
+}
+
 void UBaseGameplayAbility::OnMontageCompleted()
 {
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
@@ -92,7 +105,7 @@ FAbilityEffectSpecs UBaseGameplayAbility::MakeEffectSpecsHandles()
 	if (!CasterASC)
 		return Specs;
 
-	const TArray<FAttackEffectEntry>& EffectsToUse = (AttackData && AttackData->Effects.Num() > 0) ? AttackData->Effects : Effects;
+	const TArray<FAttackEffectEntry>& EffectsToUse = (AbilityData && AbilityData->Effects.Num() > 0) ? AbilityData->Effects : Effects;
 	
 	FGameplayEffectContextHandle Context = CasterASC->MakeEffectContext();
 	
@@ -101,12 +114,21 @@ FAbilityEffectSpecs UBaseGameplayAbility::MakeEffectSpecsHandles()
 		if (!Entry.Effect) continue;
 
 		FGameplayEffectSpecHandle Spec = CasterASC->MakeOutgoingSpec(Entry.Effect, GetAbilityLevel(), Context);
+		
 
 		if (!Spec.IsValid()) continue;
 
+		float DamageMultiplier = 1.0f + CasterASC->GetNumericAttribute(
+			UCharacterAttributeSet::GetDamageMultiplierAttribute());
+		
 		for (const auto& Pair : Entry.SetByCallerValues)
 		{
-			Spec.Data->SetSetByCallerMagnitude(Pair.Key, Pair.Value);
+			float Magnitude = Pair.Value;
+			if (Pair.Key == FGameplayTag::RequestGameplayTag("Data.Damage"))
+			{
+				Magnitude *= DamageMultiplier;
+			}
+			Spec.Data->SetSetByCallerMagnitude(Pair.Key, Magnitude);
 		}
 
 		/*Apply to correct target/s created a struct for the different specs and an enum to sort them*/
@@ -134,22 +156,14 @@ void UBaseGameplayAbility::InitializeAbilityActor(AAbilityActor* Actor)
 {
 	if (!Actor)
 		return;
-
-	
-	 FAbilityEffectSpecs SpecStruct = MakeEffectSpecsHandles();
-	
-	/*Merg specs (since i dont know if we want our actors to know difference between self / target*/
-	TArray<FGameplayEffectSpecHandle> AllSpecs = SpecStruct.SelfSpecs;
-	AllSpecs.Append(SpecStruct.TargetSpecs);
 	
 	Actor->SetReplicates(true);	
 	Actor->SetReplicateMovement(true);
 	Actor->InitializeAbilityActor(
 		GetAvatarActorFromActorInfo(),
 		GetAbilitySystemComponentFromActorInfo(),
-		this,
-		AllSpecs
-			);
+		MakeEffectSpecsHandles());
+	
 }
 
 FGameplayTag UBaseGameplayAbility::GetCooldownTagFromInputID(const FGameplayTag InputTag) 

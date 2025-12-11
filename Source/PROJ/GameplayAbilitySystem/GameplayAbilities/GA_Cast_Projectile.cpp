@@ -4,6 +4,8 @@
 #include "GA_Cast_Projectile.h"
 #include "AbilitySystemComponent.h"
 #include "PROJ/AbilityActors/Projectiles/Projectile.h"
+#include "PROJ/Data/ProjectileDataAsset.h"
+#include "GameFramework/PlayerController.h"
 
 UGA_Cast_Projectile::UGA_Cast_Projectile()
 {
@@ -37,20 +39,68 @@ void UGA_Cast_Projectile::SpawnProjectile()
 
 	UWorld* World = Avatar->GetWorld();
 	if (!World) return;
-	
-	float HeightOffset = 30.f; // whatever you want
-	SpawnLocation = Avatar->GetActorLocation()
-		+ Avatar->GetActorForwardVector()
-		+ FVector(0.f, 0.f, HeightOffset);
 
-	// can change to camera rotation
-	SpawnRotation = Avatar->GetActorRotation();
+	
+	/*APlayerController* PC = GetActorInfo().PlayerController.Get();
+	if (PC)
+	{
+		int32 ViewportX, ViewportY;
+		PC->GetViewportSize(ViewportX, ViewportY);
+		FVector2D ScreenCenter(ViewportX * 0.5f, ViewportY * 0.5f);
+
+		FVector WorldLocation;
+		FVector WorldDirection;
+
+		PC->DeprojectScreenPositionToWorld(ScreenCenter.X, ScreenCenter.Y, WorldLocation, WorldDirection);
+		FRotator AimRotation = WorldDirection.Rotation();
+		SpawnRotation = AimRotation;
+	}*/
+	
+	if (GetActorInfo().SkeletalMeshComponent->DoesSocketExist(SpawnSocketName))
+	{
+		// Get the transform of the socket
+		FTransform SpawnTransform = GetActorInfo().SkeletalMeshComponent->GetSocketTransform(SpawnSocketName);
+
+		// Optional: get location
+		SpawnLocation = SpawnTransform.GetLocation();
+
+		//could set rotation to socket rotation, but it won't always be Avatar->GetActorRotation()
+		//SpawnRotation = SpawnTransform.GetRotation().Rotator();
 
 		
-	ProjectileActor = World->SpawnActor<AProjectile>(ProjectileActorClass, SpawnLocation, SpawnRotation);
+		SpawnRotation = Avatar->GetActorRotation();
+		
+		// Debug: Draw a sphere at the spawn location
+		//DrawDebugSphere(GetWorld(), SpawnLocation,10.f,12, FColor::Red,true);
+	}
+	else
+	{ 
+		// if no socket spawn here
+		float HeightOffset = 30.f; // whatever you want
+		SpawnLocation = Avatar->GetActorLocation()
+			+ Avatar->GetActorForwardVector()
+			+ FVector(0.f, 0.f, HeightOffset);
+
+		// can change to camera rotation
+		SpawnRotation = Avatar->GetActorRotation();
+		UE_LOG(LogTemp, Warning, TEXT("Socket %s does not exist!"), *SpawnSocketName.ToString())
+	}
+
+	if (!ProjectileData)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("projectile data does not exist!"))
+		return;
+	}
+		
+		
+	ProjectileActor = World->SpawnActor<AProjectile>(ProjectileData->ProjectileActorClass, SpawnLocation, SpawnRotation);
 	if (ProjectileActor)
 	{
 		InitializeAbilityActor(ProjectileActor);
+		
+		//UE_LOG(LogTemp, Warning, TEXT("Data asset in ability %s"), ProjectileData ? TEXT("is valid now"): TEXT("Not valid now"));
+		ProjectileActor->InitializeProjectile(ProjectileData);
+		
 	}
 	else
 	{

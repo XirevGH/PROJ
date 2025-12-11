@@ -4,8 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "BaseGameplayAbility.h"
+
 #include "GA_Cast_Projectile.generated.h"
 
+class UProjectileDataAsset;
 /**
  * 
  */
@@ -23,9 +25,12 @@ class PROJ_API UGA_Cast_Projectile : public UBaseGameplayAbility
 	FVector SpawnLocation;
 	UPROPERTY()
 	FRotator SpawnRotation;
-
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ProjectileData")
+	UProjectileDataAsset* ProjectileData;
+	
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	TSubclassOf<AProjectile> ProjectileActorClass;
+	FName SpawnSocketName;
 	
 	UGA_Cast_Projectile();
 
