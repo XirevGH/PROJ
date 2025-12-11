@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include <steam/steamclientpublic.h>
+
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerState.h"
 #include "AbilitySystemInterface.h"
@@ -36,7 +38,17 @@ public:
 	
 	void InitializeASC(class AActor* Avatar);
 
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, ReplicatedUsing = OnRep_TeamID)
+	FString TeamID;
 	
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnRep_TeamID();
+
+	UFUNCTION(BlueprintCallable, Category = "Team")
+	FString GetTeamID(){ return TeamID;}
+	
+	UFUNCTION(BlueprintCallable, Category = "Team")
+	void SetTeamID(const FString& NewTeamID);
 private:
 	
 	UPROPERTY(BlueprintReadOnly, meta=(AllowPrivateAccess))
