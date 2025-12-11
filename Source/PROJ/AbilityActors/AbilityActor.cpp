@@ -34,7 +34,6 @@ void AAbilityActor::ApplyEffectToTarget(AActor* Target)
 		UE_LOG(LogTemp, Warning, TEXT("Has no authority"));
 		return;
 	}
-	
 	if (CasterASC)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("apply damage to CasterASC"));

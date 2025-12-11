@@ -172,7 +172,7 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		EnhancedInput->BindAction(RotateCharacterAction, ETriggerEvent::Triggered, this, &ABaseCharacter::InputRotateCharacterTriggered);
 		EnhancedInput->BindAction(RotateCharacterAction, ETriggerEvent::Completed, this, &ABaseCharacter::InputRotateCharacterCompleted);
 		
-		/*APlayerController* PC = Cast<APlayerController>(GetController());
+		APlayerController* PC = Cast<APlayerController>(GetController());
 		if (!PC) return;
 
 		ABasePlayerState* PS = PC->GetPlayerState<ABasePlayerState>();
@@ -183,11 +183,11 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		
 		if (ASC)
 		{
-		 	
-			//EnhancedInput->BindAction(ConfirmAbilityAction, ETriggerEvent::Triggered, this &ABaseCharacter::LocalInputConfirm);
+			EnhancedInput->BindAction(CancelActiveAbilityAction, ETriggerEvent::Triggered, this, &ABaseCharacter::OnCancelActiveAbilityTriggered);
+			
 			EnhancedInput->BindAction(ConfirmAbilityAction, ETriggerEvent::Triggered, ASC, &UBaseAbilitySystemComponent::TargetConfirm);
 		 	EnhancedInput->BindAction(CancelAbilityAction, ETriggerEvent::Triggered, ASC, &UBaseAbilitySystemComponent::TargetCancel);
-		}*/
+		}
 	}
 }
 
@@ -323,4 +323,23 @@ void ABaseCharacter::InputRotateCharacterTriggered(const FInputActionValue& Valu
 void ABaseCharacter::Jump()
 {
 	Super::Jump();
+}
+
+
+void ABaseCharacter::OnCancelActiveAbilityTriggered(const FInputActionValue& Value)
+{
+	APlayerController* PC = Cast<APlayerController>(GetController());
+	if (!PC) return;
+
+	ABasePlayerState* PS = PC->GetPlayerState<ABasePlayerState>();
+	if (!PS) return;
+
+	UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent();
+	if (!ASC) return;
+	
+		FGameplayTagContainer CancelTags;
+		CancelTags.AddTag(FGameplayTag::RequestGameplayTag("Ability"));
+		UE_LOG(LogTemp, Warning, TEXT("cancel ability"));
+		ASC->CancelAbilities(&CancelTags, nullptr);
+	
 }

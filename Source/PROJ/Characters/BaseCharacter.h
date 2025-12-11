@@ -48,6 +48,8 @@ public:
 	void InputRotateCameraStarted(const FInputActionValue& Value);
 	void InputRotateCameraCompleted(const FInputActionValue& Value);
 	void InputRotateCharacterTriggered(const FInputActionValue& Value);
+
+	void OnCancelActiveAbilityTriggered(const FInputActionValue& Value);
 	
 	void Jump() override;
 
@@ -107,6 +109,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, category = "Enhanced Input")
 	UInputAction* CancelAbilityAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, category = "Enhanced Input")
+	UInputAction* CancelActiveAbilityAction;
 
 	UPROPERTY(EditAnywhere ,BlueprintReadWrite, Category = "GAS")
 	TArray<TSubclassOf<class UGameplayEffect>> DefaultEffects;
