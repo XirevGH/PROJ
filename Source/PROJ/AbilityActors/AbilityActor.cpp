@@ -31,10 +31,13 @@ void AAbilityActor::ApplyEffectToTarget(AActor* Target)
 {
 	if (!HasAuthority())
 	{
+		UE_LOG(LogTemp, Warning, TEXT("Has no authority"));
 		return;
 	}
+	
 	if (CasterASC)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("apply damage to CasterASC"));
 		ApplySpecArrayToASC(EffectSpecHandles.SelfSpecs, CasterASC);
 	}
 	
@@ -44,6 +47,7 @@ void AAbilityActor::ApplyEffectToTarget(AActor* Target)
 	if (TargetASC)
 	{
 		// Apply effects to target
+		UE_LOG(LogTemp, Warning, TEXT("apply damage to TargetASC"));
 		ApplySpecArrayToASC(EffectSpecHandles.TargetSpecs, TargetASC);
 	}
 }
