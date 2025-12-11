@@ -23,10 +23,6 @@ public:
 	virtual void SetupInputComponent() override;
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Replicated)
-	FString TeamID;
-
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 protected:
 
 	virtual void BeginPlay() override;

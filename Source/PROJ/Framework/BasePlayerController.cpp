@@ -34,14 +34,6 @@ void ABasePlayerController::BeginPlay()
 	Super::BeginPlay();
 }
 
-void ABasePlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
-	// This command is what actually makes the engine send the data
-	DOREPLIFETIME(ABasePlayerController, TeamID);
-}
-
 void ABasePlayerController::AbilityInputPressed(FGameplayTag InputTag)
 {
 	if (IsValid(GetAbilitySystemComponent()))
