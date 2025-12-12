@@ -17,6 +17,8 @@ struct FBaseInputAction
 
 	UPROPERTY(EditDefaultsOnly)
 	TObjectPtr<UInputAction> InputAction = nullptr;
+	UPROPERTY(EditDefaultsOnly)
+	TObjectPtr<UInputAction> TapInputAction = nullptr;
 
 	UPROPERTY(EditDefaultsOnly)
 	FGameplayTag InputTag = FGameplayTag();
