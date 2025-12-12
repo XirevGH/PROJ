@@ -95,6 +95,7 @@ void AProjectile::OnProjectileHit_Implementation(UPrimitiveComponent* HitComp, A
 
 		FGameplayEffectContextHandle EffectContext = CasterASC->MakeEffectContext();
 		EffectContext.AddInstigator(Caster, Caster);
+		EffectContext.AddSourceObject(this);
 		EffectContext.AddHitResult(Hit);
 		
 		CasterASC->ExecuteGameplayCue(
