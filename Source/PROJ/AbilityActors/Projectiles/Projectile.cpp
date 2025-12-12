@@ -87,19 +87,12 @@ void AProjectile::OnProjectileHit_Implementation(UPrimitiveComponent* HitComp, A
 	
 	if (!ShouldSkipHit(OtherActor))
 	{
-		// FVector IncomingDirection = -ProjectileMovement->Velocity.GetSafeNormal();
-		// MulticastSpawnImpactFX(ProjectileData->WorldHitParticle,  Hit.ImpactPoint,
-		// IncomingDirection.Rotation());
-		//
-		// UE_LOG(LogTemp, Warning, TEXT("Hit %s via OnHit"), *OtherActor->GetActorNameOrLabel());
-
-		FGameplayEffectContextHandle EffectContext = CasterASC->MakeEffectContext();
-		EffectContext.AddInstigator(Caster, Caster);
-		EffectContext.AddSourceObject(this);
-		EffectContext.AddHitResult(Hit);
+		FVector IncomingDirection = -ProjectileMovement->Velocity.GetSafeNormal();
+		 MulticastSpawnImpactFX_Implementation(ProjectileData->WorldHitParticle,  Hit.ImpactPoint,
+		 IncomingDirection.Rotation());
 		
-		CasterASC->ExecuteGameplayCue(
-	FGameplayTag::RequestGameplayTag("GameplayCue.Test"), EffectContext);
+		 UE_LOG(LogTemp, Warning, TEXT("Hit %s via OnHit"), *OtherActor->GetActorNameOrLabel());
+		
 	}
 	
 	//Destroy();
@@ -116,14 +109,8 @@ void AProjectile::OnBeginOverlap_Implementation(UPrimitiveComponent* OverlappedC
 	
 	if (!ShouldSkipHit_Implementation(OtherActor))
 	{
-		FGameplayEffectContextHandle EffectContext = CasterASC->MakeEffectContext();
-		EffectContext.AddInstigator(Caster, Caster);
-		EffectContext.AddHitResult(SweepResult);
 		
-		CasterASC->ExecuteGameplayCue(
-	FGameplayTag::RequestGameplayTag("GameplayCue.Test"), EffectContext);
-		
-		//MulticastSpawnImpactFX(ProjectileData->CharacterHitParticle, GetActorLocation(), GetActorRotation());
+		MulticastSpawnImpactFX_Implementation(ProjectileData->CharacterHitParticle, GetActorLocation(), GetActorRotation());
 	}
 	
 	
@@ -139,17 +126,7 @@ void AProjectile::OnBeginOverlap_Implementation(UPrimitiveComponent* OverlappedC
 
 void AProjectile::MulticastSpawnImpactFX_Implementation(UParticleSystem* Particle, FVector Location, FRotator Rotation)
 {
-	
-		if (!Particle)
-		{
-			UE_LOG(LogTemp, Error, TEXT("Client missing particle reference!"));
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Client spawning particle OK!"));
-		}
-	
-	
+
 		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(),  Particle,  Location,
 	Rotation);
 }

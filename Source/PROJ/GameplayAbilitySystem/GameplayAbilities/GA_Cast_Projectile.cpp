@@ -60,8 +60,7 @@ void UGA_Cast_Projectile::SpawnProjectile()
 	{
 		// Get the transform of the socket
 		FTransform SpawnTransform = GetActorInfo().SkeletalMeshComponent->GetSocketTransform(SpawnSocketName);
-
-		// Optional: get location
+		
 		SpawnLocation = SpawnTransform.GetLocation();
 
 		//could set rotation to socket rotation, but it won't always be Avatar->GetActorRotation()
@@ -100,7 +99,6 @@ void UGA_Cast_Projectile::SpawnProjectile()
 		
 		//UE_LOG(LogTemp, Warning, TEXT("Data asset in ability %s"), ProjectileData ? TEXT("is valid now"): TEXT("Not valid now"));
 		ProjectileActor->InitializeProjectile(ProjectileData);
-		
 	}
 	else
 	{

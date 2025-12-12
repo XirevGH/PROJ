@@ -56,6 +56,11 @@ bool AAbilityActor::ShouldSkipHit_Implementation(AActor* OtherActor)
 {
 	if (Caster)
 	{
+		if (OtherActor->IsA(DummyTestBPClass))
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Hit Dummy, Projectile will:  %hs"), bShouldSkipHit ? "Hit" : "Skip");
+			return bShouldSkipHit;
+		}
 		
 		if (ABasePlayerState* PS = Cast<ABasePlayerState>(Cast<ABaseCharacter>(Caster)->GetPlayerState()))
 		{

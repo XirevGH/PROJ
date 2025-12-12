@@ -32,6 +32,12 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 	FAbilityEffectSpecs EffectSpecHandles;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Test")
+	TSubclassOf<AActor> DummyTestBPClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Test")
+	bool bShouldSkipHit;
+	
 	UFUNCTION(BlueprintCallable)
 	bool InitializeAbilityActor(AActor* InCaster, UAbilitySystemComponent* InCasterASC,
 		const FAbilityEffectSpecs& InEffectSpecHandles);
@@ -49,7 +55,6 @@ protected:
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	bool ShouldSkipHit(AActor* OtherActor);
-
 	bool ShouldSkipHit_Implementation(AActor* OtherActor);
 	
 public:
