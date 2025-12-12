@@ -45,4 +45,10 @@ public:
 	
 	void AbilityInputPressed(const FGameplayTag& InputTag);
 	void AbilityInputReleased(const FGameplayTag& InputTag);
+	void AbilityInputTriggered(const FGameplayTag& InputTag);
+	void AbilityInputCompleted(const FGameplayTag& InputTag);
+	void AbilityInputCanceled(const FGameplayTag& InputTag);
+	void AbilityInputTap(const FGameplayTag& InputTag);
+	
 };
+
