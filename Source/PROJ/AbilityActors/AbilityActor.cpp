@@ -31,10 +31,12 @@ void AAbilityActor::ApplyEffectToTarget(AActor* Target)
 {
 	if (!HasAuthority())
 	{
+		UE_LOG(LogTemp, Warning, TEXT("Has no authority"));
 		return;
 	}
 	if (CasterASC)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("apply damage to CasterASC"));
 		ApplySpecArrayToASC(EffectSpecHandles.SelfSpecs, CasterASC);
 	}
 	
@@ -44,6 +46,7 @@ void AAbilityActor::ApplyEffectToTarget(AActor* Target)
 	if (TargetASC)
 	{
 		// Apply effects to target
+		UE_LOG(LogTemp, Warning, TEXT("apply damage to TargetASC"));
 		ApplySpecArrayToASC(EffectSpecHandles.TargetSpecs, TargetASC);
 	}
 }
@@ -52,12 +55,16 @@ bool AAbilityActor::ShouldSkipHit_Implementation(AActor* OtherActor)
 {
 	if (Caster)
 	{
+		
 		if (ABasePlayerState* PS = Cast<ABasePlayerState>(Cast<ABaseCharacter>(Caster)->GetPlayerState()))
 		{
+			UE_LOG(LogTemp, Warning, TEXT("Caster Name is %s and TeamID is %s"), *PS->GetPlayerName(), *PS->GetTeamID());
 			if (ABaseCharacter* OtherCharacter = Cast<ABaseCharacter>(OtherActor))
 			{
 				if (ABasePlayerState* OtherPS = Cast<ABasePlayerState>(OtherCharacter->GetPlayerState()))
 				{
+					UE_LOG(LogTemp, Warning, TEXT("Caster Name is %s and TeamID is %s"), *OtherPS->GetPlayerName(), *OtherPS->GetTeamID());
+
 					return PS->TeamID.Equals(OtherPS->TeamID);
 				}
 			}
