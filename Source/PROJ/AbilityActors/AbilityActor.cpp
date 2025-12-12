@@ -55,12 +55,16 @@ bool AAbilityActor::ShouldSkipHit_Implementation(AActor* OtherActor)
 {
 	if (Caster)
 	{
+		
 		if (ABasePlayerState* PS = Cast<ABasePlayerState>(Cast<ABaseCharacter>(Caster)->GetPlayerState()))
 		{
+			UE_LOG(LogTemp, Warning, TEXT("Caster Name is %s and TeamID is %s"), *PS->GetPlayerName(), *PS->GetTeamID());
 			if (ABaseCharacter* OtherCharacter = Cast<ABaseCharacter>(OtherActor))
 			{
 				if (ABasePlayerState* OtherPS = Cast<ABasePlayerState>(OtherCharacter->GetPlayerState()))
 				{
+					UE_LOG(LogTemp, Warning, TEXT("Caster Name is %s and TeamID is %s"), *OtherPS->GetPlayerName(), *OtherPS->GetTeamID());
+
 					return PS->TeamID.Equals(OtherPS->TeamID);
 				}
 			}
