@@ -13,7 +13,15 @@ void ABasePlayerController::SetupInputComponent()
 
 	if (UBaseEnhancedInputComponent* BaseInputComp = Cast<UBaseEnhancedInputComponent>(InputComponent))
 	{
-		BaseInputComp->BindAbilityActions(BaseInputConfig, this, &ThisClass::AbilityInputPressed, &ThisClass::AbilityInputReleased);
+		BaseInputComp->BindAbilityActions(
+			BaseInputConfig,
+			this,
+			&ThisClass::AbilityInputPressed,
+			&ThisClass::AbilityInputReleased,
+			&ThisClass::AbilityInputTriggered,
+			&ThisClass::AbilityInputCompleted,
+			&ThisClass::AbilityInputCancelled,
+			&ThisClass::AbilityInputTap);
 	}
 }
 
@@ -47,6 +55,37 @@ void ABasePlayerController::AbilityInputReleased(FGameplayTag InputTag)
 	if (IsValid(GetAbilitySystemComponent()))
 	{
 		BaseAbilitySystemComponent->AbilityInputReleased(InputTag);
+	}
+}
+
+void ABasePlayerController::AbilityInputTriggered(FGameplayTag InputTag)
+{
+	if (IsValid(GetAbilitySystemComponent()))
+	{
+		BaseAbilitySystemComponent->AbilityInputTriggered(InputTag);
+	}
+}
+
+void ABasePlayerController::AbilityInputCompleted(FGameplayTag InputTag)
+{
+	if (IsValid(GetAbilitySystemComponent()))
+	{
+		BaseAbilitySystemComponent->AbilityInputCompleted(InputTag);
+	}
+}
+
+void ABasePlayerController::AbilityInputCancelled(FGameplayTag InputTag)
+{
+	if (IsValid(GetAbilitySystemComponent()))
+	{
+		BaseAbilitySystemComponent->AbilityInputCanceled(InputTag);
+	}
+}
+void ABasePlayerController::AbilityInputTap(FGameplayTag InputTag)
+{
+	if (IsValid(GetAbilitySystemComponent()))
+	{
+		BaseAbilitySystemComponent->AbilityInputTap(InputTag);
 	}
 }
 

@@ -27,10 +27,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ConduitActorLifeTime")
 	float ConduitLifeTime = 10.f;
 	
-	FTimerHandle LandingCheckTimer;
-	
-	virtual void PlayMontage(UAnimMontage* Montage) override;
-	virtual void OnMontageCompleted() override;
+	FTimerHandle LandingCheckTimer;	
 	
 	UFUNCTION()
 	void OnMontageNotifyReceived(FGameplayEventData Payload);
