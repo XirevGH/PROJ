@@ -162,7 +162,8 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		EnhancedInput->BindAction(JumpAction, ETriggerEvent::Started, this, &ABaseCharacter::Jump);
 		EnhancedInput->BindAction(JumpAction, ETriggerEvent::Completed, this, &ABaseCharacter::StopJumping);
 		EnhancedInput->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ABaseCharacter::InputMove);
-
+		
+		EnhancedInput->BindAction(MouseMoveAction, ETriggerEvent::Triggered, this, &ABaseCharacter::InputMouseMove);
 		EnhancedInput->BindAction(LookAction, ETriggerEvent::Triggered, this, &ABaseCharacter::InputLook);
 		
 		EnhancedInput->BindAction(RotateCameraAction, ETriggerEvent::Started, this, &ABaseCharacter::InputRotateCameraStarted);
@@ -189,6 +190,21 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		 	EnhancedInput->BindAction(CancelAbilityAction, ETriggerEvent::Triggered, ASC, &UBaseAbilitySystemComponent::TargetCancel);
 		}
 	}
+}
+
+void ABaseCharacter::InputMouseMove(const FInputActionValue& Value)
+{
+	const FRotator BaseRotation = bUseControllerRotationYaw ? GetController()->GetControlRotation() : GetActorRotation();
+
+	const FRotator YawRotation(0, BaseRotation.Yaw, 0);
+
+	// Get world-space forward and right vectors from our chosen base rotation
+	const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+	const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+
+	// Add the movement input
+	AddMovementInput(ForwardDirection, MoveAxis.Y);
+	AddMovementInput(RightDirection, MoveAxis.X);
 }
 
 
