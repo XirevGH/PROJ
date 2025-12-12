@@ -29,6 +29,10 @@ protected:
 
 	void AbilityInputPressed(FGameplayTag InputTag);
 	void AbilityInputReleased(FGameplayTag InputTag);
+	void AbilityInputTriggered(FGameplayTag InputTag);
+	void AbilityInputCompleted(FGameplayTag InputTag);
+	void AbilityInputCancelled(FGameplayTag InputTag);
+	void AbilityInputTap(FGameplayTag InputTag);
 
 	virtual void OnRep_PlayerState() override;
 
