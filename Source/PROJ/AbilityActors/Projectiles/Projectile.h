@@ -58,7 +58,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void InitializeProjectile(UProjectileDataAsset* InData);
 
-	UFUNCTION(NetMulticast, Unreliable)
+	UFUNCTION(NetMulticast, Reliable)
 	void MulticastSpawnImpactFX( UParticleSystem* Particle, FVector Location, FRotator Rotation);
 	void MulticastSpawnImpactFX_Implementation(UParticleSystem* Particle, FVector Location, FRotator Rotation);
 	

@@ -109,7 +109,6 @@ void AProjectile::OnBeginOverlap_Implementation(UPrimitiveComponent* OverlappedC
 	
 	if (!ShouldSkipHit_Implementation(OtherActor))
 	{
-		
 		MulticastSpawnImpactFX_Implementation(ProjectileData->CharacterHitParticle, GetActorLocation(), GetActorRotation());
 	}
 	
@@ -126,8 +125,10 @@ void AProjectile::OnBeginOverlap_Implementation(UPrimitiveComponent* OverlappedC
 
 void AProjectile::MulticastSpawnImpactFX_Implementation(UParticleSystem* Particle, FVector Location, FRotator Rotation)
 {
-
-		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(),  Particle,  Location,
+	UE_LOG(LogTemp, Warning, TEXT("MulticastSpawnImpactFX_Implementation is called"));
+	UE_LOG(LogTemp, Warning, TEXT("CLIENT FX %s"), HasAuthority() ? TEXT("SERVER") : TEXT("CLIENT"));
+	 UParticleSystemComponent* HitEffect =	UGameplayStatics::SpawnEmitterAtLocation(GetWorld(),  Particle,  Location,
 	Rotation);
+	UE_LOG(LogTemp, Warning, TEXT("HitEffect is %hs"), HitEffect->IsValidLowLevel() ? "Valid" : "not Valid");
 }
 
