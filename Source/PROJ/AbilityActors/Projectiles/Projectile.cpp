@@ -10,6 +10,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 #include "Particles/ParticleSystemComponent.h"
+#include "ProfilingDebugging/CookStats.h"
 #include "PROJ/Data/ProjectileDataAsset.h"
 
 // Sets default values
@@ -79,14 +80,25 @@ void AProjectile::InitializeProjectile(UProjectileDataAsset* InData)
 void AProjectile::OnProjectileHit_Implementation(UPrimitiveComponent* HitComp, AActor* OtherActor,
                                                  UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
+	if (!HasAuthority())
+	{
+		return;
+	}
+	
 	if (!ShouldSkipHit(OtherActor))
 	{
-		FVector IncomingDirection = -ProjectileMovement->Velocity.GetSafeNormal();
-		MulticastSpawnImpactFX(ProjectileData->WorldHitParticle,  Hit.ImpactPoint,
-		IncomingDirection.Rotation());
-		
-		UE_LOG(LogTemp, Warning, TEXT("Hit %s via OnHit"), *OtherActor->GetActorNameOrLabel());
+		// FVector IncomingDirection = -ProjectileMovement->Velocity.GetSafeNormal();
+		// MulticastSpawnImpactFX(ProjectileData->WorldHitParticle,  Hit.ImpactPoint,
+		// IncomingDirection.Rotation());
+		//
+		// UE_LOG(LogTemp, Warning, TEXT("Hit %s via OnHit"), *OtherActor->GetActorNameOrLabel());
 
+		FGameplayEffectContextHandle EffectContext = CasterASC->MakeEffectContext();
+		EffectContext.AddInstigator(Caster, Caster);
+		EffectContext.AddHitResult(Hit);
+		
+		CasterASC->ExecuteGameplayCue(
+	FGameplayTag::RequestGameplayTag("GameplayCue.Test"), EffectContext);
 	}
 	
 	//Destroy();
@@ -96,9 +108,21 @@ void AProjectile::OnProjectileHit_Implementation(UPrimitiveComponent* HitComp, A
 void AProjectile::OnBeginOverlap_Implementation(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
+	if (!HasAuthority())
+	{
+		return;
+	}
+	
 	if (!ShouldSkipHit_Implementation(OtherActor))
 	{
-		MulticastSpawnImpactFX(ProjectileData->CharacterHitParticle, GetActorLocation(), GetActorRotation());
+		FGameplayEffectContextHandle EffectContext = CasterASC->MakeEffectContext();
+		EffectContext.AddInstigator(Caster, Caster);
+		EffectContext.AddHitResult(SweepResult);
+		
+		CasterASC->ExecuteGameplayCue(
+	FGameplayTag::RequestGameplayTag("GameplayCue.Test"), EffectContext);
+		
+		//MulticastSpawnImpactFX(ProjectileData->CharacterHitParticle, GetActorLocation(), GetActorRotation());
 	}
 	
 	
@@ -115,8 +139,17 @@ void AProjectile::OnBeginOverlap_Implementation(UPrimitiveComponent* OverlappedC
 void AProjectile::MulticastSpawnImpactFX_Implementation(UParticleSystem* Particle, FVector Location, FRotator Rotation)
 {
 	
+		if (!Particle)
+		{
+			UE_LOG(LogTemp, Error, TEXT("Client missing particle reference!"));
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Client spawning particle OK!"));
+		}
+	
+	
 		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(),  Particle,  Location,
 	Rotation);
-	
 }
 
