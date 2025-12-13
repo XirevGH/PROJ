@@ -40,7 +40,8 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	/* Movement*/
 
-	void InputMouseMove(const FInputActionValue& Value);
+	void InputMouseMoveTriggered(const FInputActionValue& Value);
+	void InputMouseMoveCompleted(const FInputActionValue& Value);
 	
 	void InputMove(const FInputActionValue& Value);
 	void InputLook(const FInputActionValue& Value);
