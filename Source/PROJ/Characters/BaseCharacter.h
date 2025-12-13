@@ -6,6 +6,7 @@
 #include "InputAction.h"
 #include "AbilitySystemInterface.h"
 #include "InputActionValue.h"
+#include "GameFramework/SpringArmComponent.h"
 #include "../Framework/BasePlayerState.h"
 #include "PROJ/GameplayAbilitySystem/AttributeSets/CharacterAttributeSet.h"
 #include "Net/UnrealNetwork.h"
@@ -45,6 +46,8 @@ public:
 	
 	void InputMove(const FInputActionValue& Value);
 	void InputLook(const FInputActionValue& Value);
+
+	void InputZoom(const FInputActionValue& Value);
 	
 	void InputRotateCharacterStarted(const FInputActionValue& Value);
 	void InputRotateCharacterCompleted(const FInputActionValue& Value);
@@ -77,6 +80,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, category = "Enhanced Input")
 	UInputMappingContext* PlayerInputContext;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, category = "Enhanced Input")
+	UInputAction* ZoomAction;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, category = "Enhanced Input")
 	UInputAction* LookAction;
@@ -139,6 +145,7 @@ public:
 	}
 	UFUNCTION(BlueprintCallable, Category = "GAS")
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+	
 protected:
 	virtual void BeginPlay() override;
 
@@ -160,6 +167,18 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, category = "GAS")
 	TWeakObjectPtr<class UAbilitySystemComponent> AbilitySystemComponent;
 
+	UPROPERTY(EditAnywhere, Category = "Camera")
+	float ZoomInterpSpeed = 10.0f;
+	
+	UPROPERTY()
+	USpringArmComponent* BPCameraBoom;
+
+	float DesiredArmLength = 750.f;
+	
+	float MinZoomDistance = 300.0f;
+	float MaxZoomDistance = 1200.0f;
+	float ZoomStep = 75.0f;
+	
 	UFUNCTION(Server, Reliable)
 	void Server_SetFreeLooking(bool bNewFreeLooking);
 

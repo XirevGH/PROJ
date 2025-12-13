@@ -52,6 +52,9 @@ void ABaseCharacter::SpawnDefaultWeapon()
 void ABaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	BPCameraBoom = FindComponentByClass<USpringArmComponent>();
+
 }
 
 UAbilitySystemComponent* ABaseCharacter::GetAbilitySystemComponent() const
@@ -61,7 +64,6 @@ UAbilitySystemComponent* ABaseCharacter::GetAbilitySystemComponent() const
 
 void ABaseCharacter::InitAbilitySystemComponent()
 {
-
 	if (!BasePlayerState)
 		return;
 	BaseAbilitySystemComp =  Cast<UBaseAbilitySystemComponent>(BasePlayerState->GetAbilitySystemComponent());
@@ -152,6 +154,27 @@ void ABaseCharacter::Server_SetUseControllerRotationYaw_Implementation(bool bNew
 void ABaseCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	if (BPCameraBoom)
+	{
+		// Get the current length
+		float CurrentLength = BPCameraBoom->TargetArmLength;
+
+		// Check if we are close enough; if not, interpolate
+		if (!FMath::IsNearlyEqual(CurrentLength, DesiredArmLength, 0.1f))
+		{
+			// FInterpTo creates a smooth "ease-out" movement
+			float NewLength = FMath::FInterpTo(
+				CurrentLength,      // Where we are
+				DesiredArmLength,   // Where we want to be
+				DeltaTime,          // Time since last frame
+				ZoomInterpSpeed     // How fast to go
+			);
+
+			// Apply the smoothed value
+			BPCameraBoom->TargetArmLength = NewLength;
+		}
+	}
 }
 
 void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -173,6 +196,8 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		EnhancedInput->BindAction(RotateCharacterAction, ETriggerEvent::Started, this, &ABaseCharacter::InputRotateCharacterStarted);
 		EnhancedInput->BindAction(RotateCharacterAction, ETriggerEvent::Triggered, this, &ABaseCharacter::InputRotateCharacterTriggered);
 		EnhancedInput->BindAction(RotateCharacterAction, ETriggerEvent::Completed, this, &ABaseCharacter::InputRotateCharacterCompleted);
+
+		EnhancedInput->BindAction(ZoomAction, ETriggerEvent::Triggered, this, &ABaseCharacter::InputZoom);
 		
 		APlayerController* PC = Cast<APlayerController>(GetController());
 		if (!PC) return;
@@ -190,6 +215,17 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 			EnhancedInput->BindAction(ConfirmAbilityAction, ETriggerEvent::Triggered, ASC, &UBaseAbilitySystemComponent::TargetConfirm);
 		 	EnhancedInput->BindAction(CancelAbilityAction, ETriggerEvent::Triggered, ASC, &UBaseAbilitySystemComponent::TargetCancel);
 		}
+	}
+}
+
+void ABaseCharacter::InputZoom(const FInputActionValue& Value)
+{
+	float AxisValue = Value.Get<float>();
+
+	if (AxisValue != 0.0f)
+	{
+		DesiredArmLength -= (AxisValue * ZoomStep);
+		DesiredArmLength = FMath::Clamp(DesiredArmLength, MinZoomDistance, MaxZoomDistance);
 	}
 }
 
