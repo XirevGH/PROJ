@@ -52,6 +52,9 @@ void ABaseCharacter::SpawnDefaultWeapon()
 void ABaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	BPCameraBoom = FindComponentByClass<USpringArmComponent>();
+
 }
 
 UAbilitySystemComponent* ABaseCharacter::GetAbilitySystemComponent() const
@@ -61,7 +64,6 @@ UAbilitySystemComponent* ABaseCharacter::GetAbilitySystemComponent() const
 
 void ABaseCharacter::InitAbilitySystemComponent()
 {
-
 	if (!BasePlayerState)
 		return;
 	BaseAbilitySystemComp =  Cast<UBaseAbilitySystemComponent>(BasePlayerState->GetAbilitySystemComponent());
@@ -152,6 +154,27 @@ void ABaseCharacter::Server_SetUseControllerRotationYaw_Implementation(bool bNew
 void ABaseCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	if (BPCameraBoom)
+	{
+		// Get the current length
+		float CurrentLength = BPCameraBoom->TargetArmLength;
+
+		// Check if we are close enough; if not, interpolate
+		if (!FMath::IsNearlyEqual(CurrentLength, DesiredArmLength, 0.1f))
+		{
+			// FInterpTo creates a smooth "ease-out" movement
+			float NewLength = FMath::FInterpTo(
+				CurrentLength,      // Where we are
+				DesiredArmLength,   // Where we want to be
+				DeltaTime,          // Time since last frame
+				ZoomInterpSpeed     // How fast to go
+			);
+
+			// Apply the smoothed value
+			BPCameraBoom->TargetArmLength = NewLength;
+		}
+	}
 }
 
 void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -162,7 +185,9 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		EnhancedInput->BindAction(JumpAction, ETriggerEvent::Started, this, &ABaseCharacter::Jump);
 		EnhancedInput->BindAction(JumpAction, ETriggerEvent::Completed, this, &ABaseCharacter::StopJumping);
 		EnhancedInput->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ABaseCharacter::InputMove);
-
+		
+		EnhancedInput->BindAction(MouseMoveAction, ETriggerEvent::Triggered, this, &ABaseCharacter::InputMouseMoveTriggered);
+		EnhancedInput->BindAction(MouseMoveAction, ETriggerEvent::Completed, this, &ABaseCharacter::InputMouseMoveCompleted);
 		EnhancedInput->BindAction(LookAction, ETriggerEvent::Triggered, this, &ABaseCharacter::InputLook);
 		
 		EnhancedInput->BindAction(RotateCameraAction, ETriggerEvent::Started, this, &ABaseCharacter::InputRotateCameraStarted);
@@ -171,6 +196,8 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		EnhancedInput->BindAction(RotateCharacterAction, ETriggerEvent::Started, this, &ABaseCharacter::InputRotateCharacterStarted);
 		EnhancedInput->BindAction(RotateCharacterAction, ETriggerEvent::Triggered, this, &ABaseCharacter::InputRotateCharacterTriggered);
 		EnhancedInput->BindAction(RotateCharacterAction, ETriggerEvent::Completed, this, &ABaseCharacter::InputRotateCharacterCompleted);
+
+		EnhancedInput->BindAction(ZoomAction, ETriggerEvent::Triggered, this, &ABaseCharacter::InputZoom);
 		
 		APlayerController* PC = Cast<APlayerController>(GetController());
 		if (!PC) return;
@@ -189,6 +216,45 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		 	EnhancedInput->BindAction(CancelAbilityAction, ETriggerEvent::Triggered, ASC, &UBaseAbilitySystemComponent::TargetCancel);
 		}
 	}
+}
+
+void ABaseCharacter::InputZoom(const FInputActionValue& Value)
+{
+	float AxisValue = Value.Get<float>();
+
+	if (AxisValue != 0.0f)
+	{
+		DesiredArmLength -= (AxisValue * ZoomStep);
+		DesiredArmLength = FMath::Clamp(DesiredArmLength, MinZoomDistance, MaxZoomDistance);
+	}
+}
+
+void ABaseCharacter::InputMouseMoveTriggered(const FInputActionValue& Value)
+{
+	UE_LOG(LogTemp, Display, TEXT("InputMouseMoveTriggered"));
+	bUseControllerRotationYaw = true;
+	Server_SetUseControllerRotationYaw(true);
+	
+	FVector2D MoveAxis = Value.Get<FVector2D>();
+	if ((Controller != nullptr) && (MoveAxis.X != 0.0f || MoveAxis.Y != 0.0f))
+	{
+		const FRotator BaseRotation = GetController()->GetControlRotation();
+
+		const FRotator YawRotation(0, BaseRotation.Yaw, 0);
+
+		// Get world-space forward and right vectors from our chosen base rotation
+		const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+		
+		// Add the movement input
+		AddMovementInput(ForwardDirection, MoveAxis.X);
+	}
+}
+
+void ABaseCharacter::InputMouseMoveCompleted(const FInputActionValue& Value)
+{
+	UE_LOG(LogTemp, Display, TEXT("InputMouseMoveCompleted"));
+	bUseControllerRotationYaw = false;
+	Server_SetUseControllerRotationYaw(false);
 }
 
 
@@ -281,6 +347,7 @@ void ABaseCharacter::InputMove(const FInputActionValue& Value)
 }
 void ABaseCharacter::InputLook(const FInputActionValue& Value)
 {
+	UE_LOG(LogTemp, Display, TEXT("InputLook"));
 	const FVector2D LookVector = Value.Get<FVector2D>();
 	if (Controller != nullptr)
 	{
@@ -291,6 +358,7 @@ void ABaseCharacter::InputLook(const FInputActionValue& Value)
 
 void ABaseCharacter::InputRotateCameraStarted(const FInputActionValue& Value)
 {
+	UE_LOG(LogTemp, Display, TEXT("InputRotateCameraStarted"));
 	bIsFreeLooking = true;
 	LockedMovementRotation = GetActorRotation();
 	GetCharacterMovement()->bOrientRotationToMovement = false;
@@ -299,24 +367,32 @@ void ABaseCharacter::InputRotateCameraStarted(const FInputActionValue& Value)
 
 void ABaseCharacter::InputRotateCameraCompleted(const FInputActionValue& Value)
 {
+	UE_LOG(LogTemp, Display, TEXT("InputRotateCameraCompleted"));
 	bIsFreeLooking = false;
 	Server_SetFreeLooking(false);
 }
 
 void ABaseCharacter::InputRotateCharacterStarted(const FInputActionValue& Value)
 {
+	UE_LOG(LogTemp, Display, TEXT("InputRotateCharacterStarted"));
+
 	bUseControllerRotationYaw = true;
 	Server_SetUseControllerRotationYaw(true);
 }
 
 void ABaseCharacter::InputRotateCharacterCompleted(const FInputActionValue& Value)
 {
+	UE_LOG(LogTemp, Display, TEXT("InputRotateCharacterCompleted"));
+
 	bUseControllerRotationYaw = false;
 	Server_SetUseControllerRotationYaw(false);
 }
 
 void ABaseCharacter::InputRotateCharacterTriggered(const FInputActionValue& Value)
 {
+	UE_LOG(LogTemp, Display, TEXT("InputRotateCharacterTriggered"));
+	bUseControllerRotationYaw = true;
+	Server_SetUseControllerRotationYaw(true);
 	LockedMovementRotation = GetActorRotation();
 }
 
