@@ -32,6 +32,8 @@ void AProjectile::BeginPlay()
 	PrimaryActorTick.bCanEverTick = true;
 	SetReplicateMovement(true);
 	ProjectileMovement->SetIsReplicated(true);
+
+
 }
 
 
@@ -89,7 +91,7 @@ void AProjectile::OnProjectileHit_Implementation(UPrimitiveComponent* HitComp, A
 	if (!ShouldSkipHit(OtherActor))
 	{
 		FVector IncomingDirection = -ProjectileMovement->Velocity.GetSafeNormal();
-		 MulticastSpawnImpactFX_Implementation(ProjectileData->WorldHitParticle,  Hit.ImpactPoint,
+		 MulticastSpawnImpactFX(ProjectileData->WorldHitParticle,  Hit.ImpactPoint,
 		 IncomingDirection.Rotation());
 		
 		 UE_LOG(LogTemp, Warning, TEXT("Hit %s via OnHit"), *OtherActor->GetActorNameOrLabel());
@@ -115,7 +117,7 @@ if (!HasAuthority())
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Made it through the if statement"));
 
-		MulticastSpawnImpactFX(ProjectileData->CharacterHitParticle, GetActorLocation(), GetActorRotation());
+		MulticastSpawnImpactFX(ProjectileData->CharacterHitParticle, FVector::ZeroVector, FRotator::ZeroRotator);
 		TestMulticast();
 	}
 	
@@ -133,7 +135,7 @@ if (!HasAuthority())
 void AProjectile::MulticastSpawnImpactFX_Implementation(UParticleSystem* Particle, FVector Location, FRotator Rotation)
 {
 	UE_LOG(LogTemp, Warning, TEXT("MulticastSpawnImpactFX_Implementation is called"));
-	UE_LOG(LogTemp, Warning, TEXT("CLIENT FX %s"), HasAuthority() ? TEXT("SERVER") : TEXT("CLIENT"));
+	UE_LOG(LogTemp, Warning, TEXT("CLIENT FX: %s"), HasAuthority() ? TEXT("SERVER") : TEXT("CLIENT"));
 	 UParticleSystemComponent* HitEffect =	UGameplayStatics::SpawnEmitterAtLocation(GetWorld(),  Particle,  Location,
 	Rotation);
 	UE_LOG(LogTemp, Warning, TEXT("HitEffect is %hs"), HitEffect->IsValidLowLevel() ? "Valid" : "not Valid");

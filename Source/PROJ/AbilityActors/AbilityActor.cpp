@@ -12,6 +12,8 @@ AAbilityActor::AAbilityActor()
 {
 	PrimaryActorTick.bCanEverTick = true;
 	bReplicates = true;
+	// expensive but it is ok for this project
+	bAlwaysRelevant = true;
 }
 
 void AAbilityActor::BeginPlay()
@@ -98,7 +100,7 @@ bool AAbilityActor::InitializeAbilityActor(
 	CasterASC = InCasterASC;
 	//should check if struct is valid
 	EffectSpecHandles = InEffectSpecHandles;
-    
+    SetOwner(InCaster);
 	return true;
 }
 
