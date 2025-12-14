@@ -62,10 +62,6 @@ public:
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastSpawnImpactFX( UParticleSystem* Particle, FVector Location, FRotator Rotation);
 	void MulticastSpawnImpactFX_Implementation(UParticleSystem* Particle, FVector Location, FRotator Rotation);
-
-	UFUNCTION(NetMulticast, Reliable)
-	void TestMulticast();
-	void TestMulticast_Implementation();
 	
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void OnProjectileHit(

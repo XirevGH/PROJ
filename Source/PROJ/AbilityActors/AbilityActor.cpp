@@ -60,21 +60,15 @@ bool AAbilityActor::ShouldSkipHit_Implementation(AActor* OtherActor)
 	{
 		if (OtherActor->IsA(DummyTestBPClass))
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Hit Dummy, Projectile will:  %hs"), bShouldSkipHit ? "Hit" : "Skip");
 			return bShouldSkipHit;
 		}
 		
 		if (ABasePlayerState* PS = Cast<ABasePlayerState>(Cast<ABaseCharacter>(Caster)->GetPlayerState()))
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Caster Name is %s and TeamID is %s"), *PS->GetPlayerName(), *PS->GetTeamID());
 			if (ABaseCharacter* OtherCharacter = Cast<ABaseCharacter>(OtherActor))
 			{
 				if (ABasePlayerState* OtherPS = Cast<ABasePlayerState>(OtherCharacter->GetPlayerState()))
 				{
-					UE_LOG(LogTemp, Warning, TEXT("Other PC is %s and TeamID is %s"), *OtherPS->GetPlayerName(), *OtherPS->GetTeamID());
-
-					UE_LOG(LogTemp, Warning, TEXT("TeamID equals is %d"), PS->TeamID.Equals(OtherPS->TeamID));
-
 					return PS->TeamID.Equals(OtherPS->TeamID);
 				}
 			}
@@ -100,7 +94,6 @@ bool AAbilityActor::InitializeAbilityActor(
 	CasterASC = InCasterASC;
 	//should check if struct is valid
 	EffectSpecHandles = InEffectSpecHandles;
-    SetOwner(InCaster);
 	return true;
 }
 
