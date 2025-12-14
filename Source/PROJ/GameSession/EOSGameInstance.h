@@ -19,7 +19,8 @@ enum class ESessionState : uint8
 	SearchingForMatch,
 	JoiningMatch,
 	InMatch,
-	Transition
+	Transition,
+	PlayAgain
 };
 
 static const FName KEY_SESSION_NAME = FName("SessionNameKey");

@@ -85,22 +85,6 @@ void UThunderCrash::SpawnConduit()
 	}
 }
 
-void UThunderCrash::PlayMontage(UAnimMontage* Montage)
-{
-	if (CachedPlayer)
-		CachedPlayer->bMovementInputBlocked = true;
-	
-	Super::PlayMontage(Montage);
-}
-
-void UThunderCrash::OnMontageCompleted()
-{
-	if (CachedPlayer)
-		CachedPlayer->bMovementInputBlocked = false;
-	
-	Super::OnMontageCompleted();
-}
-
 void UThunderCrash::MakeMontageWaitEvent()
 {
 	if (MontageNotifyTag.IsValid())

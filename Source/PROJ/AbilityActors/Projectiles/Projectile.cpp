@@ -102,14 +102,19 @@ void AProjectile::OnProjectileHit_Implementation(UPrimitiveComponent* HitComp, A
 void AProjectile::OnBeginOverlap_Implementation(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (!HasAuthority())
+
+if (!HasAuthority())
 	{
 		return;
 	}
 	
+	UE_LOG(LogTemp, Warning, TEXT("!ShouldSkipHit is %d"), !ShouldSkipHit_Implementation(OtherActor));
+
 	if (!ShouldSkipHit_Implementation(OtherActor))
 	{
-		MulticastSpawnImpactFX_Implementation(ProjectileData->CharacterHitParticle, GetActorLocation(), GetActorRotation());
+		UE_LOG(LogTemp, Warning, TEXT("Made it through the if statement"));
+
+		MulticastSpawnImpactFX(ProjectileData->CharacterHitParticle, GetActorLocation(), GetActorRotation());
 	}
 	
 	
