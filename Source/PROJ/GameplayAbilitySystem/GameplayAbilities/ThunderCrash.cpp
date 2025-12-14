@@ -20,7 +20,6 @@ void UThunderCrash::ActivateAbility(const FGameplayAbilitySpecHandle Handle, con
                                     const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
-	if (!CanActivateAbility(Handle, ActorInfo)) return;
 	
 	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
