@@ -47,7 +47,22 @@ void AProjectile::DestroySelf()
 }
 void AProjectile::OnRep_ProjectileData()
 {
-	InitializeProjectile(ProjectileData);
+	ProjectileParticle->SetTemplate(ProjectileData->ProjectileParticle);
+	ProjectileMovement->InitialSpeed = ProjectileData->ProjectileSpeed;
+	ProjectileMovement->MaxSpeed = ProjectileData->ProjectileSpeed;
+	ProjectileMovement->bRotationFollowsVelocity = true;
+	ProjectileMovement->ProjectileGravityScale = 0.f;
+	
+
+	
+	CollisionComp->SetNotifyRigidBodyCollision(true);
+	ProjectileMovement->Velocity = GetActorForwardVector() * ProjectileData->ProjectileSpeed;
+	CollisionComp->SetGenerateOverlapEvents(true);
+	CollisionComp->SetCollisionProfileName(TEXT("Projectile"));
+	CollisionComp->OnComponentBeginOverlap.AddDynamic(this, &AProjectile::OnBeginOverlap);
+	CollisionComp->OnComponentHit.AddDynamic(this, &AProjectile::OnProjectileHit);
+	SetLifeSpan(ProjectileData->ProjectileLifeTime);
+	GetWorldTimerManager().SetTimer(DestroyTimerHandle, this, &AProjectile::DestroySelf, ProjectileData->ProjectileLifeTime, false);
 }
 
 void AProjectile::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
@@ -58,23 +73,9 @@ void AProjectile::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLif
 
 void AProjectile::InitializeProjectile(UProjectileDataAsset* InData)
 {
+	if (!HasAuthority()) return;
 	ProjectileData = InData;
-	ProjectileParticle->SetTemplate(InData->ProjectileParticle);
-	ProjectileMovement->InitialSpeed = InData->ProjectileSpeed;
-	ProjectileMovement->MaxSpeed = InData->ProjectileSpeed;
-	ProjectileMovement->bRotationFollowsVelocity = true;
-	ProjectileMovement->ProjectileGravityScale = 0.f;
-	
-
-	
-	CollisionComp->SetNotifyRigidBodyCollision(true);
-	ProjectileMovement->Velocity = GetActorForwardVector() * InData->ProjectileSpeed;
-	CollisionComp->SetGenerateOverlapEvents(true);
-	CollisionComp->SetCollisionProfileName(TEXT("Projectile"));
-	CollisionComp->OnComponentBeginOverlap.AddDynamic(this, &AProjectile::OnBeginOverlap);
-	CollisionComp->OnComponentHit.AddDynamic(this, &AProjectile::OnProjectileHit);
-	SetLifeSpan(InData->ProjectileLifeTime);
-	GetWorldTimerManager().SetTimer(DestroyTimerHandle, this, &AProjectile::DestroySelf, InData->ProjectileLifeTime, false);
+	OnRep_ProjectileData();
 }
 
 void AProjectile::OnProjectileHit_Implementation(UPrimitiveComponent* HitComp, AActor* OtherActor,
@@ -92,7 +93,7 @@ void AProjectile::OnProjectileHit_Implementation(UPrimitiveComponent* HitComp, A
 		 IncomingDirection.Rotation());
 		
 		 UE_LOG(LogTemp, Warning, TEXT("Hit %s via OnHit"), *OtherActor->GetActorNameOrLabel());
-		
+		TestMulticast();
 	}
 	
 	//Destroy();
@@ -115,6 +116,7 @@ if (!HasAuthority())
 		UE_LOG(LogTemp, Warning, TEXT("Made it through the if statement"));
 
 		MulticastSpawnImpactFX(ProjectileData->CharacterHitParticle, GetActorLocation(), GetActorRotation());
+		TestMulticast();
 	}
 	
 	
@@ -135,5 +137,16 @@ void AProjectile::MulticastSpawnImpactFX_Implementation(UParticleSystem* Particl
 	 UParticleSystemComponent* HitEffect =	UGameplayStatics::SpawnEmitterAtLocation(GetWorld(),  Particle,  Location,
 	Rotation);
 	UE_LOG(LogTemp, Warning, TEXT("HitEffect is %hs"), HitEffect->IsValidLowLevel() ? "Valid" : "not Valid");
+}
+
+void AProjectile::TestMulticast_Implementation()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Test Multicast is called"));
+	if (ProjectileData)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("CharacterHitParticle: %s"), *ProjectileData->CharacterHitParticle->GetName());
+		UE_LOG(LogTemp, Warning, TEXT("WorldHitParticle: %s"), *ProjectileData->WorldHitParticle->GetName());
+		
+	}
 }
 
