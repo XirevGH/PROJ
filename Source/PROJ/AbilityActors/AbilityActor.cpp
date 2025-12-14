@@ -12,6 +12,8 @@ AAbilityActor::AAbilityActor()
 {
 	PrimaryActorTick.bCanEverTick = true;
 	bReplicates = true;
+	// expensive but it is ok for this project
+	bAlwaysRelevant = true;
 }
 
 void AAbilityActor::BeginPlay()
@@ -34,6 +36,7 @@ void AAbilityActor::ApplyEffectToTarget(AActor* Target)
 		UE_LOG(LogTemp, Warning, TEXT("Has no authority"));
 		return;
 	}
+
 	if (CasterASC)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("apply damage to CasterASC"));
@@ -55,6 +58,11 @@ bool AAbilityActor::ShouldSkipHit_Implementation(AActor* OtherActor)
 {
 	if (Caster)
 	{
+		if (OtherActor->IsA(DummyTestBPClass))
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Hit Dummy, Projectile will:  %hs"), bShouldSkipHit ? "Hit" : "Skip");
+			return bShouldSkipHit;
+		}
 		
 		if (ABasePlayerState* PS = Cast<ABasePlayerState>(Cast<ABaseCharacter>(Caster)->GetPlayerState()))
 		{
@@ -92,7 +100,7 @@ bool AAbilityActor::InitializeAbilityActor(
 	CasterASC = InCasterASC;
 	//should check if struct is valid
 	EffectSpecHandles = InEffectSpecHandles;
-    
+    SetOwner(InCaster);
 	return true;
 }
 
