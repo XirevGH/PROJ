@@ -93,12 +93,7 @@ void AProjectile::OnProjectileHit_Implementation(UPrimitiveComponent* HitComp, A
 		FVector IncomingDirection = -ProjectileMovement->Velocity.GetSafeNormal();
 		 MulticastSpawnImpactFX(ProjectileData->WorldHitParticle,  Hit.ImpactPoint,
 		 IncomingDirection.Rotation());
-		
-		 UE_LOG(LogTemp, Warning, TEXT("Hit %s via OnHit"), *OtherActor->GetActorNameOrLabel());
-		TestMulticast();
 	}
-	
-	//Destroy();
 }
 
 
@@ -110,45 +105,16 @@ if (!HasAuthority())
 	{
 		return;
 	}
-	
-	UE_LOG(LogTemp, Warning, TEXT("!ShouldSkipHit is %d"), !ShouldSkipHit_Implementation(OtherActor));
 
 	if (!ShouldSkipHit_Implementation(OtherActor))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Made it through the if statement"));
-
-		MulticastSpawnImpactFX(ProjectileData->CharacterHitParticle, FVector::ZeroVector, FRotator::ZeroRotator);
-		TestMulticast();
+		MulticastSpawnImpactFX(ProjectileData->CharacterHitParticle, GetActorLocation(), GetActorRotation());
 	}
-	
-	
-	//UGameplayStatics::SpawnEmitterAtLocation
-		//ApplyEffectToTarget(OtherActor);
-	
-	
-	//UE_LOG(LogTemp, Warning, TEXT("Hit %s via OnBeginOverlap"), *OtherActor->GetActorNameOrLabel());
-	
-	//Destroy();
-	
 }
 
 void AProjectile::MulticastSpawnImpactFX_Implementation(UParticleSystem* Particle, FVector Location, FRotator Rotation)
 {
-	UE_LOG(LogTemp, Warning, TEXT("MulticastSpawnImpactFX_Implementation is called"));
-	UE_LOG(LogTemp, Warning, TEXT("CLIENT FX: %s"), HasAuthority() ? TEXT("SERVER") : TEXT("CLIENT"));
 	 UParticleSystemComponent* HitEffect =	UGameplayStatics::SpawnEmitterAtLocation(GetWorld(),  Particle,  Location,
 	Rotation);
-	UE_LOG(LogTemp, Warning, TEXT("HitEffect is %hs"), HitEffect->IsValidLowLevel() ? "Valid" : "not Valid");
-}
-
-void AProjectile::TestMulticast_Implementation()
-{
-	UE_LOG(LogTemp, Warning, TEXT("Test Multicast is called"));
-	if (ProjectileData)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("CharacterHitParticle: %s"), *ProjectileData->CharacterHitParticle->GetName());
-		UE_LOG(LogTemp, Warning, TEXT("WorldHitParticle: %s"), *ProjectileData->WorldHitParticle->GetName());
-		
-	}
 }
 
