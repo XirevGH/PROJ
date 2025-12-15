@@ -23,18 +23,6 @@ public:
 
 	UHeroicSlam();
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<AGameplayAbilityTargetActor> IndicatorClass;
-
-	UPROPERTY()
-	AGameplayAbilityTargetActor* Indicator;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float Radius;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float Height;
-	
 	UPROPERTY(EditDefaultsOnly, Category="Slam")
 	UNiagaraSystem* SlamVfx;
 
@@ -43,6 +31,10 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category="Slam")
 	float SlamRadius = 800.f;
+	UPROPERTY(EditDefaultsOnly, Category="Slam")
+	float JumpDistance = 800.f;
+	UPROPERTY(EditDefaultsOnly, Category="Slam")
+	float ArcParam = .5f;
 	UPROPERTY()
 	bool bLeapEffectsApplied = false;
 	/*Attributes for air and launch arc*/
@@ -59,10 +51,6 @@ public:
 	void RestoreAirFriction();
 	UFUNCTION(BlueprintCallable)
 	void LaunchToTarget();
-	UFUNCTION(BlueprintCallable)
-	void OnConfirm(const FGameplayAbilityTargetDataHandle& Data);
-	UFUNCTION(BlueprintCallable)
-	void OnCancel(const FGameplayAbilityTargetDataHandle& Data);
 	
 	virtual void ActivateAbility(
 		const FGameplayAbilitySpecHandle Handle,
@@ -70,11 +58,6 @@ public:
 		const FGameplayAbilityActivationInfo ActivationInfo,
 		const FGameplayEventData* TriggerEventData) override;
 
-	virtual void EndAbility(
-		const FGameplayAbilitySpecHandle Handle,
-		const FGameplayAbilityActorInfo* ActorInfo,
-	    const FGameplayAbilityActivationInfo ActivationInfo,
-	    bool bReplicatedEndAbility, bool bWasCancelled) override;
 private:
 	UPROPERTY()
 	FVector TargetLocation;
