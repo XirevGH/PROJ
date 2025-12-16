@@ -61,6 +61,10 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Damage Multiplier", ReplicatedUsing = OnRep_DamageMultiplier)
 	FGameplayAttributeData DamageMultiplier;
 	ATTRIBUTE_ACCESSORS(UCharacterAttributeSet, DamageMultiplier)
+
+	UPROPERTY(BlueprintReadOnly, Category = "Meta Attributes")
+	FGameplayAttributeData IncomingCritFlag;
+	ATTRIBUTE_ACCESSORS(UCharacterAttributeSet, IncomingCritFlag)
 	
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data) override;
@@ -85,10 +89,10 @@ public:
 
 	UFUNCTION()
 	void OnRep_MaxMoveSpeed(const FGameplayAttributeData& OldValue) const;
-
-
+	
 	UFUNCTION()
 	void OnRep_MaxMana(const FGameplayAttributeData& OldValue) const;
+	
 	UFUNCTION()
 	void OnRep_Mana(const FGameplayAttributeData& OldValue) const;
 };

@@ -3,9 +3,7 @@
 
 #include "HeroicSlam.h"
 
-#include "AbilitySystemGlobals.h"
 #include "Abilities/Tasks/AbilityTask_WaitTargetData.h"
-#include "Components/CapsuleComponent.h"
 #include "Engine/OverlapResult.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -27,53 +25,12 @@ void UHeroicSlam::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const
 	CachedPlayer = Cast<ABaseCharacter>(ActorInfo->AvatarActor.Get());
 	if (!CachedPlayer) return;
 	
-	/*Null Check*/
-	if (!IndicatorClass) return;
-	
-	/*Task & delegate setup*/
-	UAbilityTask_WaitTargetData* Task = UAbilityTask_WaitTargetData::WaitTargetData(
-	this,
-	FName("WaitForTarget"),
-	EGameplayTargetingConfirmation::UserConfirmed,
-	IndicatorClass);
-	/***/
-	Task->ValidData.AddDynamic(this, &UHeroicSlam::OnConfirm);
-	Task->Cancelled.AddDynamic(this, &UHeroicSlam::OnCancel);
-	
-	Task->ReadyForActivation();
-	
-}
-
-void UHeroicSlam::OnConfirm(const FGameplayAbilityTargetDataHandle& Data)
-{
-	if (!CommitAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo))
+	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
-		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
+		return;
 	}
-	
-	/*Get Location Marked With Indicator*/
-	if (Data.Num() > 0)
-	{
-		/*Gets TargetData*/
-		const FGameplayAbilityTargetData* TargetData = Data.Get(0);
-		if (TargetData)
-		{
-			/*Sets TargetLocation via HitData*/
-			if (const FGameplayAbilityTargetData_SingleTargetHit* HitData =
-				static_cast<const FGameplayAbilityTargetData_SingleTargetHit*>(TargetData))
-			{
-				TargetLocation = HitData->HitResult.ImpactPoint;
-			}
-			/*Sets TargetLocation via LocationData if no there is no HitData*/
-			else if (const FGameplayAbilityTargetData_LocationInfo* LocationData =
-				static_cast<const FGameplayAbilityTargetData_LocationInfo*>(TargetData))
-			{
-				TargetLocation = LocationData->GetEndPoint();
-			}
-			/*Call Launch Logic*/
-			LaunchToTarget();
-		}
-	}
+	LaunchToTarget();
 }
 
 void UHeroicSlam::RestoreAirFriction()
@@ -98,13 +55,9 @@ void UHeroicSlam::RestoreAirFriction()
 
 void UHeroicSlam::LaunchToTarget()
 {
-	ESuggestProjVelocityTraceOption::Type TraceOption = ESuggestProjVelocityTraceOption::DoNotTrace;
-	FCollisionResponseParams& ResponseParam = FCollisionResponseParams::DefaultResponseParam;
-	TArray<AActor*> ActorsToIgnore;
-	ActorsToIgnore.Add(CachedPlayer);
-	
+	FVector Forward = CachedPlayer->GetActorForwardVector();
 	FVector Start = CachedPlayer->GetActorLocation();
-	FVector End = TargetLocation;
+	FVector End = Start + Forward * JumpDistance;
 	/*Because Target location is on ground level and player start is above ground(Better calculation imo*TEST*)*/
 	End.Z += /*CachedPlayer->GetCapsuleComponent()->GetScaledCapsuleHalfHeight() +*/ 500.f;
 	
@@ -116,11 +69,11 @@ void UHeroicSlam::LaunchToTarget()
 			Start,
 			End,
 			0.f,
-			0.7);
+			ArcParam);
 	
 	if (!bHasSolution)
 	{
-		TargetLocation = Start + (End - Start).GetSafeNormal() * 200.f;
+		TargetLocation = Start + (End - Start).GetSafeNormal() * 500.f;
 		UE_LOG(LogTemp, Warning, TEXT("NoSolution"));
 	}
 	
@@ -200,16 +153,7 @@ void UHeroicSlam::LandingCheck()
 	GetWorld()->GetTimerManager().ClearTimer(LandingCheckTimer);
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }
-void UHeroicSlam::OnCancel(const FGameplayAbilityTargetDataHandle& Data)
-{
-	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
-}
 
-void UHeroicSlam::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
-                             const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicatedEndAbility, bool bWasCancelled)
-{
-	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicatedEndAbility, bWasCancelled);
-}
 
 
 

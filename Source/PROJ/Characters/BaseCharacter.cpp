@@ -151,6 +151,23 @@ void ABaseCharacter::Server_SetUseControllerRotationYaw_Implementation(bool bNew
 	bUseControllerRotationYaw = bNewUseControllerRotationYaw;
 }
 
+void ABaseCharacter::HandleDamageDealt(AActor* TargetActor, float DamageAmount, bool bIsCrit)
+{
+	// We call this on the ATTACKER. 
+	// This sends the message to the Player Controller of the person who shot the gun.
+	UE_LOG(LogTemp, Warning, TEXT("ClientShowDamageNumber"));
+
+	ClientShowDamageNumber(TargetActor, DamageAmount, bIsCrit);
+}
+
+void ABaseCharacter::ClientShowDamageNumber_Implementation(AActor* TargetActor, float DamageAmount, bool bIsCrit)
+{
+	// Now we are on the Player's screen.
+	// We have the reference to the TargetActor (the enemy) here!
+	UE_LOG(LogTemp, Warning, TEXT("OnShowDamageNumber"));
+	OnShowDamageNumber(TargetActor, DamageAmount, bIsCrit);
+}
+
 void ABaseCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);

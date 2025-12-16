@@ -145,10 +145,18 @@ public:
 	}
 	UFUNCTION(BlueprintCallable, Category = "GAS")
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+
+	void HandleDamageDealt(AActor* TargetActor, float DamageAmount, bool bIsCrit);
 	
 protected:
 	virtual void BeginPlay() override;
 
+	UFUNCTION(Client, Unreliable)
+	void ClientShowDamageNumber(AActor* TargetActor, float DamageAmount, bool bIsCrit);
+	
+	UFUNCTION(BlueprintImplementableEvent, Category = "GAS|UI")
+	void OnShowDamageNumber(AActor* TargetActor, float DamageAmount, bool bIsCrit);
+	
 	void InitAbilitySystemComponent();
 
 	virtual void PossessedBy(AController* NewController) override;
