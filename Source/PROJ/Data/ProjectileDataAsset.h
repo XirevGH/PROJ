@@ -33,6 +33,8 @@ public:
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Particles / Ability")
 	UParticleSystem* CastParticle;
+	//UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Particles")
+	//UAudioc* NoHitParticle;
 	
 	
 	UPROPERTY(EditDefaultsOnly,BlueprintReadWrite)
