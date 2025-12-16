@@ -2,6 +2,7 @@
 
 
 #include "CharacterAttributeSet.h"
+#include "PROJ/Characters/BaseCharacter.h"
 #include "Net/UnrealNetwork.h"
 
 void UCharacterAttributeSet::OnRep_CurrentHealth(const FGameplayAttributeData& OldValue) const
@@ -65,36 +66,51 @@ void UCharacterAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty
 	DOREPLIFETIME_CONDITION_NOTIFY(UCharacterAttributeSet,DamageMultiplier, COND_None, REPNOTIFY_Always);
 }
 
-void UCharacterAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data)
+void UCharacterAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data)
 {
 	Super::PostGameplayEffectExecute(Data);
-	
+
 	if (Data.EvaluatedData.Attribute == GetCurrentHealthAttribute())
 	{
-		SetCurrentHealth(FMath::Clamp(GetCurrentHealth(),0.f,GetMaxHealth()));
-		UE_LOG(LogTemp, Warning, TEXT("Health Attribute is now: %f"), GetCurrentHealth());
-	}
+		float DamageDealt = -Data.EvaluatedData.Magnitude;
 
-	if (Data.EvaluatedData.Attribute == GetCurrentMoveSpeedAttribute())
-	{
-		SetCurrentMoveSpeed(FMath::Clamp(GetCurrentMoveSpeed(),0.f,GetMaxMoveSpeed()));
-		UE_LOG(LogTemp, Warning, TEXT("Speed Attribute is now: %f"), GetCurrentMoveSpeed());
-	}
-	
-	if (Data.EvaluatedData.Attribute == GetManaAttribute())
-	{
-		SetMana(FMath::Clamp(GetMana(),0.f,GetMaxMana()));
-	}
+		if (DamageDealt > 0.0f)
+		{
+			AActor* TargetActor = nullptr;
+			if (Data.Target.AbilityActorInfo.IsValid() && Data.Target.AbilityActorInfo->AvatarActor.IsValid())
+			{
+				TargetActor = Data.Target.AbilityActorInfo->AvatarActor.Get();
+			}
+			
+			AActor* SourceActor = Data.EffectSpec.GetContext().GetInstigator();
+			ABaseCharacter* AttackerChar = nullptr;
+			
+			if (SourceActor)
+			{
+				if (APlayerState* PS = Cast<APlayerState>(SourceActor))
+				{
+					AttackerChar = Cast<ABaseCharacter>(PS->GetPawn());
+				}
+				else if (AController* Controller = Cast<AController>(SourceActor))
+				{
+					AttackerChar = Cast<ABaseCharacter>(Controller->GetPawn());
+				}
+				else
+				{
+					AttackerChar = Cast<ABaseCharacter>(SourceActor);
+				}
+			}
 
-	if (Data.EvaluatedData.Attribute == GetConduitChargesAttribute())
-	{
-		float NewCharges = FMath::Clamp(GetConduitCharges(),0.f,GetMaxConduitCharges());
-		SetConduitCharges(NewCharges);
-		UE_LOG(LogTemp, Warning, TEXT("Conduction Charges = %f"), NewCharges);
+			if (AttackerChar)
+			{
+				bool bIsCrit = GetIncomingCritFlag() > 0.0f;
+				
+				AttackerChar->HandleDamageDealt(TargetActor, DamageDealt, bIsCrit);
+
+				SetIncomingCritFlag(0.0f);
+			}
+		}
+		
+		SetCurrentHealth(FMath::Clamp(GetCurrentHealth(), 0.f, GetMaxHealth()));
 	}
 }
-
-
-
-
-
