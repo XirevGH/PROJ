@@ -28,7 +28,6 @@ void ABasePlayerState::SetTeamID(const FString& NewTeamID)
 {
 		TeamID = NewTeamID;
 		OnRep_TeamID();
-		UE_LOG(LogTemp, Display, TEXT("TeamID: %s"), *GetTeamID());
 }
 
 void ABasePlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
