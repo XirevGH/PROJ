@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "FCustomBlueprintSessionResult.h"
 #include "Engine/GameInstance.h"
+#include "Engine/Texture2D.h"
 #include "EOSGameInstance.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnOpenPublicLobbiesFound,
@@ -20,7 +21,8 @@ enum class ESessionState : uint8
 	JoiningMatch,
 	InMatch,
 	Transition,
-	PlayAgain
+	PlayAgain,
+	ReturningToLobbyFromMatch
 };
 
 static const FName KEY_SESSION_NAME = FName("SessionNameKey");
@@ -131,6 +133,21 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Settings")
 	void ResetLobbySettings();
+
+	UFUNCTION(BlueprintCallable, Category = "UI|LoadingScreen")
+	void ShowPersistentLoadingScreen();
+
+	UFUNCTION(BlueprintCallable, Category = "UI|LoadingScreen")
+	void StopPersistentLoadingScreen();
+
+	UPROPERTY(EditDefaultsOnly, Category = "UI|LoadingScreen")
+	TArray<UTexture2D*> LoadingBackgrounds;
+
+	UFUNCTION(BlueprintCallable, Category = "Team")
+	void SetCurrentTeamSize(const int32 NewTeamSize);
+
+	UFUNCTION(BlueprintPure, Category = "Team")
+	int32 GetCurrentTeamSize() const { return TeamSize; }
 	
 protected:
 	UFUNCTION(BlueprintCallable)
@@ -140,6 +157,9 @@ protected:
 	void SetClientIsTransitioning(const bool bTransitioning) { bClientTransitionToOtherSession = bTransitioning; }
 
 	virtual void LoadComplete(const float LoadTime, const FString& MapName) override;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Team")
+	int32 MaxTeamSize;
 
 private:
 	FName SessionName;
@@ -158,6 +178,7 @@ private:
 	ESessionState CurrentSessionState;
 
 	int32 SessionCreationRetryCount;
+	int32 TeamSize;
 
 	TSharedPtr<FOnlineSessionSearch> MatchSearch;
 	TSharedPtr<FOnlineSessionSearch> OpenPublicSearch;
@@ -170,6 +191,8 @@ private:
 	FDelegateHandle FindSessionByNameDelegateHandle;
 	FDelegateHandle DestroySessionDelegateHandle;
 	FDelegateHandle UpdateSessionDelegateHandle;
+
+	TSharedPtr<SWidget> ViewportLoadingWidget;
 
 	UFUNCTION()
 	void OnFindOpenPublicSessionsCompleted(const bool bSuccess);
