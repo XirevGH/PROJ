@@ -1,16 +1,19 @@
 ﻿#include "EOSGameInstance.h"
 #include <string>
+#include "MoviePlayer.h"
 #include "OnlineSubsystem.h"
 #include "OnlineSubsystemUtils.h"
 #include "OnlineSessionSettings.h"
-#include "SkeletalDebugRendering.h"
 #include "GameFramework/GameStateBase.h"
 #include "Interfaces/OnlineIdentityInterface.h"
 #include "Interfaces/OnlineSessionInterface.h"
 #include "Kismet/GameplayStatics.h"
 #include "Online/OnlineSessionNames.h"
+#include "Framework/Application/SlateApplication.h"
+#include "PROJ/UI/LoadingScreen.h"
 
 UEOSGameInstance::UEOSGameInstance() :
+	MaxTeamSize(3),
 	MaxSearchResults(100),
 	CachedGameMode(TEXT("1v1")),
 	bIsTeamLeader(false),
@@ -18,7 +21,9 @@ UEOSGameInstance::UEOSGameInstance() :
 	bIsMigratingMember(false),
 	bClientTransitionToOtherSession(false),
 	bReturningToOwnLobby(false),
-	SessionCreationRetryCount(0)
+	SessionCreationRetryCount(0),
+	MigrationRetryCount(0),
+	TeamSize(0)
 {
 	CurrentSessionState = ESessionState::Lobby;
 }
@@ -197,50 +202,65 @@ void UEOSGameInstance::LoadComplete(const float LoadTime, const FString& MapName
 		return;
 	}
 	
-	if (!MapName.Contains(TransitionLevel.GetAssetName()))
-	{
-		UE_LOG(LogTemp, Display, TEXT("LoadComplete: Loaded %s (Not Transition Map)"), *MapName);
-		return;
-	}
+if (MapName.Contains(TransitionLevel.GetAssetName()))
+    {
+        UE_LOG(LogTemp, Display, TEXT("LoadComplete: Transition Map Detected."));
 
-	UE_LOG(LogTemp, Display, TEXT("LoadComplete: Transition Map Loaded. Checking flags..."));
+        if (UWorld* World = GetWorld())
+        {
+            // We use a small delay (0.1s)
+            FTimerHandle Handle;
+            World->GetTimerManager().SetTimer(Handle, [this, World]()
+            {
+                // We do this INSIDE the timer to override the PlayerController's BeginPlay defaults
+                if (APlayerController* PC = World->GetFirstPlayerController())
+                {
+                    // 1. Force the engine to focus on the game viewport (ignores any lingering UI)
+                    if (FSlateApplication::IsInitialized())
+                    {
+                         FSlateApplication::Get().SetAllUserFocusToGameViewport();
+                    }
 
-	if (UWorld* World = GetWorld())
-	{
-		World->GetTimerManager().SetTimerForNextTick([this]()
-		{
-			UE_LOG(LogTemp, Display, TEXT("Executing Transition Logic..."));
+                    // 2. Hard Set Input Mode to Game Only
+                    FInputModeGameOnly InputMode;
+                    PC->SetInputMode(InputMode);
+                    PC->bShowMouseCursor = false;
+                }
 
-			if (bIsMigratingLeader)
-			{
-				bIsMigratingLeader = false;
-				UE_LOG(LogTemp, Display, TEXT("Transition Done -> Creating Migration Lobby..."));
-				CreateSession(FName(*MigrationTargetName), true, true);
-			}
-			else if (bReturningToOwnLobby)
-			{
-				UE_LOG(LogTemp, Display, TEXT("Transition Done -> Creating Own Lobby..."));
-				bReturningToOwnLobby = false;
-				CreateOwnSession();
-			}
-			else if (bIsMigratingMember)
-			{
-				UE_LOG(LogTemp, Display, TEXT("Transition Done -> Searching for Leader..."));
-				FindSessionByName(MigrationTargetName);
-			}
-			else if (bClientTransitionToOtherSession)
-			{
-				UE_LOG(LogTemp, Display, TEXT("Transition Done -> Joining Cached Session..."));
-				bClientTransitionToOtherSession = false;
-				JoinSavedSession();
-			}
-			else if (CachedSessionToJoin.IsValid())
-			{
-				UE_LOG(LogTemp, Display, TEXT("Transition Done -> Joining Cached Session (Default)..."));
-				JoinSavedSession();
-			}
-		});
-	}
+                UE_LOG(LogTemp, Display, TEXT("Executing Transition Logic..."));
+
+                if (bIsMigratingLeader)
+                {
+                    bIsMigratingLeader = false;
+                    CreateSession(FName(*MigrationTargetName), true, true);
+                }
+                else if (bReturningToOwnLobby)
+                {
+                    bReturningToOwnLobby = false;
+                    CreateOwnSession();
+                }
+                else if (bIsMigratingMember)
+                {
+                    FindSessionByName(MigrationTargetName);
+                }
+                else if (bClientTransitionToOtherSession)
+                {
+                    bClientTransitionToOtherSession = false;
+                    JoinSavedSession();
+                }
+                else if (CachedSessionToJoin.IsValid())
+                {
+                    JoinSavedSession();
+                }
+                else 
+                {
+                    LeaveToOwnSession();
+                }
+            }, 0.1f, false);
+        }
+        return;
+    }
+	UE_LOG(LogTemp, Display, TEXT("LoadComplete: Loaded %s (Not Lobby or Transition)"), *MapName);
 }
 
 void UEOSGameInstance::OnDestroySessionCompleted(FName Name, bool bWasSuccessful)
@@ -358,6 +378,7 @@ void UEOSGameInstance::Client_ExecuteLeaderMigration(FString TargetSessionName)
 	MigrationTargetName = TargetSessionName;
 	bIsMigratingLeader = true;
 	bIsMigratingMember = false;
+	CurrentSessionState = ESessionState::ReturningToLobbyFromMatch;
 	
 	DestroyCurrentSessionAndJoinCachedSession();
 }
@@ -371,6 +392,8 @@ void UEOSGameInstance::Client_ExecuteMemberMigration(FString TargetSessionName)
 	MigrationTargetName = TargetSessionName;
 	bIsMigratingLeader = false;
 	bIsMigratingMember = true;
+
+	MigrationRetryCount = 0;
 	
 	DestroyCurrentSessionAndJoinCachedSession();
 }
@@ -419,9 +442,18 @@ void UEOSGameInstance::ResetLobbySettings()
 		SessionSettings->bUsesPresence = true;
 		SessionSettings->bAllowJoinInProgress = true;
 		SessionSettings->bAllowJoinViaPresence = true;
-		SessionSettings->NumPublicConnections = 6;
-		SessionSettings->Set(KEY_SESSION_STATE,
-			FOnlineSessionSetting(static_cast<int32>(ESessionState::Lobby), EOnlineDataAdvertisementType::ViaOnlineService));
+		SessionSettings->NumPublicConnections = MaxTeamSize;
+
+		if (CurrentSessionState == ESessionState::ReturningToLobbyFromMatch)
+		{
+			SessionSettings->Set(KEY_SESSION_STATE,
+				FOnlineSessionSetting(static_cast<int32>(ESessionState::ReturningToLobbyFromMatch), EOnlineDataAdvertisementType::ViaOnlineService));
+		}else
+		{
+			SessionSettings->Set(KEY_SESSION_STATE,
+				FOnlineSessionSetting(static_cast<int32>(ESessionState::Lobby), EOnlineDataAdvertisementType::ViaOnlineService));
+			CurrentSessionState = ESessionState::Lobby;
+		}
 		UpdateSessionSettings(SessionSettings);
 	}
 }
@@ -440,7 +472,7 @@ void UEOSGameInstance::CreateSession(const FName& Name, const bool bNotTransitio
 		SessionSettings.bUsesPresence = bNotTransition;
 		SessionSettings.bAllowJoinInProgress = true;
 		SessionSettings.bAllowJoinViaPresence = bNotTransition;
-		SessionSettings.NumPublicConnections = 6;
+		SessionSettings.NumPublicConnections = MaxTeamSize;
 		
 		FString DisplayName;
 		FString UniqueSearchName;
@@ -480,6 +512,11 @@ void UEOSGameInstance::CreateSession(const FName& Name, const bool bNotTransitio
 			SessionSettings.Set(KEY_SESSION_STATE,
 				FOnlineSessionSetting(static_cast<int32>(ESessionState::Transition), EOnlineDataAdvertisementType::ViaOnlineService));
 			CurrentSessionState = ESessionState::Transition;
+		}
+		else if (CurrentSessionState == ESessionState::ReturningToLobbyFromMatch)
+		{
+			SessionSettings.Set(KEY_SESSION_STATE,
+				FOnlineSessionSetting(static_cast<int32>(ESessionState::ReturningToLobbyFromMatch), EOnlineDataAdvertisementType::ViaOnlineService));
 		}else
 		{
 			SessionSettings.Set(KEY_SESSION_STATE,
@@ -594,6 +631,9 @@ void UEOSGameInstance::JoinLobbyByResult(const FBlueprintSessionResult& Result)
 		return;
 	}
 
+	ShowPersistentLoadingScreen();
+	JoinIntent = JOIN_INTENT_LOBBY;
+
 	UE_LOG(LogTemp, Display, TEXT("Joining specific session: %s"),
 		*Result.OnlineResult.Session.SessionSettings.Settings.FindRef(KEY_SESSION_NAME).Data.ToString());
 
@@ -647,6 +687,15 @@ void UEOSGameInstance::OnJoinSessionCompleted(FName Name, EOnJoinSessionComplete
 			{
 				UE_LOG(LogTemp, Display, TEXT("Travel URL is empty"));
 			}
+
+			if (!JoinIntent.IsEmpty())
+			{
+				// Use ? if it's the first option, or & if others exist (EOS URLs usually have options)
+				FString Separator = TravelURL.Contains(TEXT("?")) ? TEXT("&") : TEXT("?");
+				TravelURL += FString::Printf(TEXT("%s%s=%s"), *Separator, *KEY_JOIN_INTENT, *JoinIntent);
+                    
+				UE_LOG(LogTemp, Warning, TEXT("Modified Travel URL with Intent: %s"), *TravelURL);
+			}
 			
 			UE_LOG(LogTemp, Display, TEXT("Initiate client travel"));
 			GetFirstLocalPlayerController(GetWorld())->ClientTravel(TravelURL, TRAVEL_Absolute);
@@ -659,8 +708,10 @@ void UEOSGameInstance::OnJoinSessionCompleted(FName Name, EOnJoinSessionComplete
 		ClearCachedSession();
 	}else
 	{
+		// Join failed, recreate own session
 		CreateOwnSession();
 	}
+	JoinIntent.Empty();
 }
 
 void UEOSGameInstance::LoadLevelAndListen(const TSoftObjectPtr<UWorld>& LevelToLoad)
@@ -884,6 +935,10 @@ void UEOSGameInstance::OnFindSessionByNameCompleted(bool bWasSuccessful)
 			UE_LOG(LogTemp, Log, TEXT("Migrating member to session by name."));
 			bIsMigratingMember = false;
 			CachedSessionToJoin = NameSearch->SearchResults[0];
+			MigrationRetryCount = 0;
+
+			JoinIntent = JOIN_INTENT_LOBBY;
+			
 			DestroyCurrentSessionAndJoinCachedSession();
 		}
 		else
@@ -897,9 +952,24 @@ void UEOSGameInstance::OnFindSessionByNameCompleted(bool bWasSuccessful)
 	{
 		if (bIsMigratingMember)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Leader lobby not found yet. Retrying in 1.5 seconds..."));
-            
-			// Wait 1.5s then try again
+			// Check if I should give up search for leader
+			if (MigrationRetryCount >= MaxMigrationRetryCount)
+			{
+				// Leader probably failed session createion or disconnected at this point
+				UE_LOG(LogTemp, Error, TEXT("Migration Failed: Leader lobby '%s' not found after %d attempts. Giving up."), 
+					*MigrationTargetName, MigrationRetryCount);
+				
+				bIsMigratingMember = false;
+				MigrationRetryCount = 0;
+				
+				CreateOwnSession(); 
+				return;
+			}
+
+			MigrationRetryCount++;
+			UE_LOG(LogTemp, Warning, TEXT("Leader lobby not found yet (Attempt %d/%d). Retrying in 1.5 seconds..."), 
+				MigrationRetryCount, MaxMigrationRetryCount);
+			
 			FTimerHandle RetryHandle;
 			GetWorld()->GetTimerManager().SetTimer(RetryHandle, [this]()
 			{
@@ -924,7 +994,7 @@ bool UEOSGameInstance::CancelMatchSearch()
 	}
 	if (FOnlineSessionSettings* Settings = GetSessionSettings())
 	{
-		Settings->NumPublicConnections = 6;
+		Settings->NumPublicConnections = MaxTeamSize;
 		Settings->Set(KEY_SESSION_STATE, FOnlineSessionSetting(
 			static_cast<int32>(ESessionState::Lobby), EOnlineDataAdvertisementType::ViaOnlineService));
 		UpdateSessionSettings(Settings);
@@ -1049,6 +1119,7 @@ void UEOSGameInstance::HandleNetworkFailure(UWorld* World, UNetDriver* NetDriver
 	// If we are a client and the connection timed out or the host closed the connection
 	if (FailureType == ENetworkFailure::ConnectionTimeout || FailureType == ENetworkFailure::ConnectionLost)
 	{
+		ShowPersistentLoadingScreen();
 		LeaveToOwnSession(); 
 	}
 }
@@ -1125,12 +1196,6 @@ void UEOSGameInstance::FilterOpenPublicSearchResults()
 				continue;
 			}
 		}
-		
-		if (CurrentPlayers >= MaxPublicConnections / 2)
-		{
-			UE_LOG(LogTemp, Display, TEXT("CurrentPlayers are more than half the max amount"));
-			continue;
-		}
 
 		if (CurrentPlayers < 0)
 		{
@@ -1174,5 +1239,74 @@ void UEOSGameInstance::SetStartMatchSearchVariables(ESessionState NewSessionStat
 		UE_LOG(LogTemp, Warning, TEXT("NumPublicConnections set to %d"), GetSessionSettings()->NumPublicConnections);
 		UE_LOG(LogTemp, Display, TEXT("SessionState set to: %hhd"), NewSessionState);
 		UpdateSessionSettings(SessionSettings);
+	}
+}
+
+void UEOSGameInstance::ShowPersistentLoadingScreen()
+{
+	UTexture2D* SelectedBackground = nullptr;
+	if (LoadingBackgrounds.Num() > 0)
+	{
+		const int32 RandomIndex = FMath::RandRange(0, LoadingBackgrounds.Num() - 1);
+		SelectedBackground = LoadingBackgrounds[RandomIndex];
+	}
+
+	TSharedRef<SWidget> LoadingWidget = SNew(SLoadingScreen).BackgroundTexture(SelectedBackground);
+
+	// 1. Add to Viewport (Instant visual feedback)
+	if (GEngine && GEngine->GameViewport)
+	{
+		if (ViewportLoadingWidget.IsValid())
+		{
+			GEngine->GameViewport->RemoveViewportWidgetContent(ViewportLoadingWidget.ToSharedRef());
+		}
+		ViewportLoadingWidget = LoadingWidget;
+		GEngine->GameViewport->AddViewportWidgetContent(ViewportLoadingWidget.ToSharedRef(), 10000);
+	}
+	
+	FLoadingScreenAttributes LoadingScreen;
+	LoadingScreen.bAllowEngineTick = false;
+	LoadingScreen.bAutoCompleteWhenLoadingCompletes = true;
+	LoadingScreen.bWaitForManualStop = false;
+	LoadingScreen.WidgetLoadingScreen = SNew(SLoadingScreen).BackgroundTexture(SelectedBackground);
+
+	GetMoviePlayer()->SetupLoadingScreen(LoadingScreen);
+}
+
+void UEOSGameInstance::StopPersistentLoadingScreen()
+{
+	// 1. Stop the Movie Player (Transition Screen)
+	GetMoviePlayer()->StopMovie();
+
+	// 2. Remove the Viewport Widget (Handshake Screen)
+	if (ViewportLoadingWidget.IsValid())
+	{
+		if (GEngine && GEngine->GameViewport)
+		{
+			GEngine->GameViewport->RemoveViewportWidgetContent(ViewportLoadingWidget.ToSharedRef());
+		}
+		ViewportLoadingWidget.Reset();
+	}
+
+	if (UWorld* World = GetWorld())
+	{
+		if (APlayerController* PC = World->GetFirstPlayerController())
+		{
+			// Restore your standard "Game And UI" mode
+			FInputModeGameAndUI InputMode;
+			PC->SetInputMode(InputMode);
+		}
+	}
+}
+
+void UEOSGameInstance::SetCurrentTeamSize(const int32 NewTeamSize)
+{
+	if (NewTeamSize > 0 && NewTeamSize <= MaxTeamSize)
+	{
+		TeamSize = NewTeamSize;
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("New team size of %d is out of range"), NewTeamSize);
 	}
 }
