@@ -440,8 +440,17 @@ void UEOSGameInstance::ResetLobbySettings()
 		SessionSettings->bAllowJoinInProgress = true;
 		SessionSettings->bAllowJoinViaPresence = true;
 		SessionSettings->NumPublicConnections = MaxTeamSize;
-		SessionSettings->Set(KEY_SESSION_STATE,
-			FOnlineSessionSetting(static_cast<int32>(ESessionState::Lobby), EOnlineDataAdvertisementType::ViaOnlineService));
+
+		if (CurrentSessionState == ESessionState::ReturningToLobbyFromMatch)
+		{
+			SessionSettings->Set(KEY_SESSION_STATE,
+				FOnlineSessionSetting(static_cast<int32>(ESessionState::ReturningToLobbyFromMatch), EOnlineDataAdvertisementType::ViaOnlineService));
+		}else
+		{
+			SessionSettings->Set(KEY_SESSION_STATE,
+				FOnlineSessionSetting(static_cast<int32>(ESessionState::Lobby), EOnlineDataAdvertisementType::ViaOnlineService));
+			CurrentSessionState = ESessionState::Lobby;
+		}
 		UpdateSessionSettings(SessionSettings);
 	}
 }
@@ -500,6 +509,11 @@ void UEOSGameInstance::CreateSession(const FName& Name, const bool bNotTransitio
 			SessionSettings.Set(KEY_SESSION_STATE,
 				FOnlineSessionSetting(static_cast<int32>(ESessionState::Transition), EOnlineDataAdvertisementType::ViaOnlineService));
 			CurrentSessionState = ESessionState::Transition;
+		}
+		else if (CurrentSessionState == ESessionState::ReturningToLobbyFromMatch)
+		{
+			SessionSettings.Set(KEY_SESSION_STATE,
+				FOnlineSessionSetting(static_cast<int32>(ESessionState::ReturningToLobbyFromMatch), EOnlineDataAdvertisementType::ViaOnlineService));
 		}else
 		{
 			SessionSettings.Set(KEY_SESSION_STATE,
