@@ -30,6 +30,10 @@ static const FName KEY_CUSTOM_NAME = FName("CustomSessionName");
 static const FName KEY_GAME_MODE = FName("SelectedGameMode");
 static const FName KEY_SESSION_STATE = FName("SessionState");
 
+static const FString KEY_JOIN_INTENT = TEXT("JoinIntent");
+static const FString JOIN_INTENT_LOBBY = TEXT("Lobby");
+static const FString JOIN_INTENT_MATCH = TEXT("Match");
+
 UCLASS()
 class PROJ_API UEOSGameInstance : public UGameInstance
 {
@@ -112,6 +116,11 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Settings")
 	void SetSessionState(const ESessionState NewSessionState);
 	/* ------------------------------------------ */
+
+	UFUNCTION(BlueprintPure, Category = "Options|JoinIntent")
+	static FString GetJoinIntentLobby() { return JOIN_INTENT_LOBBY; }
+	UFUNCTION(BlueprintPure, Category = "Options|JoinIntent")
+	static FString GetJoinIntentMatch() { return JOIN_INTENT_MATCH; }
 	
 	UFUNCTION(BlueprintCallable)
 	void SetNumPublicConnections(const int NewAmount);
@@ -161,6 +170,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Team")
 	int32 MaxTeamSize;
 
+	UFUNCTION(BlueprintCallable)
+	void SetJoinIntent(const FString Intent) { JoinIntent = Intent; }
+
 private:
 	FName SessionName;
 	int32 MaxSearchResults;
@@ -172,6 +184,8 @@ private:
 	bool bIsMigratingLeader;
 	bool bIsMigratingMember;
 	FString MigrationTargetName;
+
+	FString JoinIntent;
 	
 	bool bClientTransitionToOtherSession;
 	bool bReturningToOwnLobby;

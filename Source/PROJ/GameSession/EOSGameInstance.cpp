@@ -629,6 +629,7 @@ void UEOSGameInstance::JoinLobbyByResult(const FBlueprintSessionResult& Result)
 	}
 
 	ShowPersistentLoadingScreen();
+	JoinIntent = JOIN_INTENT_LOBBY;
 
 	UE_LOG(LogTemp, Display, TEXT("Joining specific session: %s"),
 		*Result.OnlineResult.Session.SessionSettings.Settings.FindRef(KEY_SESSION_NAME).Data.ToString());
@@ -683,6 +684,15 @@ void UEOSGameInstance::OnJoinSessionCompleted(FName Name, EOnJoinSessionComplete
 			{
 				UE_LOG(LogTemp, Display, TEXT("Travel URL is empty"));
 			}
+
+			if (!JoinIntent.IsEmpty())
+			{
+				// Use ? if it's the first option, or & if others exist (EOS URLs usually have options)
+				FString Separator = TravelURL.Contains(TEXT("?")) ? TEXT("&") : TEXT("?");
+				TravelURL += FString::Printf(TEXT("%s%s=%s"), *Separator, *KEY_JOIN_INTENT, *JoinIntent);
+                    
+				UE_LOG(LogTemp, Warning, TEXT("Modified Travel URL with Intent: %s"), *TravelURL);
+			}
 			
 			UE_LOG(LogTemp, Display, TEXT("Initiate client travel"));
 			GetFirstLocalPlayerController(GetWorld())->ClientTravel(TravelURL, TRAVEL_Absolute);
@@ -695,8 +705,10 @@ void UEOSGameInstance::OnJoinSessionCompleted(FName Name, EOnJoinSessionComplete
 		ClearCachedSession();
 	}else
 	{
+		// Join failed, recreate own session
 		CreateOwnSession();
 	}
+	JoinIntent.Empty();
 }
 
 void UEOSGameInstance::LoadLevelAndListen(const TSoftObjectPtr<UWorld>& LevelToLoad)
