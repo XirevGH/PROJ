@@ -22,6 +22,7 @@ UEOSGameInstance::UEOSGameInstance() :
 	bClientTransitionToOtherSession(false),
 	bReturningToOwnLobby(false),
 	SessionCreationRetryCount(0),
+	MigrationRetryCount(0),
 	TeamSize(0)
 {
 	CurrentSessionState = ESessionState::Lobby;
@@ -391,6 +392,8 @@ void UEOSGameInstance::Client_ExecuteMemberMigration(FString TargetSessionName)
 	MigrationTargetName = TargetSessionName;
 	bIsMigratingLeader = false;
 	bIsMigratingMember = true;
+
+	MigrationRetryCount = 0;
 	
 	DestroyCurrentSessionAndJoinCachedSession();
 }
@@ -932,6 +935,10 @@ void UEOSGameInstance::OnFindSessionByNameCompleted(bool bWasSuccessful)
 			UE_LOG(LogTemp, Log, TEXT("Migrating member to session by name."));
 			bIsMigratingMember = false;
 			CachedSessionToJoin = NameSearch->SearchResults[0];
+			MigrationRetryCount = 0;
+
+			JoinIntent = JOIN_INTENT_LOBBY;
+			
 			DestroyCurrentSessionAndJoinCachedSession();
 		}
 		else
@@ -945,9 +952,24 @@ void UEOSGameInstance::OnFindSessionByNameCompleted(bool bWasSuccessful)
 	{
 		if (bIsMigratingMember)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Leader lobby not found yet. Retrying in 1.5 seconds..."));
-            
-			// Wait 1.5s then try again
+			// Check if I should give up search for leader
+			if (MigrationRetryCount >= MaxMigrationRetryCount)
+			{
+				// Leader probably failed session createion or disconnected at this point
+				UE_LOG(LogTemp, Error, TEXT("Migration Failed: Leader lobby '%s' not found after %d attempts. Giving up."), 
+					*MigrationTargetName, MigrationRetryCount);
+				
+				bIsMigratingMember = false;
+				MigrationRetryCount = 0;
+				
+				CreateOwnSession(); 
+				return;
+			}
+
+			MigrationRetryCount++;
+			UE_LOG(LogTemp, Warning, TEXT("Leader lobby not found yet (Attempt %d/%d). Retrying in 1.5 seconds..."), 
+				MigrationRetryCount, MaxMigrationRetryCount);
+			
 			FTimerHandle RetryHandle;
 			GetWorld()->GetTimerManager().SetTimer(RetryHandle, [this]()
 			{

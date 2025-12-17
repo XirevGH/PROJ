@@ -190,8 +190,10 @@ private:
 	bool bClientTransitionToOtherSession;
 	bool bReturningToOwnLobby;
 	ESessionState CurrentSessionState;
-
+	
 	int32 SessionCreationRetryCount;
+	int32 MigrationRetryCount;
+	const int32 MaxMigrationRetryCount = 15;
 	int32 TeamSize;
 
 	TSharedPtr<FOnlineSessionSearch> MatchSearch;
