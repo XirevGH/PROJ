@@ -44,7 +44,9 @@ public:
 	TSubclassOf<AProjectile> ProjectileActorClass;
 	
 	
-
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Sound")
+	USoundBase* HitSound;
+	
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Projectile Stats")
 	float ProjectileSpeed;

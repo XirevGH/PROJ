@@ -93,6 +93,7 @@ void AProjectile::OnProjectileHit_Implementation(UPrimitiveComponent* HitComp, A
 		FVector IncomingDirection = -ProjectileMovement->Velocity.GetSafeNormal();
 		 MulticastSpawnImpactFX(ProjectileData->WorldHitParticle,  Hit.ImpactPoint,
 		 IncomingDirection.Rotation());
+		
 	}
 }
 
@@ -114,7 +115,10 @@ if (!HasAuthority())
 
 void AProjectile::MulticastSpawnImpactFX_Implementation(UParticleSystem* Particle, FVector Location, FRotator Rotation)
 {
-	 UParticleSystemComponent* HitEffect =	UGameplayStatics::SpawnEmitterAtLocation(GetWorld(),  Particle,  Location,
+	 UGameplayStatics::SpawnEmitterAtLocation(GetWorld(),  Particle,  Location,
 	Rotation);
+	
+	UGameplayStatics::SpawnSoundAtLocation(GetWorld(),  ProjectileData->HitSound, Location,
+		Rotation);
 }
 
