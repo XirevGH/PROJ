@@ -193,7 +193,7 @@ private:
 	
 	int32 SessionCreationRetryCount;
 	int32 MigrationRetryCount;
-	const int32 MaxMigrationRetryCount = 15;
+	const int32 MaxMigrationRetryCount = 10;
 	int32 TeamSize;
 
 	TSharedPtr<FOnlineSessionSearch> MatchSearch;
