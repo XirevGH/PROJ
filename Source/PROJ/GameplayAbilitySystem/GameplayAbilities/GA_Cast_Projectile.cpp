@@ -40,21 +40,8 @@ void UGA_Cast_Projectile::SpawnProjectile()
 	UWorld* World = Avatar->GetWorld();
 	if (!World) return;
 
+
 	
-	/*APlayerController* PC = GetActorInfo().PlayerController.Get();
-	if (PC)
-	{
-		int32 ViewportX, ViewportY;
-		PC->GetViewportSize(ViewportX, ViewportY);
-		FVector2D ScreenCenter(ViewportX * 0.5f, ViewportY * 0.5f);
-
-		FVector WorldLocation;
-		FVector WorldDirection;
-
-		PC->DeprojectScreenPositionToWorld(ScreenCenter.X, ScreenCenter.Y, WorldLocation, WorldDirection);
-		FRotator AimRotation = WorldDirection.Rotation();
-		SpawnRotation = AimRotation;
-	}*/
 	
 	if (GetActorInfo().SkeletalMeshComponent->DoesSocketExist(SpawnSocketName))
 	{
@@ -62,12 +49,10 @@ void UGA_Cast_Projectile::SpawnProjectile()
 		FTransform SpawnTransform = GetActorInfo().SkeletalMeshComponent->GetSocketTransform(SpawnSocketName);
 		
 		SpawnLocation = SpawnTransform.GetLocation();
-
+		SpawnRotation = GetProjectileSpawnRotation(SpawnLocation);
 		//could set rotation to socket rotation, but it won't always be Avatar->GetActorRotation()
 		//SpawnRotation = SpawnTransform.GetRotation().Rotator();
-
 		
-		SpawnRotation = Avatar->GetActorRotation();
 		
 		// Debug: Draw a sphere at the spawn location
 		//DrawDebugSphere(GetWorld(), SpawnLocation,10.f,12, FColor::Red,true);
@@ -79,9 +64,9 @@ void UGA_Cast_Projectile::SpawnProjectile()
 		SpawnLocation = Avatar->GetActorLocation()
 			+ Avatar->GetActorForwardVector()
 			+ FVector(0.f, 0.f, HeightOffset);
-
+		SpawnRotation = GetProjectileSpawnRotation(SpawnLocation);
+		
 		// can change to camera rotation
-		SpawnRotation = Avatar->GetActorRotation();
 		UE_LOG(LogTemp, Warning, TEXT("Socket %s does not exist!"), *SpawnSocketName.ToString())
 	}
 
@@ -104,4 +89,36 @@ void UGA_Cast_Projectile::SpawnProjectile()
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Failed to spawn projectile"));
 	}
+	
+}
+
+FRotator UGA_Cast_Projectile::GetProjectileSpawnRotation(FVector StartLocation)
+{
+	AActor* Avatar = GetAvatarActorFromActorInfo();
+	
+	FVector Start = Avatar->GetActorLocation();
+	
+	float Distance = 100000.f;
+
+	FVector Forward = Avatar->GetActorForwardVector();
+	FVector End = Start + (Forward * Distance);
+	
+	FHitResult Hit;
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(Avatar);
+
+	bool bHit = GetWorld()->LineTraceSingleByChannel(
+		Hit,
+		Start,
+		End,
+		ECC_Visibility,
+		Params
+	);
+
+	if (bHit)
+	{
+		End = Hit.ImpactPoint;
+	}
+	DrawDebugLine(GetWorld(), StartLocation, End, FColor::Red, false, 2.f, 0, 2.f);
+	return (End - StartLocation).Rotation();
 }

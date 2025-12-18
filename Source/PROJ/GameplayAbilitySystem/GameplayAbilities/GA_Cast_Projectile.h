@@ -52,5 +52,7 @@ class PROJ_API UGA_Cast_Projectile : public UBaseGameplayAbility
 	FGameplayAbilityTargetDataHandle CurrentTargetData;
 
 	FGameplayAbilityTargetData_SingleTargetHit* NewTargetData;
+	
+	FRotator GetProjectileSpawnRotation(FVector StartLocation);
 
 };

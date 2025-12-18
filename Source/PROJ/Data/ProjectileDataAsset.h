@@ -33,6 +33,8 @@ public:
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Particles / Ability")
 	UParticleSystem* CastParticle;
+	//UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Particles")
+	//UAudioc* NoHitParticle;
 	
 	
 	UPROPERTY(EditDefaultsOnly,BlueprintReadWrite)
@@ -42,7 +44,9 @@ public:
 	TSubclassOf<AProjectile> ProjectileActorClass;
 	
 	
-
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Sound")
+	USoundBase* HitSound;
+	
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Projectile Stats")
 	float ProjectileSpeed;

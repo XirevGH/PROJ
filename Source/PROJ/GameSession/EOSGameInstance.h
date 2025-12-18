@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "FCustomBlueprintSessionResult.h"
 #include "Engine/GameInstance.h"
+#include "Engine/Texture2D.h"
 #include "EOSGameInstance.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnOpenPublicLobbiesFound,
@@ -20,13 +21,18 @@ enum class ESessionState : uint8
 	JoiningMatch,
 	InMatch,
 	Transition,
-	PlayAgain
+	PlayAgain,
+	ReturningToLobbyFromMatch
 };
 
 static const FName KEY_SESSION_NAME = FName("SessionNameKey");
 static const FName KEY_CUSTOM_NAME = FName("CustomSessionName");
 static const FName KEY_GAME_MODE = FName("SelectedGameMode");
 static const FName KEY_SESSION_STATE = FName("SessionState");
+
+static const FString KEY_JOIN_INTENT = TEXT("JoinIntent");
+static const FString JOIN_INTENT_LOBBY = TEXT("Lobby");
+static const FString JOIN_INTENT_MATCH = TEXT("Match");
 
 UCLASS()
 class PROJ_API UEOSGameInstance : public UGameInstance
@@ -110,6 +116,11 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Settings")
 	void SetSessionState(const ESessionState NewSessionState);
 	/* ------------------------------------------ */
+
+	UFUNCTION(BlueprintPure, Category = "Options|JoinIntent")
+	static FString GetJoinIntentLobby() { return JOIN_INTENT_LOBBY; }
+	UFUNCTION(BlueprintPure, Category = "Options|JoinIntent")
+	static FString GetJoinIntentMatch() { return JOIN_INTENT_MATCH; }
 	
 	UFUNCTION(BlueprintCallable)
 	void SetNumPublicConnections(const int NewAmount);
@@ -131,6 +142,21 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Settings")
 	void ResetLobbySettings();
+
+	UFUNCTION(BlueprintCallable, Category = "UI|LoadingScreen")
+	void ShowPersistentLoadingScreen();
+
+	UFUNCTION(BlueprintCallable, Category = "UI|LoadingScreen")
+	void StopPersistentLoadingScreen();
+
+	UPROPERTY(EditDefaultsOnly, Category = "UI|LoadingScreen")
+	TArray<UTexture2D*> LoadingBackgrounds;
+
+	UFUNCTION(BlueprintCallable, Category = "Team")
+	void SetCurrentTeamSize(const int32 NewTeamSize);
+
+	UFUNCTION(BlueprintPure, Category = "Team")
+	int32 GetCurrentTeamSize() const { return TeamSize; }
 	
 protected:
 	UFUNCTION(BlueprintCallable)
@@ -140,6 +166,12 @@ protected:
 	void SetClientIsTransitioning(const bool bTransitioning) { bClientTransitionToOtherSession = bTransitioning; }
 
 	virtual void LoadComplete(const float LoadTime, const FString& MapName) override;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Team")
+	int32 MaxTeamSize;
+
+	UFUNCTION(BlueprintCallable)
+	void SetJoinIntent(const FString Intent) { JoinIntent = Intent; }
 
 private:
 	FName SessionName;
@@ -152,12 +184,17 @@ private:
 	bool bIsMigratingLeader;
 	bool bIsMigratingMember;
 	FString MigrationTargetName;
+
+	FString JoinIntent;
 	
 	bool bClientTransitionToOtherSession;
 	bool bReturningToOwnLobby;
 	ESessionState CurrentSessionState;
-
+	
 	int32 SessionCreationRetryCount;
+	int32 MigrationRetryCount;
+	const int32 MaxMigrationRetryCount = 10;
+	int32 TeamSize;
 
 	TSharedPtr<FOnlineSessionSearch> MatchSearch;
 	TSharedPtr<FOnlineSessionSearch> OpenPublicSearch;
@@ -170,6 +207,8 @@ private:
 	FDelegateHandle FindSessionByNameDelegateHandle;
 	FDelegateHandle DestroySessionDelegateHandle;
 	FDelegateHandle UpdateSessionDelegateHandle;
+
+	TSharedPtr<SWidget> ViewportLoadingWidget;
 
 	UFUNCTION()
 	void OnFindOpenPublicSessionsCompleted(const bool bSuccess);
