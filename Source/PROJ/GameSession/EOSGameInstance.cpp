@@ -11,6 +11,7 @@
 #include "Online/OnlineSessionNames.h"
 #include "Framework/Application/SlateApplication.h"
 #include "PROJ/UI/LoadingScreen.h"
+#include "PROJ/UI/ProjectSettings/LoadingScreenSettings.h"
 
 UEOSGameInstance::UEOSGameInstance() :
 	MaxTeamSize(3),
@@ -24,7 +25,8 @@ UEOSGameInstance::UEOSGameInstance() :
 	bReturningToOwnLobby(false),
 	SessionCreationRetryCount(0),
 	MigrationRetryCount(0),
-	TeamSize(0)
+	TeamSize(0),
+	CachedLoadingScreenData(nullptr)
 {
 	CurrentSessionState = ESessionState::Lobby;
 }
@@ -52,6 +54,13 @@ void UEOSGameInstance::Init()
 	{
 		GEngine->OnTravelFailure().AddUObject(this, &UEOSGameInstance::HandleTravelFailure);
 		GEngine->OnNetworkFailure().AddUObject(this, &UEOSGameInstance::HandleNetworkFailure);
+	}
+
+	const ULoadingScreenSettings* Settings = GetDefault<ULoadingScreenSettings>();
+	if (Settings && !Settings->LoadingScreenConfig.IsNull())
+	{
+		CachedLoadingScreenData = Settings->LoadingScreenConfig.LoadSynchronous();
+		UE_LOG(LogTemp, Log, TEXT("Loading Screen Data Cached in Init."));
 	}
 
 	UE_LOG(LogTemp, Display, TEXT("SessionState lobby int: %hd"), static_cast<int32>(ESessionState::Lobby));
@@ -1251,26 +1260,74 @@ void UEOSGameInstance::SetStartMatchSearchVariables(ESessionState NewSessionStat
 
 void UEOSGameInstance::ShowPersistentLoadingScreen()
 {
-	TSharedRef<SWidget> LoadingWidget = SNew(SLoadingScreen);
+    // If data failed to load in Init, try one last safety load (unlikely)
+    if (!CachedLoadingScreenData)
+    {
+        const ULoadingScreenSettings* Settings = GetDefault<ULoadingScreenSettings>();
+        if (Settings && !Settings->LoadingScreenConfig.IsNull())
+        {
+            CachedLoadingScreenData = Settings->LoadingScreenConfig.LoadSynchronous();
+        }
+    }
 
-	// 1. Add to Viewport (Instant visual feedback)
-	if (GEngine && GEngine->GameViewport)
-	{
-		if (ViewportLoadingWidget.IsValid())
-		{
-			GEngine->GameViewport->RemoveViewportWidgetContent(ViewportLoadingWidget.ToSharedRef());
-		}
-		ViewportLoadingWidget = LoadingWidget;
-		GEngine->GameViewport->AddViewportWidgetContent(ViewportLoadingWidget.ToSharedRef(), 10000);
-	}
-	
-	FLoadingScreenAttributes LoadingScreen;
-	LoadingScreen.bAllowEngineTick = false;
-	LoadingScreen.bAutoCompleteWhenLoadingCompletes = true;
-	LoadingScreen.bWaitForManualStop = false;
-	LoadingScreen.WidgetLoadingScreen = SNew(SLoadingScreen);
+    // Default pointers
+    UTexture2D* SelectedBG = nullptr;
+    UTexture2D* SelectedLogo = nullptr;
+    TArray<FText> AllTips;
+    int32 StartTipIndex = 0;
 
-	GetMoviePlayer()->SetupLoadingScreen(LoadingScreen);
+    // 1. Extract Data from Cache
+    if (CachedLoadingScreenData)
+    {
+        SelectedLogo = CachedLoadingScreenData->Logo;
+        AllTips = CachedLoadingScreenData->LoadingTips;
+
+        // Pick Random Background
+        if (CachedLoadingScreenData->Backgrounds.Num() > 0)
+        {
+            SelectedBG = CachedLoadingScreenData->Backgrounds[FMath::RandRange(0, CachedLoadingScreenData->Backgrounds.Num() - 1)];
+        }
+
+        // Pick Random Tip Index
+        if (AllTips.Num() > 0)
+        {
+            StartTipIndex = FMath::RandRange(0, AllTips.Num() - 1);
+        }
+    }
+
+    // 2. Create the Viewport Widget
+    // We pass the CACHED data. No loading happens here. Instant.
+    TSharedRef<SLoadingScreen> LoadingWidget = SNew(SLoadingScreen)
+        .SelectedBackground(SelectedBG)
+        .SelectedLogo(SelectedLogo)
+        .LoadingTips(AllTips)
+        .InitialTipIndex(StartTipIndex);
+
+    if (GEngine && GEngine->GameViewport)
+    {
+        if (ViewportLoadingWidget.IsValid())
+        {
+            GEngine->GameViewport->RemoveViewportWidgetContent(ViewportLoadingWidget.ToSharedRef());
+        }
+        ViewportLoadingWidget = LoadingWidget;
+        // Z-Order 10000 ensures it is on top of everything
+        GEngine->GameViewport->AddViewportWidgetContent(ViewportLoadingWidget.ToSharedRef(), 10000);
+    }
+    
+    // 3. Setup the Movie Player
+    // Pass the EXACT SAME pointers and index.
+    FLoadingScreenAttributes LoadingScreenAttrs;
+    LoadingScreenAttrs.bAllowEngineTick = false;
+    LoadingScreenAttrs.bAutoCompleteWhenLoadingCompletes = true;
+    LoadingScreenAttrs.bWaitForManualStop = false;
+    
+    LoadingScreenAttrs.WidgetLoadingScreen = SNew(SLoadingScreen)
+        .SelectedBackground(SelectedBG)
+        .SelectedLogo(SelectedLogo)
+        .LoadingTips(AllTips)
+        .InitialTipIndex(StartTipIndex);
+
+    GetMoviePlayer()->SetupLoadingScreen(LoadingScreenAttrs);
 }
 
 void UEOSGameInstance::StopPersistentLoadingScreen()

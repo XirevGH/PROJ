@@ -1,13 +1,22 @@
 ﻿#pragma once
 
 #include "CoreMinimal.h"
-#include "Data/LoadingScreenData.h"
 #include "Widgets/SCompoundWidget.h"
+
+class SScaleBox;
 
 class PROJ_API SLoadingScreen : public SCompoundWidget
 {
 public:
-	SLATE_BEGIN_ARGS(SLoadingScreen){}
+	SLATE_BEGIN_ARGS(SLoadingScreen)
+		: _SelectedBackground(nullptr)
+		, _SelectedLogo(nullptr)
+		, _InitialTipIndex(0)
+	{}
+		SLATE_ARGUMENT(UTexture2D*, SelectedBackground)
+		SLATE_ARGUMENT(UTexture2D*, SelectedLogo)
+		SLATE_ARGUMENT(int32, InitialTipIndex)
+		SLATE_ARGUMENT(TArray<FText>, LoadingTips)
 	SLATE_END_ARGS()
 
 	/** Constructs this widget with InArgs */
@@ -18,11 +27,12 @@ private:
 	FSlateBrush BackgroundBrush;
 	FSlateBrush LogoBrush;
 
-	TStrongObjectPtr<ULoadingScreenData> LoadedDataAsset; 
+	FVector2D BGTextureSize = FVector2D::ZeroVector;
+	TSharedPtr<SScaleBox> BackgroundScaleBox; 
 
 	TArray<FText> Tips;
-	float TipInterval;
-	float TimeSinceLastTipUpdate;
+	float TipInterval = 0;
+	float TimeSinceLastTipUpdate = 0;
 	TSharedPtr<STextBlock> TipTextBlock;
 	void DisplayRandomTip();
 };

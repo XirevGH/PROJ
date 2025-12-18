@@ -1,12 +1,12 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
-
+﻿// SLoadingScreen.cpp
 
 #include "LoadingScreen.h"
-
 #include "SlateOptMacros.h"
-#include "ProjectSettings/LoadingScreenSettings.h"
 #include "Widgets/Layout/SScaleBox.h"
+#include "Widgets/Layout/SBox.h"
 #include "Widgets/Images/SThrobber.h"
+#include "Engine/Engine.h"        // Needed for GEngine
+#include "Engine/GameViewportClient.h" // Needed for Viewport size
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
@@ -14,165 +14,197 @@ void SLoadingScreen::Construct(const FArguments& InArgs)
 {
     SetVisibility(EVisibility::HitTestInvisible);
 
-    // --- 1. Fetch Data from Project Settings ---
-    Tips.Empty();
+    // --- 1. Fetch Data ---
+    UTexture2D* BGTexture = InArgs._SelectedBackground;
+    UTexture2D* LogoTexture = InArgs._SelectedLogo;
+    Tips = InArgs._LoadingTips;
     TipInterval = 5.0f;
-    LoadedDataAsset.Reset();
-	
-    // Get the settings singleton
-    const ULoadingScreenSettings* Settings = GetDefault<ULoadingScreenSettings>();
-	
-    if (Settings && !Settings->LoadingScreenConfig.IsNull())
-    {
-        // Load the Data Asset Synchronously (It's a loading screen, blocking is fine here)
-    	LoadedDataAsset.Reset(Settings->LoadingScreenConfig.LoadSynchronous());
-    }
-
-    UTexture2D* BGTexture = nullptr;
-    UTexture2D* LogoTexture = nullptr;
-
-    if (LoadedDataAsset.IsValid())
-    {
-        // Extract Data
-        if (LoadedDataAsset->Backgrounds.Num() > 0)
-        {
-            BGTexture = LoadedDataAsset->Backgrounds[FMath::RandRange(0, LoadedDataAsset->Backgrounds.Num() - 1)];
-        }
-		
-        LogoTexture = LoadedDataAsset->Logo;
-        Tips = LoadedDataAsset->LoadingTips;
-        TipInterval = LoadedDataAsset->TipSwitchInterval;
-    }
     
-   // --- 2. Setup Brushes ---
-	if (BGTexture)
-	{
-		BackgroundBrush.SetResourceObject(BGTexture);
-		BackgroundBrush.ImageSize = FVector2D(BGTexture->GetSizeX(), BGTexture->GetSizeY());
-		BackgroundBrush.DrawAs = ESlateBrushDrawType::Image;
-		BackgroundBrush.TintColor = FLinearColor::White;
-	}
-	else
-	{
-		BackgroundBrush.DrawAs = ESlateBrushDrawType::NoDrawType;
-	}
+    BGTextureSize = FVector2D(1920, 1080); // Default
 
-	if (LogoTexture)
-	{
-		LogoBrush.SetResourceObject(LogoTexture);
-		LogoBrush.ImageSize = FVector2D(LogoTexture->GetSizeX(), LogoTexture->GetSizeY());
-		LogoBrush.DrawAs = ESlateBrushDrawType::Image;
-		LogoBrush.TintColor = FLinearColor::White;
-	}
-	else
-	{
-		LogoBrush.DrawAs = ESlateBrushDrawType::NoDrawType;
-	}
+    // --- 2. Setup Brushes ---
+    if (BGTexture && BGTexture->IsValidLowLevel())
+    {
+        BGTextureSize = FVector2D(BGTexture->GetSizeX(), BGTexture->GetSizeY());
+        BackgroundBrush.SetResourceObject(BGTexture);
+        BackgroundBrush.ImageSize = BGTextureSize;
+        BackgroundBrush.DrawAs = ESlateBrushDrawType::Image;
+        BackgroundBrush.TintColor = FLinearColor::White;
+    }
+    else
+    {
+        BackgroundBrush.DrawAs = ESlateBrushDrawType::NoDrawType;
+    }
 
-	// --- 3. Build UI Layout ---
-	ChildSlot
-	[
-		SNew(SOverlay)
+    if (LogoTexture && LogoTexture->IsValidLowLevel())
+    {
+        LogoBrush.SetResourceObject(LogoTexture);
+        LogoBrush.ImageSize = FVector2D(LogoTexture->GetSizeX(), LogoTexture->GetSizeY());
+        LogoBrush.DrawAs = ESlateBrushDrawType::Image;
+        LogoBrush.TintColor = FLinearColor::White;
+    }
+    else
+    {
+        LogoBrush.DrawAs = ESlateBrushDrawType::NoDrawType;
+    }
 
-		// Layer 1: Background
-		+ SOverlay::Slot()
-		.HAlign(HAlign_Fill)
-		.VAlign(VAlign_Fill)
-		[
-			SNew(SScaleBox)
-			.Stretch(EStretch::ScaleToFill)
-			[
-				SNew(SImage).Image(&BackgroundBrush)
-			]
-		]
+    // --- 3. Build UI Layout ---
+    ChildSlot
+    [
+        SNew(SOverlay)
 
-		// Layer 2: Logo (Top Left)
-		+ SOverlay::Slot()
-		.HAlign(HAlign_Left)
-		.VAlign(VAlign_Top)
-		.Padding(40.f)
-		[
-			SNew(SImage).Image(&LogoBrush)
-		]
+        // Layer 1: Background
+        + SOverlay::Slot()
+        .HAlign(HAlign_Fill)
+        .VAlign(VAlign_Fill)
+        [
+            SAssignNew(BackgroundScaleBox, SScaleBox)
+            .Stretch(EStretch::UserSpecified) // Manual Scaling
+            [
+                SNew(SImage).Image(&BackgroundBrush)
+            ]
+        ]
 
-		// Layer 3: Footer Black Box
-		+ SOverlay::Slot()
-		.HAlign(HAlign_Fill)
-		.VAlign(VAlign_Bottom)
-		[
-			SNew(SBox)
-			.HeightOverride(200.0f)
-			[
-				SNew(SOverlay)
-				
-				// Black transparent background
-				+ SOverlay::Slot()
-				[
-					SNew(SImage).ColorAndOpacity(FLinearColor(0,0,0,0.75f))
-				]
+        // Layer 2: Logo (Constrained)
+        + SOverlay::Slot()
+        .HAlign(HAlign_Left)
+        .VAlign(VAlign_Top)
+        .Padding(60.f)
+        [
+            SNew(SBox)
+            .WidthOverride(500.0f)
+            .HeightOverride(250.0f)
+            [
+                SNew(SScaleBox)
+                .Stretch(EStretch::ScaleToFit)
+                .HAlign(HAlign_Left)
+                .VAlign(VAlign_Top)
+                [
+                    SNew(SImage).Image(&LogoBrush)
+                ]
+            ]
+        ]
 
-				// Content
-				+ SOverlay::Slot()
-				.Padding(40.f)
-				[
-					SNew(SHorizontalBox)
+        // Layer 3: Footer
+        + SOverlay::Slot()
+        .HAlign(HAlign_Fill)
+        .VAlign(VAlign_Bottom)
+        [
+            SNew(SBox)
+            .HeightOverride(200.0f)
+            .Clipping(EWidgetClipping::ClipToBounds) 
+            [
+                SNew(SOverlay)
+                
+                + SOverlay::Slot()
+                [
+                    SNew(SImage).ColorAndOpacity(FLinearColor(0,0,0,0.85f))
+                ]
 
-					// Tip Text (Left)
-					+ SHorizontalBox::Slot()
-					.FillWidth(0.5f)
-					.HAlign(HAlign_Left)
-					.VAlign(VAlign_Top)
-					[
-						SAssignNew(TipTextBlock, STextBlock)
-						.Font(FCoreStyle::GetDefaultFontStyle("Regular", 18))
-						.AutoWrapText(true)
-					]
+                + SOverlay::Slot()
+                .Padding(FMargin(60.f, 0.f))
+                [
+                    SNew(SHorizontalBox)
 
-					// Spinner (Right)
-					+ SHorizontalBox::Slot()
-					.FillWidth(0.5f)
-					.HAlign(HAlign_Right)
-					.VAlign(VAlign_Bottom)
-					[
-						SNew(SHorizontalBox)
-						+ SHorizontalBox::Slot().AutoWidth().Padding(0,0,20,0).VAlign(VAlign_Center)
-						[
-							SNew(STextBlock).Text(FText::FromString("LOADING..."))
-							.Font(FCoreStyle::GetDefaultFontStyle("Bold", 24))
-						]
-						+ SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Center)
-						[
-							SNew(SCircularThrobber)
-						]
-					]
-				]
-			]
-		]
-	];
-	DisplayRandomTip();
+                    // Tip Text
+                    + SHorizontalBox::Slot()
+                    .FillWidth(0.7f)
+                    .HAlign(HAlign_Left)
+                    .VAlign(VAlign_Center)
+                    [
+                        SAssignNew(TipTextBlock, STextBlock)
+                        .Font(FCoreStyle::GetDefaultFontStyle("Regular", 18))
+                        .ColorAndOpacity(FLinearColor(0.9f, 0.9f, 0.9f, 1.0f))
+                        .AutoWrapText(true)
+                        .WrapTextAt(1000.0f)
+                    ]
+
+                    // Spinner
+                    + SHorizontalBox::Slot()
+                    .FillWidth(0.3f)
+                    .HAlign(HAlign_Right)
+                    .VAlign(VAlign_Center)
+                    [
+                        SNew(SHorizontalBox)
+                        + SHorizontalBox::Slot().AutoWidth().Padding(0,0,20,0).VAlign(VAlign_Center)
+                        [
+                            SNew(STextBlock).Text(FText::FromString("LOADING..."))
+                            .Font(FCoreStyle::GetDefaultFontStyle("Bold", 24))
+                        ]
+                        + SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Center)
+                        [
+                            SNew(SCircularThrobber).Radius(20.0f)
+                        ]
+                    ]
+                ]
+            ]
+        ]
+    ];
+    
+    // --- 4. PRE-CALCULATE SCALE (FIX FOR GLITCH) ---
+    // This runs BEFORE the first frame is drawn.
+    if (BackgroundScaleBox.IsValid() && BGTextureSize.X > 0 && BGTextureSize.Y > 0)
+    {
+        FVector2D ViewportSize = FVector2D(1920, 1080); // Default fallback
+
+        // Try to get the actual viewport size immediately
+        if (GEngine && GEngine->GameViewport)
+        {
+            FVector2D ActualSize;
+            GEngine->GameViewport->GetViewportSize(ActualSize);
+            if (ActualSize.X > 0 && ActualSize.Y > 0)
+            {
+                ViewportSize = ActualSize;
+            }
+        }
+
+        float ScaleX = ViewportSize.X / BGTextureSize.X;
+        float ScaleY = ViewportSize.Y / BGTextureSize.Y;
+        
+        // Apply "Cover" scale immediately
+        BackgroundScaleBox->SetUserSpecifiedScale(FMath::Max(ScaleX, ScaleY));
+    }
+
+    // --- 5. Set Initial Tip ---
+    if (Tips.Num() > 0 && TipTextBlock.IsValid())
+    {
+        int32 SafeIndex = FMath::Clamp(InArgs._InitialTipIndex, 0, Tips.Num() - 1);
+        TipTextBlock->SetText(Tips[SafeIndex]);
+    }
 }
 
 void SLoadingScreen::Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime)
 {
     SCompoundWidget::Tick(AllottedGeometry, InCurrentTime, InDeltaTime);
 
-	if (Tips.Num() > 1)
-	{
-		TimeSinceLastTipUpdate += InDeltaTime;
-		if (TimeSinceLastTipUpdate >= TipInterval)
-		{
-			DisplayRandomTip();
-			TimeSinceLastTipUpdate = 0.0f;
-		}
-	}
+    // Background Scaling
+    if (BackgroundScaleBox.IsValid() && BGTextureSize.X > 0 && BGTextureSize.Y > 0)
+    {
+        const FVector2D ScreenSize = AllottedGeometry.GetLocalSize();
+        if (ScreenSize.X > 0 && ScreenSize.Y > 0)
+        {
+            float ScaleX = ScreenSize.X / BGTextureSize.X;
+            float ScaleY = ScreenSize.Y / BGTextureSize.Y;
+            BackgroundScaleBox->SetUserSpecifiedScale(FMath::Max(ScaleX, ScaleY));
+        }
+    }
+
+    // Tip Cycling
+    if (Tips.Num() > 1)
+    {
+        TimeSinceLastTipUpdate += InDeltaTime;
+        if (TimeSinceLastTipUpdate >= TipInterval)
+        {
+            DisplayRandomTip();
+            TimeSinceLastTipUpdate = 0.0f;
+        }
+    }
 }
 
 void SLoadingScreen::DisplayRandomTip()
 {
-	if (Tips.Num() > 0 && TipTextBlock.IsValid())
-	{
-		TipTextBlock->SetText(Tips[FMath::RandRange(0, Tips.Num() - 1)]);
-	}
+    if (Tips.Num() > 0 && TipTextBlock.IsValid())
+    {
+        TipTextBlock->SetText(Tips[FMath::RandRange(0, Tips.Num() - 1)]);
+    }
 }
-
-END_SLATE_FUNCTION_BUILD_OPTIMIZATION
