@@ -208,3 +208,5 @@ void SLoadingScreen::DisplayRandomTip()
         TipTextBlock->SetText(Tips[FMath::RandRange(0, Tips.Num() - 1)]);
     }
 }
+
+END_SLATE_FUNCTION_BUILD_OPTIMIZATION
