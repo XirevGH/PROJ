@@ -1,8 +1,12 @@
-﻿#include "LoadingScreen.h"
+﻿// SLoadingScreen.cpp
+
+#include "LoadingScreen.h"
 #include "SlateOptMacros.h"
 #include "Widgets/Layout/SScaleBox.h"
 #include "Widgets/Layout/SBox.h"
 #include "Widgets/Images/SThrobber.h"
+#include "Engine/Engine.h"        // Needed for GEngine
+#include "Engine/GameViewportClient.h" // Needed for Viewport size
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
@@ -12,27 +16,14 @@ void SLoadingScreen::Construct(const FArguments& InArgs)
 
     // --- 1. Fetch Data ---
     UTexture2D* BGTexture = InArgs._SelectedBackground;
-    if (BGTexture && BGTexture->IsValidLowLevel())
-    {
-        BGTextureSize = FVector2D(BGTexture->GetSizeX(), BGTexture->GetSizeY());
-        BackgroundBrush.SetResourceObject(BGTexture);
-        // ... rest of settings
-    }
-    else
-    {
-        BackgroundBrush.DrawAs = ESlateBrushDrawType::NoDrawType;
-    }
-    
     UTexture2D* LogoTexture = InArgs._SelectedLogo;
-    
-    // CHANGED: Direct assignment (FText array)
-    Tips = InArgs._LoadingTips; 
-    
+    Tips = InArgs._LoadingTips;
     TipInterval = 5.0f;
-    BGTextureSize = FVector2D(1920, 1080); 
+    
+    BGTextureSize = FVector2D(1920, 1080); // Default
 
     // --- 2. Setup Brushes ---
-    if (BGTexture)
+    if (BGTexture && BGTexture->IsValidLowLevel())
     {
         BGTextureSize = FVector2D(BGTexture->GetSizeX(), BGTexture->GetSizeY());
         BackgroundBrush.SetResourceObject(BGTexture);
@@ -45,7 +36,7 @@ void SLoadingScreen::Construct(const FArguments& InArgs)
         BackgroundBrush.DrawAs = ESlateBrushDrawType::NoDrawType;
     }
 
-    if (LogoTexture)
+    if (LogoTexture && LogoTexture->IsValidLowLevel())
     {
         LogoBrush.SetResourceObject(LogoTexture);
         LogoBrush.ImageSize = FVector2D(LogoTexture->GetSizeX(), LogoTexture->GetSizeY());
@@ -62,19 +53,19 @@ void SLoadingScreen::Construct(const FArguments& InArgs)
     [
         SNew(SOverlay)
 
-        // Layer 1: Background (CSS Cover Mode)
+        // Layer 1: Background
         + SOverlay::Slot()
         .HAlign(HAlign_Fill)
         .VAlign(VAlign_Fill)
         [
             SAssignNew(BackgroundScaleBox, SScaleBox)
-            .Stretch(EStretch::UserSpecified)
+            .Stretch(EStretch::UserSpecified) // Manual Scaling
             [
                 SNew(SImage).Image(&BackgroundBrush)
             ]
         ]
 
-        // Layer 2: Logo (Constrained Size)
+        // Layer 2: Logo (Constrained)
         + SOverlay::Slot()
         .HAlign(HAlign_Left)
         .VAlign(VAlign_Top)
@@ -94,30 +85,28 @@ void SLoadingScreen::Construct(const FArguments& InArgs)
             ]
         ]
 
-        // Layer 3: Footer (Locked Height + Clipping)
+        // Layer 3: Footer
         + SOverlay::Slot()
         .HAlign(HAlign_Fill)
         .VAlign(VAlign_Bottom)
         [
             SNew(SBox)
             .HeightOverride(200.0f)
-            .Clipping(EWidgetClipping::ClipToBounds) // Fixes the "Big Black Box" glitch
+            .Clipping(EWidgetClipping::ClipToBounds) 
             [
                 SNew(SOverlay)
                 
-                // Black transparent background
                 + SOverlay::Slot()
                 [
                     SNew(SImage).ColorAndOpacity(FLinearColor(0,0,0,0.85f))
                 ]
 
-                // Content
                 + SOverlay::Slot()
                 .Padding(FMargin(60.f, 0.f))
                 [
                     SNew(SHorizontalBox)
 
-                    // Tip Text (Left)
+                    // Tip Text
                     + SHorizontalBox::Slot()
                     .FillWidth(0.7f)
                     .HAlign(HAlign_Left)
@@ -127,10 +116,10 @@ void SLoadingScreen::Construct(const FArguments& InArgs)
                         .Font(FCoreStyle::GetDefaultFontStyle("Regular", 18))
                         .ColorAndOpacity(FLinearColor(0.9f, 0.9f, 0.9f, 1.0f))
                         .AutoWrapText(true)
-                        .WrapTextAt(1000.0f) // Helps prevent layout jitter
+                        .WrapTextAt(1000.0f)
                     ]
 
-                    // Spinner (Right)
+                    // Spinner
                     + SHorizontalBox::Slot()
                     .FillWidth(0.3f)
                     .HAlign(HAlign_Right)
@@ -152,14 +141,43 @@ void SLoadingScreen::Construct(const FArguments& InArgs)
         ]
     ];
     
-    DisplayRandomTip();
+    // --- 4. PRE-CALCULATE SCALE (FIX FOR GLITCH) ---
+    // This runs BEFORE the first frame is drawn.
+    if (BackgroundScaleBox.IsValid() && BGTextureSize.X > 0 && BGTextureSize.Y > 0)
+    {
+        FVector2D ViewportSize = FVector2D(1920, 1080); // Default fallback
+
+        // Try to get the actual viewport size immediately
+        if (GEngine && GEngine->GameViewport)
+        {
+            FVector2D ActualSize;
+            GEngine->GameViewport->GetViewportSize(ActualSize);
+            if (ActualSize.X > 0 && ActualSize.Y > 0)
+            {
+                ViewportSize = ActualSize;
+            }
+        }
+
+        float ScaleX = ViewportSize.X / BGTextureSize.X;
+        float ScaleY = ViewportSize.Y / BGTextureSize.Y;
+        
+        // Apply "Cover" scale immediately
+        BackgroundScaleBox->SetUserSpecifiedScale(FMath::Max(ScaleX, ScaleY));
+    }
+
+    // --- 5. Set Initial Tip ---
+    if (Tips.Num() > 0 && TipTextBlock.IsValid())
+    {
+        int32 SafeIndex = FMath::Clamp(InArgs._InitialTipIndex, 0, Tips.Num() - 1);
+        TipTextBlock->SetText(Tips[SafeIndex]);
+    }
 }
 
 void SLoadingScreen::Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime)
 {
     SCompoundWidget::Tick(AllottedGeometry, InCurrentTime, InDeltaTime);
 
-    // Background Aspect Ratio Logic
+    // Background Scaling
     if (BackgroundScaleBox.IsValid() && BGTextureSize.X > 0 && BGTextureSize.Y > 0)
     {
         const FVector2D ScreenSize = AllottedGeometry.GetLocalSize();
@@ -171,7 +189,7 @@ void SLoadingScreen::Tick(const FGeometry& AllottedGeometry, const double InCurr
         }
     }
 
-    // Tip Switch Logic
+    // Tip Cycling
     if (Tips.Num() > 1)
     {
         TimeSinceLastTipUpdate += InDeltaTime;
@@ -187,9 +205,6 @@ void SLoadingScreen::DisplayRandomTip()
 {
     if (Tips.Num() > 0 && TipTextBlock.IsValid())
     {
-        // CHANGED: No longer FText::FromString(), just pass the FText directly
         TipTextBlock->SetText(Tips[FMath::RandRange(0, Tips.Num() - 1)]);
     }
 }
-
-END_SLATE_FUNCTION_BUILD_OPTIMIZATION

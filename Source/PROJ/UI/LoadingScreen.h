@@ -1,7 +1,6 @@
 ﻿#pragma once
 
 #include "CoreMinimal.h"
-#include "Data/LoadingScreenData.h"
 #include "Widgets/SCompoundWidget.h"
 
 class SScaleBox;
@@ -12,9 +11,11 @@ public:
 	SLATE_BEGIN_ARGS(SLoadingScreen)
 		: _SelectedBackground(nullptr)
 		, _SelectedLogo(nullptr)
+		, _InitialTipIndex(0)
 	{}
 		SLATE_ARGUMENT(UTexture2D*, SelectedBackground)
 		SLATE_ARGUMENT(UTexture2D*, SelectedLogo)
+		SLATE_ARGUMENT(int32, InitialTipIndex)
 		SLATE_ARGUMENT(TArray<FText>, LoadingTips)
 	SLATE_END_ARGS()
 
@@ -28,8 +29,6 @@ private:
 
 	FVector2D BGTextureSize = FVector2D::ZeroVector;
 	TSharedPtr<SScaleBox> BackgroundScaleBox; 
-
-	TStrongObjectPtr<ULoadingScreenData> LoadedDataAsset; 
 
 	TArray<FText> Tips;
 	float TipInterval = 0;
