@@ -1244,14 +1244,7 @@ void UEOSGameInstance::SetStartMatchSearchVariables(ESessionState NewSessionStat
 
 void UEOSGameInstance::ShowPersistentLoadingScreen()
 {
-	UTexture2D* SelectedBackground = nullptr;
-	if (LoadingBackgrounds.Num() > 0)
-	{
-		const int32 RandomIndex = FMath::RandRange(0, LoadingBackgrounds.Num() - 1);
-		SelectedBackground = LoadingBackgrounds[RandomIndex];
-	}
-
-	TSharedRef<SWidget> LoadingWidget = SNew(SLoadingScreen).BackgroundTexture(SelectedBackground);
+	TSharedRef<SWidget> LoadingWidget = SNew(SLoadingScreen);
 
 	// 1. Add to Viewport (Instant visual feedback)
 	if (GEngine && GEngine->GameViewport)
@@ -1268,7 +1261,7 @@ void UEOSGameInstance::ShowPersistentLoadingScreen()
 	LoadingScreen.bAllowEngineTick = false;
 	LoadingScreen.bAutoCompleteWhenLoadingCompletes = true;
 	LoadingScreen.bWaitForManualStop = false;
-	LoadingScreen.WidgetLoadingScreen = SNew(SLoadingScreen).BackgroundTexture(SelectedBackground);
+	LoadingScreen.WidgetLoadingScreen = SNew(SLoadingScreen);
 
 	GetMoviePlayer()->SetupLoadingScreen(LoadingScreen);
 }
