@@ -11,6 +11,7 @@
 #include "Online/OnlineSessionNames.h"
 #include "Framework/Application/SlateApplication.h"
 #include "PROJ/UI/LoadingScreen.h"
+#include "PROJ/UI/ProjectSettings/LoadingScreenSettings.h"
 
 UEOSGameInstance::UEOSGameInstance() :
 	MaxTeamSize(3),
@@ -1251,26 +1252,63 @@ void UEOSGameInstance::SetStartMatchSearchVariables(ESessionState NewSessionStat
 
 void UEOSGameInstance::ShowPersistentLoadingScreen()
 {
-	TSharedRef<SWidget> LoadingWidget = SNew(SLoadingScreen);
+    // 1. Reset pointers
+    UTexture2D* SelectedBG = nullptr;
+    UTexture2D* SelectedLogo = nullptr;
+    TArray<FText> SelectedTips;
+    
+    // Clear previous reference if any
+    CurrentLoadingScreenData = nullptr;
 
-	// 1. Add to Viewport (Instant visual feedback)
-	if (GEngine && GEngine->GameViewport)
-	{
-		if (ViewportLoadingWidget.IsValid())
-		{
-			GEngine->GameViewport->RemoveViewportWidgetContent(ViewportLoadingWidget.ToSharedRef());
-		}
-		ViewportLoadingWidget = LoadingWidget;
-		GEngine->GameViewport->AddViewportWidgetContent(ViewportLoadingWidget.ToSharedRef(), 10000);
-	}
-	
-	FLoadingScreenAttributes LoadingScreen;
-	LoadingScreen.bAllowEngineTick = false;
-	LoadingScreen.bAutoCompleteWhenLoadingCompletes = true;
-	LoadingScreen.bWaitForManualStop = false;
-	LoadingScreen.WidgetLoadingScreen = SNew(SLoadingScreen);
+    const ULoadingScreenSettings* Settings = GetDefault<ULoadingScreenSettings>();
 
-	GetMoviePlayer()->SetupLoadingScreen(LoadingScreen);
+    // 2. Load into the UPROPERTY Class Member
+    if (Settings && !Settings->LoadingScreenConfig.IsNull())
+    {
+        // We assign it to 'CurrentLoadingScreenData' (The UPROPERTY)
+        // This stops the Garbage Collector from deleting it during level travel.
+        CurrentLoadingScreenData = Settings->LoadingScreenConfig.LoadSynchronous();
+    }
+
+    // 3. Extract data from the Member Variable
+    if (CurrentLoadingScreenData)
+    {
+        if (CurrentLoadingScreenData->Backgrounds.Num() > 0)
+        {
+            SelectedBG = CurrentLoadingScreenData->Backgrounds[FMath::RandRange(0, CurrentLoadingScreenData->Backgrounds.Num() - 1)];
+        }
+        SelectedLogo = CurrentLoadingScreenData->Logo;
+        SelectedTips = CurrentLoadingScreenData->LoadingTips;
+    }
+
+    // 4. Create Viewport Widget (Instant Overlay)
+    TSharedRef<SLoadingScreen> LoadingWidget = SNew(SLoadingScreen)
+        .SelectedBackground(SelectedBG)
+        .SelectedLogo(SelectedLogo)
+        .LoadingTips(SelectedTips);
+
+    if (GEngine && GEngine->GameViewport)
+    {
+        if (ViewportLoadingWidget.IsValid())
+        {
+            GEngine->GameViewport->RemoveViewportWidgetContent(ViewportLoadingWidget.ToSharedRef());
+        }
+        ViewportLoadingWidget = LoadingWidget;
+        GEngine->GameViewport->AddViewportWidgetContent(ViewportLoadingWidget.ToSharedRef(), 10000);
+    }
+    
+    // 5. Setup MoviePlayer
+    FLoadingScreenAttributes LoadingScreenAttrs;
+    LoadingScreenAttrs.bAllowEngineTick = false;
+    LoadingScreenAttrs.bAutoCompleteWhenLoadingCompletes = true;
+    LoadingScreenAttrs.bWaitForManualStop = false;
+    
+    LoadingScreenAttrs.WidgetLoadingScreen = SNew(SLoadingScreen)
+        .SelectedBackground(SelectedBG)
+        .SelectedLogo(SelectedLogo)
+        .LoadingTips(SelectedTips);
+
+    GetMoviePlayer()->SetupLoadingScreen(LoadingScreenAttrs);
 }
 
 void UEOSGameInstance::StopPersistentLoadingScreen()
