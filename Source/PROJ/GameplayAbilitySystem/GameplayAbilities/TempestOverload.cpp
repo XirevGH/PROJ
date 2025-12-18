@@ -5,6 +5,11 @@
 #include "PROJ/Characters/BaseCharacter.h"
 #include "PROJ/Data/AbilityData.h"
 
+UTempestOverload::UTempestOverload()
+{
+	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
+}
+
 void UTempestOverload::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
                                        const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
                                        const FGameplayEventData* TriggerEventData)
@@ -16,8 +21,6 @@ void UTempestOverload::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	
 	UAbilitySystemComponent* ASC = Player->GetAbilitySystemComponent();
 	if (!ASC) return;
-	
-	if (!CanActivateAbility(Handle,ActorInfo)) return;
 
 	float Charges = ASC->GetNumericAttribute(UCharacterAttributeSet::GetConduitChargesAttribute());
 
@@ -25,6 +28,10 @@ void UTempestOverload::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	
 	if (Charges <= 0) return;
 	
+	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
+	{
+		return;
+	}
 	/*PlayMontage*/
 	PlayMontage(AbilityData->Montage);
 	
@@ -46,8 +53,6 @@ void UTempestOverload::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 		BuffValue);
 
 	ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
-	
-	EndAbility(Handle,ActorInfo,ActivationInfo,true,false);
 }
 
 bool UTempestOverload::CanActivateAbility(const FGameplayAbilitySpecHandle Handle,

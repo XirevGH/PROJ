@@ -170,6 +170,9 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void SetJoinIntent(const FString Intent) { JoinIntent = Intent; }
 
+	UPROPERTY(EditDefaultsOnly, Category = "UI|LoadingScreen")
+	float DelayBeforeStopLoadingScreen;
+
 private:
 	FName SessionName;
 	int32 MaxSearchResults;
