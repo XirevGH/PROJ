@@ -149,9 +149,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "UI|LoadingScreen")
 	void StopPersistentLoadingScreen();
 
-	UPROPERTY(EditDefaultsOnly, Category = "UI|LoadingScreen")
-	TArray<UTexture2D*> LoadingBackgrounds;
-
 	UFUNCTION(BlueprintCallable, Category = "Team")
 	void SetCurrentTeamSize(const int32 NewTeamSize);
 

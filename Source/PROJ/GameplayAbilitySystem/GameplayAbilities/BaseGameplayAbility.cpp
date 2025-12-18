@@ -51,11 +51,16 @@ void UBaseGameplayAbility::PlayMontage(UAnimMontage* Montage)
 {
 	if (!Montage) return;
 	
+	UAnimInstance* AnimInstance = GetActorInfo().GetAnimInstance();
+
+	UE_LOG(LogTemp, Warning, TEXT("AnimInstance: %s"),
+		AnimInstance ? *AnimInstance->GetName() : TEXT("NULL"));
+	
 	UE_LOG(LogTemp, Display, TEXT("Playing Montage"));
 	/*Montage start*/
 	auto* MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
 	this,
-	TEXT("MyMontageTask"),
+	NAME_None,
 	Montage,
 	1.0f,
 	NAME_None,

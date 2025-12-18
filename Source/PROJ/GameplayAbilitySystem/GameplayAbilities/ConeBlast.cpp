@@ -6,6 +6,7 @@
 #include "NiagaraFunctionLibrary.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "Engine/OverlapResult.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "PROJ/Characters/BaseCharacter.h"
 #include "PROJ/Data/AbilityData.h"
 
@@ -29,7 +30,11 @@ void UConeBlast::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const 
 	{
 		EndAbility(Handle,ActorInfo,ActivationInfo,true,false);
 	}
-	
+	MoveComp = Cast<UCharacterMovementComponent>(CachedPlayer->GetCharacterMovement());
+	if (MoveComp)
+	{
+		OriginalWalkSpeed = MoveComp->MaxWalkSpeed;
+	}
 	PlayMontage(AbilityData->Montage);
 
 	if (MontageNotifyTag.IsValid())
@@ -54,7 +59,7 @@ void UConeBlast::OnMontageNotifyReceived(FGameplayEventData Payload)
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, TEXT("Montage Notify Triggered!"));
 		ExecuteConeAttack();
 
-		if (ConeBlastVFX && CachedPlayer)
+		/*if (ConeBlastVFX && CachedPlayer)
 		{
 			float SpawnDistance = 100.f;
 		
@@ -75,7 +80,7 @@ void UConeBlast::OnMontageNotifyReceived(FGameplayEventData Payload)
 				ConeBlastVFX,
 				SpawnLocation,
 				SpawnRotation);
-		}
+		}*/
 	}
 }
 
@@ -83,7 +88,7 @@ void UConeBlast::PlayMontage(UAnimMontage* Montage)
 {
 	if (CachedPlayer)
 	{
-		CachedPlayer->bMovementInputBlocked = true;
+		MoveComp->MaxWalkSpeed = OriginalWalkSpeed * 0.5;
 	}
 	Super::PlayMontage(Montage);
 }
@@ -92,7 +97,7 @@ void UConeBlast::OnMontageCompleted()
 {
 	if (CachedPlayer)
 	{
-		CachedPlayer->bMovementInputBlocked = false;
+		MoveComp->MaxWalkSpeed = OriginalWalkSpeed;
 	}
 	Super::OnMontageCompleted();
 }

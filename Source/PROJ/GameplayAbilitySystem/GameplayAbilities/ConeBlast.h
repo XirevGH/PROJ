@@ -6,6 +6,7 @@
 #include "BaseGameplayAbility.h"
 #include "ConeBlast.generated.h"
 
+class UCharacterMovementComponent;
 class UNiagaraSystem;
 class ABaseCharacter;
 /**
@@ -67,5 +68,9 @@ private:
 
 	UPROPERTY()
 	ABaseCharacter* CachedPlayer;
+	UPROPERTY()
+	float OriginalWalkSpeed;
+	UPROPERTY()
+	UCharacterMovementComponent* MoveComp;
 	
 };

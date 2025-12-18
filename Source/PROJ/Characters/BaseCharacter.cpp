@@ -10,6 +10,7 @@
 #include "../Framework/BasePlayerState.h"
 #include "../GameplayAbilitySystem/AttributeSets/CharacterAttributeSet.h"
 #include "../Library/BaseAbilitySystemLibrary.h"
+#include "GameplayEffectExtension.h"
 #include "../Core/PROJ.h"
 #include "./PROJ/GameplayAbilitySystem/GameplayAbilities/BaseGameplayAbility.h"
 #include "../Weapon/Weapon.h"
@@ -123,7 +124,32 @@ void ABaseCharacter::OnRep_PlayerState()
 
 void ABaseCharacter::OnHealthAttributeChanged(const FOnAttributeChangeData& Data)
 {
-	OnHealthChanged(Data.NewValue, BaseAttributes->GetMaxHealth());
+	AActor* SourceActor = nullptr;
+	APlayerState* SourcePlayerState = nullptr;
+	
+	if (Data.GEModData != nullptr)
+	{
+		const FGameplayEffectContextHandle& EffectContext = Data.GEModData->EffectSpec.GetContext();
+		SourceActor = EffectContext.GetInstigator();
+	}
+	
+	if (SourceActor)
+	{
+		if (APlayerState* PS = Cast<APlayerState>(SourceActor))
+		{
+			SourcePlayerState = PS;
+		}
+		else if (APawn* Pawn = Cast<APawn>(SourceActor))
+		{
+			SourcePlayerState = Pawn->GetPlayerState();
+		}
+		else if (AController* PC = Cast<AController>(SourceActor))
+		{
+			SourcePlayerState = PC->PlayerState;
+		}
+	}
+	
+	OnHealthChanged(Data.NewValue, BaseAttributes->GetMaxHealth(), SourcePlayerState);
 }
 
 void ABaseCharacter::OnMoveSpeedAttributeChanged(const FOnAttributeChangeData& Data)
@@ -157,15 +183,21 @@ void ABaseCharacter::HandleDamageDealt(AActor* TargetActor, float DamageAmount, 
 	// This sends the message to the Player Controller of the person who shot the gun.
 	UE_LOG(LogTemp, Warning, TEXT("ClientShowDamageNumber"));
 
-	ClientShowDamageNumber(TargetActor, DamageAmount, bIsCrit);
+	Server_DamageDealt(TargetActor, DamageAmount, bIsCrit);
+	Client_DamageDealt(TargetActor, DamageAmount, bIsCrit);
 }
 
-void ABaseCharacter::ClientShowDamageNumber_Implementation(AActor* TargetActor, float DamageAmount, bool bIsCrit)
+void ABaseCharacter::Client_DamageDealt_Implementation(AActor* TargetActor, float DamageAmount, bool bIsCrit)
 {
 	// Now we are on the Player's screen.
 	// We have the reference to the TargetActor (the enemy) here!
 	UE_LOG(LogTemp, Warning, TEXT("OnShowDamageNumber"));
-	OnShowDamageNumber(TargetActor, DamageAmount, bIsCrit);
+	Client_OnDamageDealt(TargetActor, DamageAmount, bIsCrit);
+}
+
+void ABaseCharacter::Server_DamageDealt_Implementation(AActor* TargetActor, float DamageAmount, bool bIsCrit)
+{
+	Server_OnDamageDealt(TargetActor, DamageAmount, bIsCrit);
 }
 
 void ABaseCharacter::Tick(float DeltaTime)
@@ -337,7 +369,7 @@ void ABaseCharacter::BroadcastInitialValues()
 {
 	if (IsValid(BaseAttributes))
 	{
-		OnHealthChanged(BaseAttributes->GetCurrentHealth(), BaseAttributes->GetMaxHealth());
+		OnHealthChanged(BaseAttributes->GetCurrentHealth(), BaseAttributes->GetMaxHealth(), GetPlayerState());
 		OnManaChanged(BaseAttributes->GetMana(), BaseAttributes->GetMaxMana());
 		OnMoveSpeedChanged(BaseAttributes->GetCurrentMoveSpeed(), BaseAttributes->GetMaxMoveSpeed());
 	}
