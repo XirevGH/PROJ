@@ -10,7 +10,7 @@ public class PROJ : ModuleRules
 		
 		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine","GameplayAbilities",
 			"GameplayTasks","GameplayTags", "InputCore", "EnhancedInput", "OnlineSubsystem", "OnlineSubsystemUtils",
-			"OnlineSubsystemEOS", "MoviePlayer", "Slate", "SlateCore", "UMG"});
+			"OnlineSubsystemEOS", "MoviePlayer", "Slate", "SlateCore", "UMG", "DeveloperSettings"});
 
 		PrivateDependencyModuleNames.AddRange(new string[] { "AdvancedSessions", "AdvancedSteamSessions","Niagara" });
 
