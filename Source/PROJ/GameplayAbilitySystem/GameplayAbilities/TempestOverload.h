@@ -15,6 +15,7 @@ class PROJ_API UTempestOverload : public UBaseGameplayAbility
 	GENERATED_BODY()
 
 public:
+	UTempestOverload();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float DamageMultiplier = 0.1f;
