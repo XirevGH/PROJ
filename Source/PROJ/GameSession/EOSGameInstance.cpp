@@ -14,6 +14,7 @@
 
 UEOSGameInstance::UEOSGameInstance() :
 	MaxTeamSize(3),
+	DelayBeforeStopLoadingScreen(1.0f),
 	MaxSearchResults(100),
 	CachedGameMode(TEXT("1v1")),
 	bIsTeamLeader(false),
@@ -1173,6 +1174,12 @@ void UEOSGameInstance::FilterOpenPublicSearchResults()
 		const int32 MaxPublicConnections = Result.Session.SessionSettings.NumPublicConnections;
 		const int32 CurrentPlayers = MaxPublicConnections - OpenPublicConnections;
 
+		if (OpenPublicConnections <= 0)
+		{
+			UE_LOG(LogTemp, Display, TEXT("Session is already full"));
+			continue;
+		}
+
 		// Filter ghost sessions
 		if (!Result.Session.OwningUserId.IsValid())
 		{
@@ -1268,28 +1275,35 @@ void UEOSGameInstance::ShowPersistentLoadingScreen()
 
 void UEOSGameInstance::StopPersistentLoadingScreen()
 {
-	// 1. Stop the Movie Player (Transition Screen)
-	GetMoviePlayer()->StopMovie();
+	UWorld* World = GetWorld();
+	if (!World) return;
 
-	// 2. Remove the Viewport Widget (Handshake Screen)
-	if (ViewportLoadingWidget.IsValid())
+	FTimerHandle TimerHandle;
+	World->GetTimerManager().SetTimer(TimerHandle, [this]
 	{
-		if (GEngine && GEngine->GameViewport)
-		{
-			GEngine->GameViewport->RemoveViewportWidgetContent(ViewportLoadingWidget.ToSharedRef());
-		}
-		ViewportLoadingWidget.Reset();
-	}
+		// 1. Stop the Movie Player (Transition Screen)
+		GetMoviePlayer()->StopMovie();
 
-	if (UWorld* World = GetWorld())
-	{
-		if (APlayerController* PC = World->GetFirstPlayerController())
+		// 2. Remove the Viewport Widget (Handshake Screen)
+		if (ViewportLoadingWidget.IsValid())
 		{
-			// Restore your standard "Game And UI" mode
-			FInputModeGameAndUI InputMode;
-			PC->SetInputMode(InputMode);
+			if (GEngine && GEngine->GameViewport)
+			{
+				GEngine->GameViewport->RemoveViewportWidgetContent(ViewportLoadingWidget.ToSharedRef());
+			}
+			ViewportLoadingWidget.Reset();
 		}
-	}
+
+		if (UWorld* World = GetWorld())
+		{
+			if (APlayerController* PC = World->GetFirstPlayerController())
+			{
+				// Restore your standard "Game And UI" mode
+				FInputModeGameAndUI InputMode;
+				PC->SetInputMode(InputMode);
+			}
+		}
+	}, DelayBeforeStopLoadingScreen, false);
 }
 
 void UEOSGameInstance::SetCurrentTeamSize(const int32 NewTeamSize)
