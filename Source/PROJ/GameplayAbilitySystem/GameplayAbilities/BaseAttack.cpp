@@ -125,7 +125,7 @@ void UBaseAttack::OnHitscanStart(FGameplayEventData Payload)
 	{
 		if (AbilityData->AbilitySound && GetAvatarActorFromActorInfo())
 		{
-			K2_ExecuteGameplayCue()
+			//K2_ExecuteGameplayCue()
 			UGameplayStatics::PlaySoundAtLocation(
 				this,
 				AbilityData->AbilitySound,
