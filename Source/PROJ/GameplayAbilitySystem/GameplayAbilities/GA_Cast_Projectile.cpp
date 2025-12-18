@@ -119,6 +119,6 @@ FRotator UGA_Cast_Projectile::GetProjectileSpawnRotation(FVector StartLocation)
 	{
 		End = Hit.ImpactPoint;
 	}
-	DrawDebugLine(GetWorld(), StartLocation, End, FColor::Red, false, 2.f, 0, 2.f);
+	//DrawDebugLine(GetWorld(), StartLocation, End, FColor::Red, false, 2.f, 0, 2.f);
 	return (End - StartLocation).Rotation();
 }
