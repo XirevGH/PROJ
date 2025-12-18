@@ -2,6 +2,7 @@
 
 #include "BaseAttack.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
+#include "Kismet/GameplayStatics.h"
 #include "PROJ/Characters/BaseCharacter.h"
 #include "PROJ/Data/AbilityData.h"
 
@@ -122,6 +123,13 @@ void UBaseAttack::OnHitscanStart(FGameplayEventData Payload)
 {
 	if (!bIsHitscanActive)
 	{
+		if (AbilityData->AbilitySound && GetAvatarActorFromActorInfo())
+		{
+			UGameplayStatics::PlaySoundAtLocation(
+				this,
+				AbilityData->AbilitySound,
+				GetAvatarActorFromActorInfo()->GetActorLocation());
+		}
 		if (CurrentActorInfo->IsNetAuthority())
 		{
 			StartHitScan();
