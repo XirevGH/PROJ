@@ -65,6 +65,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	FGameplayTagContainer GrantedTags;
 	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Tag")
+	FGameplayTag AbilityTag;
+	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Sound")
 	USoundBase* AbilitySound;
 	
