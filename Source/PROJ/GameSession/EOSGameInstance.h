@@ -210,6 +210,9 @@ private:
 
 	TSharedPtr<SWidget> ViewportLoadingWidget;
 
+	UPROPERTY()
+	class ULoadingScreenData* CachedLoadingScreenData;
+
 	UFUNCTION()
 	void OnFindOpenPublicSessionsCompleted(const bool bSuccess);
 	void OnFindMatchSessionsCompleted(bool bSuccess);
