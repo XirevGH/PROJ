@@ -5,8 +5,6 @@
 
 #include "AbilitySystemGlobals.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
-#include "AssetTypeActions/AssetDefinition_SoundBase.h"
-#include "Engine/OverlapResult.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "PROJ/AbilityActors/AbilityActor.h"

@@ -53,7 +53,7 @@ void UGEEC_Character::Execute_Implementation(const FGameplayEffectCustomExecutio
     if (FMath::RandRange(0.0f, 1.0f) <= 0.2f) 
     {
         bIsCritical = true;
-        Damage *= 2.0f;
+        Damage *= 1.5f;
     }
 
     float FinalDamage = Damage * FMath::FRandRange(0.95f, 1.05);
