@@ -58,11 +58,6 @@ bool AAbilityActor::ShouldSkipHit_Implementation(AActor* OtherActor)
 {
 	if (Caster)
 	{
-		if (OtherActor->IsA(DummyTestBPClass))
-		{
-			return bShouldSkipHit;
-		}
-		
 		if (ABasePlayerState* PS = Cast<ABasePlayerState>(Cast<ABaseCharacter>(Caster)->GetPlayerState()))
 		{
 			if (ABaseCharacter* OtherCharacter = Cast<ABaseCharacter>(OtherActor))
