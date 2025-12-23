@@ -67,8 +67,15 @@ public:
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Tag")
 	FGameplayTag AbilityTag;
-	
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Sound")
 	USoundBase* AbilitySound;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Sound")
+	USoundBase* StartCastSound;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Sound")
+	USoundBase* ExecuteCastSound;
+	
 	
 };
