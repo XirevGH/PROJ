@@ -44,6 +44,10 @@ class PROJ_API UAbilityData : public UPrimaryDataAsset
 {
 	GENERATED_BODY()
 public:
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	FString AbilityName;
+	
 	/*Montage*/
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	UAnimMontage* Montage;

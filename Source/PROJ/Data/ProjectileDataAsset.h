@@ -27,19 +27,9 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Particles")
 	UParticleSystem* NoHitParticle;
-	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Particles / Ability")
-	UParticleSystem* MuzzleFlashParticle;
-	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Particles / Ability")
-	UParticleSystem* CastParticle;
-	
-	UPROPERTY(EditDefaultsOnly,BlueprintReadWrite)
-	FName SpawnSocketName;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Class")
 	TSubclassOf<AProjectile> ProjectileActorClass;
-	
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Sound")
 	USoundBase* HitSound;
