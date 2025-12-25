@@ -77,5 +77,12 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Sound")
 	USoundBase* ExecuteCastSound;
 	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Particle Effect")
+	UParticleSystem* MuzzleFlashParticle;
 	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Particle Effect")
+	UParticleSystem* CastParticle;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Particle Effect")
+	FName SpawnSocketName;
 };
