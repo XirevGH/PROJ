@@ -162,8 +162,8 @@ void UBaseGameplayAbility::InitializeAbilityActor(AAbilityActor* Actor)
 	if (!Actor)
 		return;
 	
-	Actor->SetReplicates(true);	
-	Actor->SetReplicateMovement(true);
+	//Actor->SetReplicates(true);	
+	//Actor->SetReplicateMovement(true);
 	Actor->InitializeAbilityActor(
 		GetAvatarActorFromActorInfo(),
 		GetAbilitySystemComponentFromActorInfo(),

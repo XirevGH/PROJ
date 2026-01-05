@@ -12,6 +12,7 @@ AAbilityActor::AAbilityActor()
 {
 	PrimaryActorTick.bCanEverTick = true;
 	bReplicates = true;
+	
 	// expensive but it is ok for this project
 	bAlwaysRelevant = true;
 }
@@ -19,6 +20,7 @@ AAbilityActor::AAbilityActor()
 void AAbilityActor::BeginPlay()
 {
 	Super::BeginPlay();
+	SetReplicateMovement(true);
 }
 
 void AAbilityActor::Cleanup()
