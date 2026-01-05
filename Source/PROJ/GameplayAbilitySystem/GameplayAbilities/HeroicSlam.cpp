@@ -101,28 +101,19 @@ void UHeroicSlam::LaunchToTarget()
 		this,
 		&UHeroicSlam::OnCharacterLanded);
 	
-	/*Move->StopMovementImmediately();
-	Move->SetMovementMode(MOVE_Falling);*/
-	
 	/*Launch player in an arc*/
 	CachedPlayer->LaunchCharacter(LaunchVelocity, true, true);
-
-	/*Set a timer to check every 0.1 sec to see if the player landed to restore MS*/
-	/*
-	GetWorld()->GetTimerManager().SetTimer(
-	LandingCheckTimer,
-	this,
-	&UHeroicSlam::LandingCheck,
-	0.1f,
-	true);*/
+	
 }
 
 void UHeroicSlam::OnCharacterLanded()
 {
 	if (!CachedPlayer) return;
-
+	
 	RestoreAirFriction();
 	LandingCheck();
+
+	CachedPlayer->OnCharacterLanded.RemoveAll(this);
 }
 
 void UHeroicSlam::LandingCheck()
@@ -157,9 +148,6 @@ void UHeroicSlam::LandingCheck()
 			ApplyEffectsToTarget(HitActor);
 		}
 	}
-	
-	/*Reset timer*/
-	GetWorld()->GetTimerManager().ClearTimer(LandingCheckTimer);
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }
 

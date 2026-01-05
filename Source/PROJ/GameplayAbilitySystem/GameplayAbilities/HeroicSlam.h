@@ -21,7 +21,6 @@ class PROJ_API UHeroicSlam : public UBaseGameplayAbility
 	GENERATED_BODY()
 
 public:
-
 	UHeroicSlam();
 	
 	UPROPERTY(EditDefaultsOnly, Category="Slam")
@@ -72,8 +71,6 @@ private:
 
 	UPROPERTY()
 	UCharacterMovementComponent* CachedMovement;
-	
-	FTimerHandle LandingCheckTimer;
 
 	UFUNCTION()
 	void OnCharacterLanded();
