@@ -64,7 +64,7 @@ public:
 	void Jump() override;
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "GAS")
-	void OnHealthChanged(float CurrentHealth, float MaxHealth);
+	void OnHealthChanged(float CurrentHealth, float MaxHealth, APlayerState* ActorCausingChange);
 	
 	UFUNCTION(BlueprintImplementableEvent, Category = "GAS")
 	void OnMoveSpeedChanged(float CurrentMoveSpeed, float MaxMoveSpeed);
@@ -158,10 +158,16 @@ protected:
 	virtual void Landed(const FHitResult& Hit) override;
 	
 	UFUNCTION(Client, Unreliable)
-	void ClientShowDamageNumber(AActor* TargetActor, float DamageAmount, bool bIsCrit);
+	void Client_DamageDealt(AActor* TargetActor, float DamageAmount, bool bIsCrit);
+
+	UFUNCTION(Server, Unreliable)
+	void Server_DamageDealt(AActor* TargetActor, float DamageAmount, bool bIsCrit);
 	
 	UFUNCTION(BlueprintImplementableEvent, Category = "GAS|UI")
-	void OnShowDamageNumber(AActor* TargetActor, float DamageAmount, bool bIsCrit);
+	void Client_OnDamageDealt(AActor* TargetActor, float DamageAmount, bool bIsCrit);
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "GAS|UI")
+	void Server_OnDamageDealt(AActor* TargetActor, float DamageAmount, bool bIsCrit);
 	
 	void InitAbilitySystemComponent();
 

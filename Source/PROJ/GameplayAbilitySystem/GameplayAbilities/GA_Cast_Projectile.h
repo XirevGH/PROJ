@@ -29,9 +29,6 @@ class PROJ_API UGA_Cast_Projectile : public UBaseGameplayAbility
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ProjectileData")
 	UProjectileDataAsset* ProjectileData;
 	
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	FName SpawnSocketName;
-	
 	UGA_Cast_Projectile();
 
 	protected:

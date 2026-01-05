@@ -149,9 +149,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "UI|LoadingScreen")
 	void StopPersistentLoadingScreen();
 
-	UPROPERTY(EditDefaultsOnly, Category = "UI|LoadingScreen")
-	TArray<UTexture2D*> LoadingBackgrounds;
-
 	UFUNCTION(BlueprintCallable, Category = "Team")
 	void SetCurrentTeamSize(const int32 NewTeamSize);
 
@@ -172,6 +169,9 @@ protected:
 
 	UFUNCTION(BlueprintCallable)
 	void SetJoinIntent(const FString Intent) { JoinIntent = Intent; }
+
+	UPROPERTY(EditDefaultsOnly, Category = "UI|LoadingScreen")
+	float DelayBeforeStopLoadingScreen;
 
 private:
 	FName SessionName;
@@ -209,6 +209,9 @@ private:
 	FDelegateHandle UpdateSessionDelegateHandle;
 
 	TSharedPtr<SWidget> ViewportLoadingWidget;
+
+	UPROPERTY()
+	class ULoadingScreenData* CachedLoadingScreenData;
 
 	UFUNCTION()
 	void OnFindOpenPublicSessionsCompleted(const bool bSuccess);

@@ -11,9 +11,11 @@
 #include "Online/OnlineSessionNames.h"
 #include "Framework/Application/SlateApplication.h"
 #include "PROJ/UI/LoadingScreen.h"
+#include "PROJ/UI/ProjectSettings/LoadingScreenSettings.h"
 
 UEOSGameInstance::UEOSGameInstance() :
 	MaxTeamSize(3),
+	DelayBeforeStopLoadingScreen(1.0f),
 	MaxSearchResults(100),
 	CachedGameMode(TEXT("1v1")),
 	bIsTeamLeader(false),
@@ -23,7 +25,8 @@ UEOSGameInstance::UEOSGameInstance() :
 	bReturningToOwnLobby(false),
 	SessionCreationRetryCount(0),
 	MigrationRetryCount(0),
-	TeamSize(0)
+	TeamSize(0),
+	CachedLoadingScreenData(nullptr)
 {
 	CurrentSessionState = ESessionState::Lobby;
 }
@@ -51,6 +54,13 @@ void UEOSGameInstance::Init()
 	{
 		GEngine->OnTravelFailure().AddUObject(this, &UEOSGameInstance::HandleTravelFailure);
 		GEngine->OnNetworkFailure().AddUObject(this, &UEOSGameInstance::HandleNetworkFailure);
+	}
+
+	const ULoadingScreenSettings* Settings = GetDefault<ULoadingScreenSettings>();
+	if (Settings && !Settings->LoadingScreenConfig.IsNull())
+	{
+		CachedLoadingScreenData = Settings->LoadingScreenConfig.LoadSynchronous();
+		UE_LOG(LogTemp, Log, TEXT("Loading Screen Data Cached in Init."));
 	}
 
 	UE_LOG(LogTemp, Display, TEXT("SessionState lobby int: %hd"), static_cast<int32>(ESessionState::Lobby));
@@ -1173,6 +1183,12 @@ void UEOSGameInstance::FilterOpenPublicSearchResults()
 		const int32 MaxPublicConnections = Result.Session.SessionSettings.NumPublicConnections;
 		const int32 CurrentPlayers = MaxPublicConnections - OpenPublicConnections;
 
+		if (OpenPublicConnections <= 0)
+		{
+			UE_LOG(LogTemp, Display, TEXT("Session is already full"));
+			continue;
+		}
+
 		// Filter ghost sessions
 		if (!Result.Session.OwningUserId.IsValid())
 		{
@@ -1244,59 +1260,107 @@ void UEOSGameInstance::SetStartMatchSearchVariables(ESessionState NewSessionStat
 
 void UEOSGameInstance::ShowPersistentLoadingScreen()
 {
-	UTexture2D* SelectedBackground = nullptr;
-	if (LoadingBackgrounds.Num() > 0)
-	{
-		const int32 RandomIndex = FMath::RandRange(0, LoadingBackgrounds.Num() - 1);
-		SelectedBackground = LoadingBackgrounds[RandomIndex];
-	}
+    // If data failed to load in Init, try one last safety load (unlikely)
+    if (!CachedLoadingScreenData)
+    {
+        const ULoadingScreenSettings* Settings = GetDefault<ULoadingScreenSettings>();
+        if (Settings && !Settings->LoadingScreenConfig.IsNull())
+        {
+            CachedLoadingScreenData = Settings->LoadingScreenConfig.LoadSynchronous();
+        }
+    }
 
-	TSharedRef<SWidget> LoadingWidget = SNew(SLoadingScreen).BackgroundTexture(SelectedBackground);
+    // Default pointers
+    UTexture2D* SelectedBG = nullptr;
+    UTexture2D* SelectedLogo = nullptr;
+    TArray<FText> AllTips;
+    int32 StartTipIndex = 0;
 
-	// 1. Add to Viewport (Instant visual feedback)
-	if (GEngine && GEngine->GameViewport)
-	{
-		if (ViewportLoadingWidget.IsValid())
-		{
-			GEngine->GameViewport->RemoveViewportWidgetContent(ViewportLoadingWidget.ToSharedRef());
-		}
-		ViewportLoadingWidget = LoadingWidget;
-		GEngine->GameViewport->AddViewportWidgetContent(ViewportLoadingWidget.ToSharedRef(), 10000);
-	}
-	
-	FLoadingScreenAttributes LoadingScreen;
-	LoadingScreen.bAllowEngineTick = false;
-	LoadingScreen.bAutoCompleteWhenLoadingCompletes = true;
-	LoadingScreen.bWaitForManualStop = false;
-	LoadingScreen.WidgetLoadingScreen = SNew(SLoadingScreen).BackgroundTexture(SelectedBackground);
+    // 1. Extract Data from Cache
+    if (CachedLoadingScreenData)
+    {
+        SelectedLogo = CachedLoadingScreenData->Logo;
+        AllTips = CachedLoadingScreenData->LoadingTips;
 
-	GetMoviePlayer()->SetupLoadingScreen(LoadingScreen);
+        // Pick Random Background
+        if (CachedLoadingScreenData->Backgrounds.Num() > 0)
+        {
+            SelectedBG = CachedLoadingScreenData->Backgrounds[FMath::RandRange(0, CachedLoadingScreenData->Backgrounds.Num() - 1)];
+        }
+
+        // Pick Random Tip Index
+        if (AllTips.Num() > 0)
+        {
+            StartTipIndex = FMath::RandRange(0, AllTips.Num() - 1);
+        }
+    }
+
+    // 2. Create the Viewport Widget
+    // We pass the CACHED data. No loading happens here. Instant.
+    TSharedRef<SLoadingScreen> LoadingWidget = SNew(SLoadingScreen)
+        .SelectedBackground(SelectedBG)
+        .SelectedLogo(SelectedLogo)
+        .LoadingTips(AllTips)
+        .InitialTipIndex(StartTipIndex);
+
+    if (GEngine && GEngine->GameViewport)
+    {
+        if (ViewportLoadingWidget.IsValid())
+        {
+            GEngine->GameViewport->RemoveViewportWidgetContent(ViewportLoadingWidget.ToSharedRef());
+        }
+        ViewportLoadingWidget = LoadingWidget;
+        // Z-Order 10000 ensures it is on top of everything
+        GEngine->GameViewport->AddViewportWidgetContent(ViewportLoadingWidget.ToSharedRef(), 10000);
+    }
+    
+    // 3. Setup the Movie Player
+    // Pass the EXACT SAME pointers and index.
+    FLoadingScreenAttributes LoadingScreenAttrs;
+    LoadingScreenAttrs.bAllowEngineTick = false;
+    LoadingScreenAttrs.bAutoCompleteWhenLoadingCompletes = true;
+    LoadingScreenAttrs.bWaitForManualStop = false;
+    
+    LoadingScreenAttrs.WidgetLoadingScreen = SNew(SLoadingScreen)
+        .SelectedBackground(SelectedBG)
+        .SelectedLogo(SelectedLogo)
+        .LoadingTips(AllTips)
+        .InitialTipIndex(StartTipIndex);
+
+    GetMoviePlayer()->SetupLoadingScreen(LoadingScreenAttrs);
 }
 
 void UEOSGameInstance::StopPersistentLoadingScreen()
 {
-	// 1. Stop the Movie Player (Transition Screen)
-	GetMoviePlayer()->StopMovie();
+	UWorld* World = GetWorld();
+	if (!World) return;
 
-	// 2. Remove the Viewport Widget (Handshake Screen)
-	if (ViewportLoadingWidget.IsValid())
+	FTimerHandle TimerHandle;
+	World->GetTimerManager().SetTimer(TimerHandle, [this]
 	{
-		if (GEngine && GEngine->GameViewport)
-		{
-			GEngine->GameViewport->RemoveViewportWidgetContent(ViewportLoadingWidget.ToSharedRef());
-		}
-		ViewportLoadingWidget.Reset();
-	}
+		// 1. Stop the Movie Player (Transition Screen)
+		GetMoviePlayer()->StopMovie();
 
-	if (UWorld* World = GetWorld())
-	{
-		if (APlayerController* PC = World->GetFirstPlayerController())
+		// 2. Remove the Viewport Widget (Handshake Screen)
+		if (ViewportLoadingWidget.IsValid())
 		{
-			// Restore your standard "Game And UI" mode
-			FInputModeGameAndUI InputMode;
-			PC->SetInputMode(InputMode);
+			if (GEngine && GEngine->GameViewport)
+			{
+				GEngine->GameViewport->RemoveViewportWidgetContent(ViewportLoadingWidget.ToSharedRef());
+			}
+			ViewportLoadingWidget.Reset();
 		}
-	}
+
+		if (UWorld* World = GetWorld())
+		{
+			if (APlayerController* PC = World->GetFirstPlayerController())
+			{
+				// Restore your standard "Game And UI" mode
+				FInputModeGameAndUI InputMode;
+				PC->SetInputMode(InputMode);
+			}
+		}
+	}, DelayBeforeStopLoadingScreen, false);
 }
 
 void UEOSGameInstance::SetCurrentTeamSize(const int32 NewTeamSize)

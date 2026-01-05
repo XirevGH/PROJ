@@ -44,6 +44,10 @@ class PROJ_API UAbilityData : public UPrimaryDataAsset
 {
 	GENERATED_BODY()
 public:
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	FString AbilityName;
+	
 	/*Montage*/
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	UAnimMontage* Montage;
@@ -65,7 +69,24 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	FGameplayTagContainer GrantedTags;
 	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Tag")
+	FGameplayTag AbilityTag;
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Sound")
 	USoundBase* AbilitySound;
 	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Sound")
+	USoundBase* StartCastSound;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Sound")
+	USoundBase* ExecuteCastSound;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Particle Effect")
+	UParticleSystem* MuzzleFlashParticle;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Particle Effect")
+	UParticleSystem* CastParticle;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Particle Effect")
+	FName SpawnSocketName;
 };

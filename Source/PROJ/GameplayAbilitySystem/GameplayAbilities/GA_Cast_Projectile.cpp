@@ -6,6 +6,7 @@
 #include "PROJ/AbilityActors/Projectiles/Projectile.h"
 #include "PROJ/Data/ProjectileDataAsset.h"
 #include "GameFramework/PlayerController.h"
+#include "PROJ/Data/AbilityData.h"
 
 UGA_Cast_Projectile::UGA_Cast_Projectile()
 {
@@ -43,10 +44,10 @@ void UGA_Cast_Projectile::SpawnProjectile()
 
 	
 	
-	if (GetActorInfo().SkeletalMeshComponent->DoesSocketExist(SpawnSocketName))
+	if (GetActorInfo().SkeletalMeshComponent->DoesSocketExist(AbilityData->SpawnSocketName))
 	{
 		// Get the transform of the socket
-		FTransform SpawnTransform = GetActorInfo().SkeletalMeshComponent->GetSocketTransform(SpawnSocketName);
+		FTransform SpawnTransform = GetActorInfo().SkeletalMeshComponent->GetSocketTransform(AbilityData->SpawnSocketName);
 		
 		SpawnLocation = SpawnTransform.GetLocation();
 		SpawnRotation = GetProjectileSpawnRotation(SpawnLocation);
@@ -60,14 +61,14 @@ void UGA_Cast_Projectile::SpawnProjectile()
 	else
 	{ 
 		// if no socket spawn here
-		float HeightOffset = 30.f; // whatever you want
+		float HeightOffset = 30.f; // middle of the mesh
 		SpawnLocation = Avatar->GetActorLocation()
 			+ Avatar->GetActorForwardVector()
 			+ FVector(0.f, 0.f, HeightOffset);
 		SpawnRotation = GetProjectileSpawnRotation(SpawnLocation);
 		
 		// can change to camera rotation
-		UE_LOG(LogTemp, Warning, TEXT("Socket %s does not exist!"), *SpawnSocketName.ToString())
+		UE_LOG(LogTemp, Warning, TEXT("Socket %s does not exist!"), *AbilityData->SpawnSocketName.ToString())
 	}
 
 	if (!ProjectileData)
@@ -76,13 +77,10 @@ void UGA_Cast_Projectile::SpawnProjectile()
 		return;
 	}
 		
-		
 	ProjectileActor = World->SpawnActor<AProjectile>(ProjectileData->ProjectileActorClass, SpawnLocation, SpawnRotation);
 	if (ProjectileActor)
 	{
 		InitializeAbilityActor(ProjectileActor);
-		
-		//UE_LOG(LogTemp, Warning, TEXT("Data asset in ability %s"), ProjectileData ? TEXT("is valid now"): TEXT("Not valid now"));
 		ProjectileActor->InitializeProjectile(ProjectileData);
 	}
 	else
@@ -119,6 +117,6 @@ FRotator UGA_Cast_Projectile::GetProjectileSpawnRotation(FVector StartLocation)
 	{
 		End = Hit.ImpactPoint;
 	}
-	DrawDebugLine(GetWorld(), StartLocation, End, FColor::Red, false, 2.f, 0, 2.f);
+	//DrawDebugLine(GetWorld(), StartLocation, End, FColor::Red, false, 2.f, 0, 2.f);
 	return (End - StartLocation).Rotation();
 }
