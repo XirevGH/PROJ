@@ -418,6 +418,11 @@ void ABaseCharacter::Jump()
 	Super::Jump();
 }
 
+void ABaseCharacter::Landed(const FHitResult& Hit)
+{
+	Super::Landed(Hit);
+	OnCharacterLanded.Broadcast();
+}
 
 void ABaseCharacter::OnCancelActiveAbilityTriggered(const FInputActionValue& Value)
 {

@@ -26,7 +26,10 @@ class UInputMappingContext;
 class UGameplayAbility;
 class UHealthComponent;
 
+DECLARE_MULTICAST_DELEGATE(FOnCharacterLanded);
+
 UCLASS()
+
 class PROJ_API ABaseCharacter : public ACharacter, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
@@ -68,7 +71,7 @@ public:
 	
 	UFUNCTION(BlueprintImplementableEvent, Category = "GAS")
 	void OnManaChanged(float CurrentMana, float MaxMana);
-
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	bool bMovementInputBlocked = false;
 	
@@ -148,9 +151,12 @@ public:
 
 	void HandleDamageDealt(AActor* TargetActor, float DamageAmount, bool bIsCrit);
 	
+	FOnCharacterLanded OnCharacterLanded;
 protected:
 	virtual void BeginPlay() override;
-
+	
+	virtual void Landed(const FHitResult& Hit) override;
+	
 	UFUNCTION(Client, Unreliable)
 	void ClientShowDamageNumber(AActor* TargetActor, float DamageAmount, bool bIsCrit);
 	

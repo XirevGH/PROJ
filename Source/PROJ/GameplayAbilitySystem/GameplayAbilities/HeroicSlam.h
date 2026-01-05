@@ -7,6 +7,7 @@
 #include "BaseGameplayAbility.h"
 #include "HeroicSlam.generated.h"
 
+class UCharacterMovementComponent;
 class AGameplayAbilityTargetActor;
 class ABaseCharacter;
 class UNiagaraSystem;
@@ -37,6 +38,7 @@ public:
 	float ArcParam = .5f;
 	UPROPERTY()
 	bool bLeapEffectsApplied = false;
+		
 	/*Attributes for air and launch arc*/
 	UPROPERTY()
 	float OriginalAirControl;
@@ -68,8 +70,14 @@ private:
 	UPROPERTY()
 	ABaseCharacter* CachedPlayer;
 
+	UPROPERTY()
+	UCharacterMovementComponent* CachedMovement;
+	
 	FTimerHandle LandingCheckTimer;
 
+	UFUNCTION()
+	void OnCharacterLanded();
+	
 	UFUNCTION()
 	void LandingCheck();
 };
