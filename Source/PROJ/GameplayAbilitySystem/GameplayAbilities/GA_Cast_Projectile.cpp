@@ -4,7 +4,7 @@
 #include "GA_Cast_Projectile.h"
 #include "AbilitySystemComponent.h"
 #include "PROJ/AbilityActors/Projectiles/Projectile.h"
-#include "PROJ/Data/ProjectileDataAsset.h"
+#include "PROJ/Data/ProjectileData.h"
 #include "GameFramework/PlayerController.h"
 #include "PROJ/Data/AbilityData.h"
 

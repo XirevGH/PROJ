@@ -7,7 +7,7 @@
 
 #include "GA_Cast_Projectile.generated.h"
 
-class UProjectileDataAsset;
+class UProjectileData;
 /**
  * 
  */
@@ -27,7 +27,7 @@ class PROJ_API UGA_Cast_Projectile : public UBaseGameplayAbility
 	FRotator SpawnRotation;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ProjectileData")
-	UProjectileDataAsset* ProjectileData;
+	UProjectileData* ProjectileData;
 	
 	UGA_Cast_Projectile();
 

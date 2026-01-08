@@ -7,11 +7,9 @@
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Components/SphereComponent.h"
 #include "GameplayEffectTypes.h"
-#include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 #include "Particles/ParticleSystemComponent.h"
-#include "ProfilingDebugging/CookStats.h"
-#include "PROJ/Data/ProjectileDataAsset.h"
+#include "PROJ/Data/ProjectileData.h"
 
 // Sets default values
 AProjectile::AProjectile()
@@ -73,7 +71,7 @@ void AProjectile::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLif
 	DOREPLIFETIME(AProjectile, ProjectileData);
 }
 
-void AProjectile::InitializeProjectile(UProjectileDataAsset* InData)
+void AProjectile::InitializeProjectile(UProjectileData* InData)
 {
 	if (!HasAuthority()) return;
 	ProjectileData = InData;
@@ -91,15 +89,15 @@ void AProjectile::OnProjectileHit_Implementation(UPrimitiveComponent* HitComp, A
 	if (!ShouldSkipHit(OtherActor))
 	{
 		FVector IncomingDirection = -ProjectileMovement->Velocity.GetSafeNormal();
-		 MulticastSpawnImpactFX(ProjectileData->WorldHitParticle, ProjectileData->ImpactSound, Hit.ImpactPoint,
-		 IncomingDirection.Rotation());
 		
-		// FGameplayCueParameters CueParams;
-		// CueParams.Location = Hit.ImpactPoint;
-		// CueParams.Instigator = Caster;
-		// CueParams.EffectCauser = this;
-		//
-		// CasterASC->ExecuteGameplayCue(FGameplayTag::RequestGameplayTag(TEXT("GameplayCue.Ability.Cast.Execute")), CueParams);
+		FGameplayCueParameters CueParams;
+		CueParams.Location = GetActorLocation();
+		CueParams.Normal = IncomingDirection;
+		CueParams.Instigator = Caster;
+		CueParams.EffectCauser = this;
+		CueParams.SourceObject = ProjectileData;
+		CueParams.AggregatedSourceTags.AddTag(FGameplayTag::RequestGameplayTag("Surface.World"));
+		CasterASC->ExecuteGameplayCue(FGameplayTag::RequestGameplayTag(TEXT("GameplayCue.Projectile.Impact")), CueParams);
 	}
 }
 
@@ -115,28 +113,18 @@ if (!HasAuthority())
 
 	if (!ShouldSkipHit_Implementation(OtherActor))
 	{
-		MulticastSpawnImpactFX(ProjectileData->CharacterHitParticle, ProjectileData->ImpactSound, GetActorLocation(), GetActorRotation());
-
-		// FGameplayCueParameters CueParams;
-		// CueParams.Location = GetActorLocation();
-		// CueParams.Instigator = Caster;
-		// CueParams.EffectCauser = this;
-		//
-		// CasterASC->ExecuteGameplayCue(FGameplayTag::RequestGameplayTag(TEXT("GameplayCue.Ability.Cast.Execute")), CueParams);
+		FVector IncomingDirection = -ProjectileMovement->Velocity.GetSafeNormal();
+		
+		FGameplayCueParameters CueParams;
+		CueParams.Location = GetActorLocation();
+		CueParams.Normal = IncomingDirection;
+		CueParams.Instigator = Caster;
+		CueParams.EffectCauser = this;
+		CueParams.SourceObject = ProjectileData;
+		CueParams.AggregatedSourceTags.AddTag(FGameplayTag::RequestGameplayTag("Surface.Player"));
+		
+		CasterASC->ExecuteGameplayCue(FGameplayTag::RequestGameplayTag(TEXT("GameplayCue.Projectile.Impact")), CueParams);
 	}
 }
 
-void AProjectile::MulticastSpawnImpactFX_Implementation(UParticleSystem* Particle,  USoundBase* Sound, FVector Location, FRotator Rotation)
-{
-	if (Particle)
-	{
-		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(),  Particle,  Location, Rotation);
-	}
-	
-	if (Sound)
-	{
-		UGameplayStatics::SpawnSoundAtLocation(GetWorld(),  Sound, Location, Rotation);
-	}
-	
-}
 

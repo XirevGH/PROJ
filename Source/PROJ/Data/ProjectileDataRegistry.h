@@ -3,18 +3,20 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "AbilityData.h"
+#include "GameplayTagContainer.h"
+#include "ProjectileData.h"
 #include "Engine/DataAsset.h"
-#include "AbilityEffectLibrary.generated.h"
+#include "ProjectileDataRegistry.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class PROJ_API UAbilityEffectLibrary : public UPrimaryDataAsset
+class PROJ_API UProjectileDataRegistry : public UPrimaryDataAsset
 {
 	GENERATED_BODY()
+
 public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	TMap<FGameplayTag, UAbilityData*> EffectMap;
+	TMap<FGameplayTag, UProjectileData*> ProjectileMap;
 };

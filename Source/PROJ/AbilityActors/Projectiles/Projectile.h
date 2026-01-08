@@ -8,7 +8,7 @@
 #include "Projectile.generated.h"
 
 
-class UProjectileDataAsset;
+class UProjectileData;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnProjectileHit, const FHitResult&, Hit);
 class UStaticMeshComponent;
 class UParticleSystemComponent;
@@ -46,7 +46,7 @@ public:
 
 
 	UPROPERTY(ReplicatedUsing=OnRep_ProjectileData)
-	UProjectileDataAsset* ProjectileData;
+	UProjectileData* ProjectileData;
 	UFUNCTION()
 	void OnRep_ProjectileData();
 
@@ -57,12 +57,8 @@ public:
 	void DestroySelf();
 	
 	UFUNCTION(BlueprintCallable)
-	void InitializeProjectile(UProjectileDataAsset* InData);
+	void InitializeProjectile(UProjectileData* InData);
 
-	UFUNCTION(NetMulticast, Reliable)
-	void MulticastSpawnImpactFX( UParticleSystem* Particle, USoundBase* Sound, FVector Location, FRotator Rotation);
-	void MulticastSpawnImpactFX_Implementation(UParticleSystem* Particle, USoundBase* Sound, FVector Location, FRotator Rotation);
-	
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void OnProjectileHit(
 		UPrimitiveComponent* HitComp,

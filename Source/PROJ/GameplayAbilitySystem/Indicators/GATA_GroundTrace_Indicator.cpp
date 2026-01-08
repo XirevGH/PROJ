@@ -84,7 +84,7 @@ FHitResult AGATA_GroundTrace_Indicator::PerformTrace(AActor* InSourceActor)
 			acosf(FVector::DotProduct(MouseHit.ImpactNormal, FVector::UpVector))
 		);
 		UE_LOG(LogTemp, Warning, TEXT("Angle: %f"), Angle);
-		bool bWalkable = Angle <= 45.f;            // walkable terrain// acceptable roof height
+		bool bWalkable = Angle <= 45.f;            // walkable terrain
 
 		if (bWalkable)
 		{
@@ -93,7 +93,7 @@ FHitResult AGATA_GroundTrace_Indicator::PerformTrace(AActor* InSourceActor)
 			return Hit;
 		}
 	}
-	// STEP 3 — INVALID surface → project downward
+	
 	DownStart = DesiredLocation;  
 
 	//This does not work with stairs/ mesh with complex shape

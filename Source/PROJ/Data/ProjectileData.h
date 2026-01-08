@@ -3,19 +3,23 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "Engine/DataAsset.h"
-#include "ProjectileDataAsset.generated.h"
+#include "ProjectileData.generated.h"
 
 class AProjectile;
 /**
  * 
  */
 UCLASS()
-class PROJ_API UProjectileDataAsset : public UPrimaryDataAsset
+class PROJ_API UProjectileData : public UPrimaryDataAsset
 {
 	GENERATED_BODY()
 	
 public:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Tag")
+	FGameplayTag ProjectileTag;
+	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Particles")
 	UParticleSystem* ProjectileParticle;
 	
