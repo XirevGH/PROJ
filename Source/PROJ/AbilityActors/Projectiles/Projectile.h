@@ -60,8 +60,8 @@ public:
 	void InitializeProjectile(UProjectileDataAsset* InData);
 
 	UFUNCTION(NetMulticast, Reliable)
-	void MulticastSpawnImpactFX( UParticleSystem* Particle, FVector Location, FRotator Rotation);
-	void MulticastSpawnImpactFX_Implementation(UParticleSystem* Particle, FVector Location, FRotator Rotation);
+	void MulticastSpawnImpactFX( UParticleSystem* Particle, USoundBase* Sound, FVector Location, FRotator Rotation);
+	void MulticastSpawnImpactFX_Implementation(UParticleSystem* Particle, USoundBase* Sound, FVector Location, FRotator Rotation);
 	
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void OnProjectileHit(

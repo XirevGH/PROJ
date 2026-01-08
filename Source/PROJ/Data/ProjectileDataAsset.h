@@ -32,7 +32,7 @@ public:
 	TSubclassOf<AProjectile> ProjectileActorClass;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Sound")
-	USoundBase* HitSound;
+	USoundBase* ImpactSound;
 	
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Projectile Stats")

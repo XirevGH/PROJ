@@ -91,9 +91,15 @@ void AProjectile::OnProjectileHit_Implementation(UPrimitiveComponent* HitComp, A
 	if (!ShouldSkipHit(OtherActor))
 	{
 		FVector IncomingDirection = -ProjectileMovement->Velocity.GetSafeNormal();
-		 MulticastSpawnImpactFX(ProjectileData->WorldHitParticle,  Hit.ImpactPoint,
+		 MulticastSpawnImpactFX(ProjectileData->WorldHitParticle, ProjectileData->ImpactSound, Hit.ImpactPoint,
 		 IncomingDirection.Rotation());
 		
+		// FGameplayCueParameters CueParams;
+		// CueParams.Location = Hit.ImpactPoint;
+		// CueParams.Instigator = Caster;
+		// CueParams.EffectCauser = this;
+		//
+		// CasterASC->ExecuteGameplayCue(FGameplayTag::RequestGameplayTag(TEXT("GameplayCue.Ability.Cast.Execute")), CueParams);
 	}
 }
 
@@ -109,16 +115,28 @@ if (!HasAuthority())
 
 	if (!ShouldSkipHit_Implementation(OtherActor))
 	{
-		MulticastSpawnImpactFX(ProjectileData->CharacterHitParticle, GetActorLocation(), GetActorRotation());
+		MulticastSpawnImpactFX(ProjectileData->CharacterHitParticle, ProjectileData->ImpactSound, GetActorLocation(), GetActorRotation());
+
+		// FGameplayCueParameters CueParams;
+		// CueParams.Location = GetActorLocation();
+		// CueParams.Instigator = Caster;
+		// CueParams.EffectCauser = this;
+		//
+		// CasterASC->ExecuteGameplayCue(FGameplayTag::RequestGameplayTag(TEXT("GameplayCue.Ability.Cast.Execute")), CueParams);
 	}
 }
 
-void AProjectile::MulticastSpawnImpactFX_Implementation(UParticleSystem* Particle, FVector Location, FRotator Rotation)
+void AProjectile::MulticastSpawnImpactFX_Implementation(UParticleSystem* Particle,  USoundBase* Sound, FVector Location, FRotator Rotation)
 {
-	 UGameplayStatics::SpawnEmitterAtLocation(GetWorld(),  Particle,  Location,
-	Rotation);
+	if (Particle)
+	{
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(),  Particle,  Location, Rotation);
+	}
 	
-	UGameplayStatics::SpawnSoundAtLocation(GetWorld(),  ProjectileData->HitSound, Location,
-		Rotation);
+	if (Sound)
+	{
+		UGameplayStatics::SpawnSoundAtLocation(GetWorld(),  Sound, Location, Rotation);
+	}
+	
 }
 
