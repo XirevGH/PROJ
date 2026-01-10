@@ -30,8 +30,7 @@ void AProjectile::BeginPlay()
 	PrimaryActorTick.bCanEverTick = true;
 	SetReplicateMovement(true);
 	ProjectileMovement->SetIsReplicated(true);
-
-
+	
 }
 
 
@@ -41,10 +40,13 @@ void AProjectile::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
-void AProjectile::DestroySelf()
+void AProjectile::Destroyed()
 {
-	Destroy();
+	Super::Destroyed();
+	ExecuteImpactCue(FGameplayTag::RequestGameplayTag("Surface.None"));
+	
 }
+
 void AProjectile::OnRep_ProjectileData()
 {
 	ProjectileParticle->SetTemplate(ProjectileData->ProjectileParticle);
@@ -76,6 +78,20 @@ void AProjectile::InitializeProjectile(UProjectileData* InData)
 	ProjectileData = InData;
 	OnRep_ProjectileData();
 }
+void AProjectile::ExecuteImpactCue(FGameplayTag SurfaceTag)
+{
+	FVector IncomingDirection = -ProjectileMovement->Velocity.GetSafeNormal();
+		
+	FGameplayCueParameters CueParams;
+	CueParams.Location = GetActorLocation();
+	CueParams.Normal = IncomingDirection;
+	CueParams.Instigator = Caster;
+	CueParams.EffectCauser = this;
+	CueParams.SourceObject = ProjectileData;
+	CueParams.AggregatedSourceTags.AddTag(SurfaceTag);
+		
+	CasterASC->ExecuteGameplayCue(FGameplayTag::RequestGameplayTag(TEXT("GameplayCue.Projectile.Impact")), CueParams);
+}
 
 void AProjectile::OnProjectileHit_Implementation(UPrimitiveComponent* HitComp, AActor* OtherActor,
                                                  UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
@@ -87,16 +103,7 @@ void AProjectile::OnProjectileHit_Implementation(UPrimitiveComponent* HitComp, A
 	
 	if (!ShouldSkipHit(OtherActor))
 	{
-		FVector IncomingDirection = -ProjectileMovement->Velocity.GetSafeNormal();
-		
-		FGameplayCueParameters CueParams;
-		CueParams.Location = GetActorLocation();
-		CueParams.Normal = IncomingDirection;
-		CueParams.Instigator = Caster;
-		CueParams.EffectCauser = this;
-		CueParams.SourceObject = ProjectileData;
-		CueParams.AggregatedSourceTags.AddTag(FGameplayTag::RequestGameplayTag("Surface.World"));
-		CasterASC->ExecuteGameplayCue(FGameplayTag::RequestGameplayTag(TEXT("GameplayCue.Projectile.Impact")), CueParams);
+		ExecuteImpactCue(FGameplayTag::RequestGameplayTag("Surface.World"));
 	}
 }
 
@@ -112,17 +119,7 @@ if (!HasAuthority())
 
 	if (!ShouldSkipHit_Implementation(OtherActor))
 	{
-		FVector IncomingDirection = -ProjectileMovement->Velocity.GetSafeNormal();
-		
-		FGameplayCueParameters CueParams;
-		CueParams.Location = GetActorLocation();
-		CueParams.Normal = IncomingDirection;
-		CueParams.Instigator = Caster;
-		CueParams.EffectCauser = this;
-		CueParams.SourceObject = ProjectileData;
-		CueParams.AggregatedSourceTags.AddTag(FGameplayTag::RequestGameplayTag("Surface.Player"));
-		
-		CasterASC->ExecuteGameplayCue(FGameplayTag::RequestGameplayTag(TEXT("GameplayCue.Projectile.Impact")), CueParams);
+		ExecuteImpactCue(FGameplayTag::RequestGameplayTag("Surface.Player"));
 	}
 }
 

@@ -49,11 +49,12 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	UFUNCTION()
-	void DestroySelf();
+	virtual void Destroyed() override;
 	
 	UFUNCTION(BlueprintCallable)
 	void InitializeProjectile(UProjectileData* InData);
+
+	void ExecuteImpactCue(FGameplayTag SurfaceTag);
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void OnProjectileHit(
@@ -85,3 +86,4 @@ public:
 	bool bFromSweep,
 	const FHitResult& SweepResult);
 };
+
