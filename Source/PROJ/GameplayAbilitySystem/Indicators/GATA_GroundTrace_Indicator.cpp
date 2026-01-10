@@ -77,7 +77,7 @@ FHitResult AGATA_GroundTrace_Indicator::PerformTrace(AActor* InSourceActor)
 	FVector DownStart = DesiredLocation + FVector(0,0,10); // lift a little for safety
 	FVector DownEnd   = DesiredLocation - FVector(0,0,5000);
 	
-	// STEP 2 — If surface hit was VALID, return it (roof allowed)
+	// If surface hit was VALID, return it
 	if (MouseHit.bBlockingHit)
 	{
 		float Angle = FMath::RadiansToDegrees(
@@ -94,6 +94,7 @@ FHitResult AGATA_GroundTrace_Indicator::PerformTrace(AActor* InSourceActor)
 		}
 	}
 	
+	// If surface hit was too steep
 	DownStart = DesiredLocation;  
 
 	//This does not work with stairs/ mesh with complex shape

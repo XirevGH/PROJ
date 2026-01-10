@@ -39,14 +39,10 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components")
 	class USphereComponent* CollisionComp;
 	
-	FTimerHandle DestroyTimerHandle;
 	
-	UPROPERTY(BlueprintAssignable)
-	FOnProjectileHit OnProjectileHitDelegate;
-
-
 	UPROPERTY(ReplicatedUsing=OnRep_ProjectileData)
 	UProjectileData* ProjectileData;
+
 	UFUNCTION()
 	void OnRep_ProjectileData();
 

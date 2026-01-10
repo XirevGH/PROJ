@@ -17,8 +17,6 @@ class PROJ_API UProjectileData : public UPrimaryDataAsset
 	GENERATED_BODY()
 	
 public:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Tag")
-	FGameplayTag ProjectileTag;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Particles")
 	UParticleSystem* ProjectileParticle;
