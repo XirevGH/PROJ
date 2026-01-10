@@ -81,7 +81,16 @@ void AProjectile::InitializeProjectile(UProjectileData* InData)
 void AProjectile::ExecuteImpactCue(FGameplayTag SurfaceTag)
 {
 	FVector IncomingDirection = -ProjectileMovement->Velocity.GetSafeNormal();
-		
+
+	if (!IsValid(this))
+		return;
+
+	if (!IsValid(CasterASC))
+		return;
+
+	if (!IsValid(Caster))
+		return;
+	
 	FGameplayCueParameters CueParams;
 	CueParams.Location = GetActorLocation();
 	CueParams.Normal = IncomingDirection;
