@@ -32,6 +32,7 @@ public:
 	UFUNCTION()
 	void OnMontageNotifyReceived(FGameplayEventData Payload);
 
+
 	
 	virtual void ActivateAbility(
 		const FGameplayAbilitySpecHandle Handle,

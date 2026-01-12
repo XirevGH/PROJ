@@ -24,6 +24,9 @@ void UHeroicSlam::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const
 	/*Get and Check CachedPlayer*/
 	CachedPlayer = Cast<ABaseCharacter>(ActorInfo->AvatarActor.Get());
 	if (!CachedPlayer) return;
+
+	CachedMovement = CachedPlayer->GetCharacterMovement();
+	if (!CachedMovement) return;
 	
 	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
@@ -32,6 +35,8 @@ void UHeroicSlam::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const
 	}
 	LaunchToTarget();
 }
+
+
 
 void UHeroicSlam::RestoreAirFriction()
 {
@@ -55,9 +60,21 @@ void UHeroicSlam::RestoreAirFriction()
 
 void UHeroicSlam::LaunchToTarget()
 {
+	/*Save original settings to restore later*/
+	CachedOriginalMaxSpeed = CachedMovement->MaxWalkSpeed;
+	OriginalAirControl = CachedMovement->AirControl;
+	OriginalBraking = CachedMovement->BrakingDecelerationFalling;
+	OriginalFriction = CachedMovement->FallingLateralFriction;
+
+	/*Disable stuff that reduce arc distance*/
+	CachedMovement->AirControl = 0.f;
+	CachedMovement->BrakingDecelerationFalling = 0.f;
+	CachedMovement->FallingLateralFriction = 0.f;
+	
 	FVector Forward = CachedPlayer->GetActorForwardVector();
 	FVector Start = CachedPlayer->GetActorLocation();
 	FVector End = Start + Forward * JumpDistance;
+	
 	/*Because Target location is on ground level and player start is above ground(Better calculation imo*TEST*)*/
 	End.Z += /*CachedPlayer->GetCapsuleComponent()->GetScaledCapsuleHalfHeight() +*/ 500.f;
 	
@@ -77,48 +94,32 @@ void UHeroicSlam::LaunchToTarget()
 		UE_LOG(LogTemp, Warning, TEXT("NoSolution"));
 	}
 	
-	auto* Move = CachedPlayer->GetCharacterMovement();
-	if (!Move) return;
-
-	/*Save original settings to restore later*/
-	CachedOriginalMaxSpeed = Move->MaxWalkSpeed;
-	OriginalAirControl = Move->AirControl;
-	OriginalBraking = Move->BrakingDecelerationFalling;
-	OriginalFriction = Move->FallingLateralFriction;
-
-	/*Disable stuff that reduce arc distance*/
-	Move->AirControl = 0.f;
-	Move->BrakingDecelerationFalling = 0.f;
-	Move->FallingLateralFriction = 0.f;
-
 	/*Increase MaxWalkSpeed*/
-	Move->MaxWalkSpeed = LaunchVelocity.Size();
-	/*Movementmodes*/
-	Move->StopMovementImmediately();
-	Move->SetMovementMode(MOVE_Falling);
+	CachedMovement->MaxWalkSpeed = LaunchVelocity.Size();
+	/*Movementmodes*/ /*Reset all movement attributes*/
+	CachedPlayer->OnCharacterLanded.AddUObject(
+		this,
+		&UHeroicSlam::OnCharacterLanded);
 	
 	/*Launch player in an arc*/
 	CachedPlayer->LaunchCharacter(LaunchVelocity, true, true);
-
-	/*Set a timer to check every 0.1 sec to see if the player landed to restore MS*/
-	GetWorld()->GetTimerManager().SetTimer(
-	LandingCheckTimer,
-	this,
-	&UHeroicSlam::LandingCheck,
-	0.1f,
-	true);
+	
 }
+
+void UHeroicSlam::OnCharacterLanded()
+{
+	if (!CachedPlayer) return;
+	
+	RestoreAirFriction();
+	LandingCheck();
+
+	CachedPlayer->OnCharacterLanded.RemoveAll(this);
+}
+
 void UHeroicSlam::LandingCheck()
 {
 	if (!CachedPlayer->HasAuthority()) return;
 	if (!CachedPlayer) return;
-	if (!CachedPlayer->GetCharacterMovement()->IsMovingOnGround()) return;
-	
-	auto* Move = CachedPlayer->GetCharacterMovement();
-	FVector Vel = Move->Velocity;
-	Vel.X = 0.f,
-	Vel.Y = 0.f;
-	Move->Velocity = Vel;
 	
 	FVector Origin = CachedPlayer->GetActorLocation();
 	TArray<FOverlapResult> Overlaps;
@@ -147,10 +148,6 @@ void UHeroicSlam::LandingCheck()
 			ApplyEffectsToTarget(HitActor);
 		}
 	}
-	/*Reset all movement attributes*/
-	RestoreAirFriction();
-	/*Reset timer*/
-	GetWorld()->GetTimerManager().ClearTimer(LandingCheckTimer);
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }
 

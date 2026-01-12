@@ -12,6 +12,7 @@ AAbilityActor::AAbilityActor()
 {
 	PrimaryActorTick.bCanEverTick = true;
 	bReplicates = true;
+	
 	// expensive but it is ok for this project
 	bAlwaysRelevant = true;
 }
@@ -19,6 +20,7 @@ AAbilityActor::AAbilityActor()
 void AAbilityActor::BeginPlay()
 {
 	Super::BeginPlay();
+	SetReplicateMovement(true);
 }
 
 void AAbilityActor::Cleanup()
@@ -58,11 +60,6 @@ bool AAbilityActor::ShouldSkipHit_Implementation(AActor* OtherActor)
 {
 	if (Caster)
 	{
-		if (OtherActor->IsA(DummyTestBPClass))
-		{
-			return bShouldSkipHit;
-		}
-		
 		if (ABasePlayerState* PS = Cast<ABasePlayerState>(Cast<ABaseCharacter>(Caster)->GetPlayerState()))
 		{
 			if (ABaseCharacter* OtherCharacter = Cast<ABaseCharacter>(OtherActor))

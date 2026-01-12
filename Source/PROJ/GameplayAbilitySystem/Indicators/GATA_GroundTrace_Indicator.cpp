@@ -52,54 +52,60 @@ FHitResult AGATA_GroundTrace_Indicator::PerformTrace(AActor* InSourceActor)
 		return Hit;
 	}
 	
-	// First trace: camera → mouse direction
+	// trace from camera in mouse direction
 	FVector CameraTraceEnd = WorldOrigin + WorldDirection * 100000.f;
 	FCollisionQueryParams Params;
 	Params.AddIgnoredActor(this);
 	Params.bTraceComplex = true;
-
-	FHitResult MouseHit;
-	GetWorld()->LineTraceSingleByChannel(MouseHit, WorldOrigin, CameraTraceEnd, ECC_Visibility, Params);
-
-	// Fallback if nothing hit
-	FVector DesiredLocation = MouseHit.bBlockingHit ? MouseHit.Location : CameraTraceEnd;
+	
+	GetWorld()->LineTraceSingleByChannel(Hit, WorldOrigin, CameraTraceEnd, ECC_Visibility, Params);
+	
+	if (!Hit.bBlockingHit)
+	{
+		return Hit;
+	}
+	
+	FVector MouseHitLocation = Hit.Location;
 	
 	//Clamp to ability range
 	FVector PlayerPos = InSourceActor->GetActorLocation();
-	FVector Dir = DesiredLocation - PlayerPos;
-	float Dist = Dir.Size();
-
-	if (Dist > MaxRange)
-	{
-		Dir = Dir.GetSafeNormal();
-		DesiredLocation = PlayerPos + Dir * MaxRange;
-	}
-	FVector DownStart = DesiredLocation + FVector(0,0,10); // lift a little for safety
-	FVector DownEnd   = DesiredLocation - FVector(0,0,5000);
+	FVector VectorToHit = MouseHitLocation - PlayerPos;
+	float DistanceToHit = VectorToHit.Size();
+	FVector Direction = VectorToHit.GetSafeNormal();
 	
-	// STEP 2 — If surface hit was VALID, return it (roof allowed)
-	if (MouseHit.bBlockingHit)
+	if (DistanceToHit  > MaxRange)
 	{
-		float Angle = FMath::RadiansToDegrees(
-			acosf(FVector::DotProduct(MouseHit.ImpactNormal, FVector::UpVector))
-		);
-		UE_LOG(LogTemp, Warning, TEXT("Angle: %f"), Angle);
-		bool bWalkable = Angle <= 45.f;            // walkable terrain// acceptable roof height
-
-		if (bWalkable)
-		{
-			GetWorld()->LineTraceSingleByChannel(Hit, DownStart, DownEnd, ECC_Visibility, Params);
-			//DrawDebugLine(GetWorld(),DownStart, DownEnd, FColor::Red, false);
-			return Hit;
-		}
+		MouseHitLocation = PlayerPos + Direction * MaxRange;
 	}
-	// STEP 3 — INVALID surface → project downward
-	DownStart = DesiredLocation;  
 
-	//This does not work with stairs/ mesh with complex shape
-	//Params.AddIgnoredActor(MouseHit.GetActor());
+	//Check if the hit angle is walkable
+	float Angle = FMath::RadiansToDegrees(
+		acosf(FVector::DotProduct(Hit.ImpactNormal, FVector::UpVector))
+	);
+	//UE_LOG(LogTemp, Warning, TEXT("Angle: %f"), Angle);
+	bool bWalkable = Angle <= 45.f; // walkable terrain
+
+	//project down for the ground position with some height offset to prevent the trace from going through the mesh 
+	FVector DownStart = MouseHitLocation + FVector(0,0,10); // lift a little for safety
+	FVector DownEnd = MouseHitLocation - FVector(0,0,5000);
+
+	if (bWalkable)
+	{
+		GetWorld()->LineTraceSingleByChannel(Hit, DownStart, DownEnd, ECC_Visibility, Params);
+		//DrawDebugLine(GetWorld(),DownStart, DownEnd, FColor::Red, false);
+		return Hit;
+	}
+
+	//This does not work with stairs/ mesh with complex shape if the WallPushBackDistance = radius of the ability
+	
+	// If surface hit was too steep
+	float WallPushBackDistance =  10;
+	FVector Direction_XY = FVector(VectorToHit.X, VectorToHit.Y, 0.f).GetSafeNormal();
+	FVector AdjustedLocation = MouseHitLocation + -Direction_XY * WallPushBackDistance;
+	DownStart = AdjustedLocation; 
+	DownEnd = AdjustedLocation - FVector(0,0,5000);
 	
 	GetWorld()->LineTraceSingleByChannel(Hit, DownStart, DownEnd, ECC_Visibility, Params);
-	//DrawDebugLine(GetWorld(),DownStart, DownEnd, FColor::Green, false);
+	//DrawDebugLine(GetWorld(),MouseHitLocation, AdjustedLocation, FColor::Green, false);
 	return Hit;
 }

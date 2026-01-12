@@ -80,7 +80,7 @@ float UBaseGameplayAbility::CalculateAbilityMontagePlayRate()
 	if (!AbilityData) return 1.f;
 	if (!AbilityData->Montage) return 1.f;
 
-	float NotifyTime =AbilityData->NotifyBeginTime;
+	float NotifyTime = AbilityData->NotifyBeginTime;
 	if (NotifyTime <= 0.f || CastTime <= 0.f)
 		return 1.f;
 
@@ -162,8 +162,8 @@ void UBaseGameplayAbility::InitializeAbilityActor(AAbilityActor* Actor)
 	if (!Actor)
 		return;
 	
-	Actor->SetReplicates(true);	
-	Actor->SetReplicateMovement(true);
+	//Actor->SetReplicates(true);	
+	//Actor->SetReplicateMovement(true);
 	Actor->InitializeAbilityActor(
 		GetAvatarActorFromActorInfo(),
 		GetAbilitySystemComponentFromActorInfo(),

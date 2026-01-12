@@ -181,7 +181,18 @@ void UBaseAttack::PerformHitScan()
 			
 			if (AbilityData)
 			{
-				ApplyEffectsToTarget(HitActor);
+				if (ABasePlayerState* PS = Cast<ABasePlayerState>(Cast<ABaseCharacter>(GetAvatarActorFromActorInfo())->GetPlayerState()))
+				{
+					if (ABaseCharacter* OtherCharacter = Cast<ABaseCharacter>(HitActor))
+					{
+						if (ABasePlayerState* OtherPS = Cast<ABasePlayerState>(OtherCharacter->GetPlayerState()))
+						{
+							if (PS->TeamID.Equals(OtherPS->TeamID))
+							return;
+						}
+						ApplyEffectsToTarget(HitActor);
+					}
+				}
 			}
 		}
 	}

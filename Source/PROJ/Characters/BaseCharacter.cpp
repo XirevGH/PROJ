@@ -154,7 +154,7 @@ void ABaseCharacter::OnHealthAttributeChanged(const FOnAttributeChangeData& Data
 
 void ABaseCharacter::OnMoveSpeedAttributeChanged(const FOnAttributeChangeData& Data)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Movespeed set to %f"), Data.NewValue);
+	//UE_LOG(LogTemp, Warning, TEXT("Movespeed set to %f"), Data.NewValue);
 	OnMoveSpeedChanged(Data.NewValue, BaseAttributes->GetMaxMoveSpeed());
 }
 
@@ -181,7 +181,7 @@ void ABaseCharacter::HandleDamageDealt(AActor* TargetActor, float DamageAmount, 
 {
 	// We call this on the ATTACKER. 
 	// This sends the message to the Player Controller of the person who shot the gun.
-	UE_LOG(LogTemp, Warning, TEXT("ClientShowDamageNumber"));
+	//UE_LOG(LogTemp, Warning, TEXT("ClientShowDamageNumber"));
 
 	Server_DamageDealt(TargetActor, DamageAmount, bIsCrit);
 	Client_DamageDealt(TargetActor, DamageAmount, bIsCrit);
@@ -191,7 +191,7 @@ void ABaseCharacter::Client_DamageDealt_Implementation(AActor* TargetActor, floa
 {
 	// Now we are on the Player's screen.
 	// We have the reference to the TargetActor (the enemy) here!
-	UE_LOG(LogTemp, Warning, TEXT("OnShowDamageNumber"));
+	//UE_LOG(LogTemp, Warning, TEXT("OnShowDamageNumber"));
 	Client_OnDamageDealt(TargetActor, DamageAmount, bIsCrit);
 }
 
@@ -280,7 +280,7 @@ void ABaseCharacter::InputZoom(const FInputActionValue& Value)
 
 void ABaseCharacter::InputMouseMoveTriggered(const FInputActionValue& Value)
 {
-	UE_LOG(LogTemp, Display, TEXT("InputMouseMoveTriggered"));
+	//UE_LOG(LogTemp, Display, TEXT("InputMouseMoveTriggered"));
 	bUseControllerRotationYaw = true;
 	Server_SetUseControllerRotationYaw(true);
 	
@@ -301,7 +301,7 @@ void ABaseCharacter::InputMouseMoveTriggered(const FInputActionValue& Value)
 
 void ABaseCharacter::InputMouseMoveCompleted(const FInputActionValue& Value)
 {
-	UE_LOG(LogTemp, Display, TEXT("InputMouseMoveCompleted"));
+	//UE_LOG(LogTemp, Display, TEXT("InputMouseMoveCompleted"));
 	bUseControllerRotationYaw = false;
 	Server_SetUseControllerRotationYaw(false);
 }
@@ -396,7 +396,7 @@ void ABaseCharacter::InputMove(const FInputActionValue& Value)
 }
 void ABaseCharacter::InputLook(const FInputActionValue& Value)
 {
-	UE_LOG(LogTemp, Display, TEXT("InputLook"));
+	//UE_LOG(LogTemp, Display, TEXT("InputLook"));
 	const FVector2D LookVector = Value.Get<FVector2D>();
 	if (Controller != nullptr)
 	{
@@ -407,7 +407,7 @@ void ABaseCharacter::InputLook(const FInputActionValue& Value)
 
 void ABaseCharacter::InputRotateCameraStarted(const FInputActionValue& Value)
 {
-	UE_LOG(LogTemp, Display, TEXT("InputRotateCameraStarted"));
+	//UE_LOG(LogTemp, Display, TEXT("InputRotateCameraStarted"));
 	bIsFreeLooking = true;
 	LockedMovementRotation = GetActorRotation();
 	GetCharacterMovement()->bOrientRotationToMovement = false;
@@ -416,14 +416,14 @@ void ABaseCharacter::InputRotateCameraStarted(const FInputActionValue& Value)
 
 void ABaseCharacter::InputRotateCameraCompleted(const FInputActionValue& Value)
 {
-	UE_LOG(LogTemp, Display, TEXT("InputRotateCameraCompleted"));
+	//UE_LOG(LogTemp, Display, TEXT("InputRotateCameraCompleted"));
 	bIsFreeLooking = false;
 	Server_SetFreeLooking(false);
 }
 
 void ABaseCharacter::InputRotateCharacterStarted(const FInputActionValue& Value)
 {
-	UE_LOG(LogTemp, Display, TEXT("InputRotateCharacterStarted"));
+	//UE_LOG(LogTemp, Display, TEXT("InputRotateCharacterStarted"));
 
 	bUseControllerRotationYaw = true;
 	Server_SetUseControllerRotationYaw(true);
@@ -431,7 +431,7 @@ void ABaseCharacter::InputRotateCharacterStarted(const FInputActionValue& Value)
 
 void ABaseCharacter::InputRotateCharacterCompleted(const FInputActionValue& Value)
 {
-	UE_LOG(LogTemp, Display, TEXT("InputRotateCharacterCompleted"));
+	//UE_LOG(LogTemp, Display, TEXT("InputRotateCharacterCompleted"));
 
 	bUseControllerRotationYaw = false;
 	Server_SetUseControllerRotationYaw(false);
@@ -439,7 +439,7 @@ void ABaseCharacter::InputRotateCharacterCompleted(const FInputActionValue& Valu
 
 void ABaseCharacter::InputRotateCharacterTriggered(const FInputActionValue& Value)
 {
-	UE_LOG(LogTemp, Display, TEXT("InputRotateCharacterTriggered"));
+	//UE_LOG(LogTemp, Display, TEXT("InputRotateCharacterTriggered"));
 	bUseControllerRotationYaw = true;
 	Server_SetUseControllerRotationYaw(true);
 	LockedMovementRotation = GetActorRotation();
@@ -450,6 +450,11 @@ void ABaseCharacter::Jump()
 	Super::Jump();
 }
 
+void ABaseCharacter::Landed(const FHitResult& Hit)
+{
+	Super::Landed(Hit);
+	OnCharacterLanded.Broadcast();
+}
 
 void ABaseCharacter::OnCancelActiveAbilityTriggered(const FInputActionValue& Value)
 {
