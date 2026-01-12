@@ -25,7 +25,7 @@ ABaseCharacter::ABaseCharacter()
 	
 	bIsFreeLooking = false;
 	bUseControllerRotationPitch = false;
-	bUseControllerRotationYaw = false; // THIS IS THE MASTER SWITCH
+	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
 	LockedMovementDirection = FRotator::ZeroRotator;
 }
