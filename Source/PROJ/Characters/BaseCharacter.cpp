@@ -179,19 +179,12 @@ void ABaseCharacter::Server_SetUseControllerRotationYaw_Implementation(bool bNew
 
 void ABaseCharacter::HandleDamageDealt(AActor* TargetActor, float DamageAmount, bool bIsCrit)
 {
-	// We call this on the ATTACKER. 
-	// This sends the message to the Player Controller of the person who shot the gun.
-	//UE_LOG(LogTemp, Warning, TEXT("ClientShowDamageNumber"));
-
 	Server_DamageDealt(TargetActor, DamageAmount, bIsCrit);
 	Client_DamageDealt(TargetActor, DamageAmount, bIsCrit);
 }
 
 void ABaseCharacter::Client_DamageDealt_Implementation(AActor* TargetActor, float DamageAmount, bool bIsCrit)
 {
-	// Now we are on the Player's screen.
-	// We have the reference to the TargetActor (the enemy) here!
-	//UE_LOG(LogTemp, Warning, TEXT("OnShowDamageNumber"));
 	Client_OnDamageDealt(TargetActor, DamageAmount, bIsCrit);
 }
 
@@ -206,21 +199,17 @@ void ABaseCharacter::Tick(float DeltaTime)
 
 	if (BPCameraBoom)
 	{
-		// Get the current length
 		float CurrentLength = BPCameraBoom->TargetArmLength;
-
-		// Check if we are close enough; if not, interpolate
+		
 		if (!FMath::IsNearlyEqual(CurrentLength, DesiredArmLength, 0.1f))
 		{
-			// FInterpTo creates a smooth "ease-out" movement
 			float NewLength = FMath::FInterpTo(
-				CurrentLength,      // Where we are
-				DesiredArmLength,   // Where we want to be
-				DeltaTime,          // Time since last frame
-				ZoomInterpSpeed     // How fast to go
+				CurrentLength,
+				DesiredArmLength,
+				DeltaTime,
+				ZoomInterpSpeed
 			);
-
-			// Apply the smoothed value
+			
 			BPCameraBoom->TargetArmLength = NewLength;
 		}
 	}
@@ -280,7 +269,6 @@ void ABaseCharacter::InputZoom(const FInputActionValue& Value)
 
 void ABaseCharacter::InputMouseMoveTriggered(const FInputActionValue& Value)
 {
-	//UE_LOG(LogTemp, Display, TEXT("InputMouseMoveTriggered"));
 	bUseControllerRotationYaw = true;
 	Server_SetUseControllerRotationYaw(true);
 	
@@ -290,18 +278,15 @@ void ABaseCharacter::InputMouseMoveTriggered(const FInputActionValue& Value)
 		const FRotator BaseRotation = GetController()->GetControlRotation();
 
 		const FRotator YawRotation(0, BaseRotation.Yaw, 0);
-
-		// Get world-space forward and right vectors from our chosen base rotation
-		const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
 		
-		// Add the movement input
+		const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+
 		AddMovementInput(ForwardDirection, MoveAxis.X);
 	}
 }
 
 void ABaseCharacter::InputMouseMoveCompleted(const FInputActionValue& Value)
 {
-	//UE_LOG(LogTemp, Display, TEXT("InputMouseMoveCompleted"));
 	bUseControllerRotationYaw = false;
 	Server_SetUseControllerRotationYaw(false);
 }
