@@ -21,13 +21,7 @@ AProjectile::AProjectile()
 	ProjectileParticle = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("Projectile"));
 	ProjectileParticle->SetupAttachment(CollisionComp);
 	ProjectileMovement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovement"));
-
-	CollisionComp->SetNotifyRigidBodyCollision(true);
-	CollisionComp->SetGenerateOverlapEvents(true);
-	CollisionComp->SetCollisionProfileName(TEXT("Projectile"));
-
-	ProjectileMovement->bRotationFollowsVelocity = true;
-	ProjectileMovement->ProjectileGravityScale = 0.f;
+	
 	
 }
 
@@ -39,6 +33,12 @@ void AProjectile::BeginPlay()
 	SetReplicateMovement(true);
 	ProjectileMovement->SetIsReplicated(true);
 	
+	CollisionComp->SetNotifyRigidBodyCollision(true);
+	CollisionComp->SetGenerateOverlapEvents(true);
+	CollisionComp->SetCollisionProfileName(TEXT("Projectile"));
+
+	ProjectileMovement->bRotationFollowsVelocity = true;
+	ProjectileMovement->ProjectileGravityScale = 0.f;
 	
 	CollisionComp->OnComponentBeginOverlap.AddDynamic(this, &AProjectile::OnBeginOverlap);
 	CollisionComp->OnComponentHit.AddDynamic(this, &AProjectile::OnProjectileHit);

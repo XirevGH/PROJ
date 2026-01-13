@@ -75,18 +75,12 @@ void UGA_Cast_Projectile::SpawnProjectile()
 		UE_LOG(LogTemp, Warning, TEXT("projectile class does not exist!"))
 		return;
 	}
-	
-	FTransform SpawnTransform(GetProjectileSpawnRotation(SpawnLocation), SpawnLocation);
-	ProjectileActor =
-	GetWorld()->SpawnActorDeferred<AProjectile>(
-		ProjectileData->ProjectileActorClass,
-		SpawnTransform);
-	
+
+	ProjectileActor = World->SpawnActor<AProjectile>(ProjectileData->ProjectileActorClass, SpawnLocation, SpawnRotation);
 	if (ProjectileActor)
 	{
 		InitializeAbilityActor(this->ProjectileActor);
 		this->ProjectileActor->InitializeProjectile(ProjectileData);
-		ProjectileActor->FinishSpawning(SpawnTransform);
 	}
 	else
 	{
@@ -104,7 +98,7 @@ FRotator UGA_Cast_Projectile::GetProjectileSpawnRotation(FVector StartLocation)
 	float Distance = 100000.f;
 
 	FVector Forward = Avatar->GetActorForwardVector();
-	FVector End = Start + (Forward * Distance);
+	FVector End = StartLocation + (Forward * Distance);
 	
 	FHitResult Hit;
 	FCollisionQueryParams Params;
@@ -112,7 +106,7 @@ FRotator UGA_Cast_Projectile::GetProjectileSpawnRotation(FVector StartLocation)
 
 	bool bHit = GetWorld()->LineTraceSingleByChannel(
 		Hit,
-		Start,
+		StartLocation,
 		End,
 		ECC_Visibility,
 		Params
