@@ -170,13 +170,18 @@ void UBaseAttack::PerformHitScan()
 	TraceParams.bReturnPhysicalMaterial = false;
     
 	TArray<FHitResult> HitResults;
-	if (GetWorld()->LineTraceMultiByChannel(HitResults, Start, End, ECC_Pawn, TraceParams))
+	if (GetWorld()->LineTraceMultiByChannel(HitResults, Start, End, ECC_GameTraceChannel3, TraceParams))
 	{
 		for (auto& Hit : HitResults)
 		{
 			AActor* HitActor = Hit.GetActor();
 			if (!HitActor || Targets.Contains(HitActor)) continue;
 
+			if (!Cast<APawn>(Hit.GetActor()))
+			{
+				return;
+			}
+			
 			Targets.Add(HitActor);
 			
 			if (AbilityData)

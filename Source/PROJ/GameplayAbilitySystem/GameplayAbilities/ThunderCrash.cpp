@@ -54,7 +54,7 @@ void UThunderCrash::OnMontageNotifyReceived(FGameplayEventData Payload)
 	FGameplayTag TriggeredTag = Payload.EventTag;
 	if (TriggeredTag.MatchesTagExact(FGameplayTag::RequestGameplayTag(TEXT("Ability.Attack.Melee"))))
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, TEXT("Montage Notify Triggered!"));
+		//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, TEXT("Montage Notify Triggered!"));
 		if (AbilityData->AbilitySound && CachedPlayer)
 		{
 			UGameplayStatics::PlaySoundAtLocation(
