@@ -47,6 +47,9 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	FString AbilityName;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Icon")
+	UTexture2D* AbilityIcon;
 	
 	/*Montage*/
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
