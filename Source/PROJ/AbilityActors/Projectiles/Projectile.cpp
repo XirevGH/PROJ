@@ -21,6 +21,14 @@ AProjectile::AProjectile()
 	ProjectileParticle = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("Projectile"));
 	ProjectileParticle->SetupAttachment(CollisionComp);
 	ProjectileMovement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovement"));
+
+	CollisionComp->SetNotifyRigidBodyCollision(true);
+	CollisionComp->SetGenerateOverlapEvents(true);
+	CollisionComp->SetCollisionProfileName(TEXT("Projectile"));
+
+	ProjectileMovement->bRotationFollowsVelocity = true;
+	ProjectileMovement->ProjectileGravityScale = 0.f;
+	
 }
 
 // Called when the game starts or when spawned
@@ -30,6 +38,11 @@ void AProjectile::BeginPlay()
 	PrimaryActorTick.bCanEverTick = true;
 	SetReplicateMovement(true);
 	ProjectileMovement->SetIsReplicated(true);
+	
+	
+	CollisionComp->OnComponentBeginOverlap.AddDynamic(this, &AProjectile::OnBeginOverlap);
+	CollisionComp->OnComponentHit.AddDynamic(this, &AProjectile::OnProjectileHit);
+
 	
 }
 
@@ -52,17 +65,9 @@ void AProjectile::OnRep_ProjectileData()
 	ProjectileParticle->SetTemplate(ProjectileData->ProjectileParticle);
 	ProjectileMovement->InitialSpeed = ProjectileData->ProjectileSpeed;
 	ProjectileMovement->MaxSpeed = ProjectileData->ProjectileSpeed;
-	ProjectileMovement->bRotationFollowsVelocity = true;
-	ProjectileMovement->ProjectileGravityScale = 0.f;
 	
-
 	
-	CollisionComp->SetNotifyRigidBodyCollision(true);
 	ProjectileMovement->Velocity = GetActorForwardVector() * ProjectileData->ProjectileSpeed;
-	CollisionComp->SetGenerateOverlapEvents(true);
-	CollisionComp->SetCollisionProfileName(TEXT("Projectile"));
-	CollisionComp->OnComponentBeginOverlap.AddDynamic(this, &AProjectile::OnBeginOverlap);
-	CollisionComp->OnComponentHit.AddDynamic(this, &AProjectile::OnProjectileHit);
 	SetLifeSpan(ProjectileData->ProjectileLifeTime);
 }
 

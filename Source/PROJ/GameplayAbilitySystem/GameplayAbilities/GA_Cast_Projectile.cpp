@@ -53,10 +53,6 @@ void UGA_Cast_Projectile::SpawnProjectile()
 		SpawnRotation = GetProjectileSpawnRotation(SpawnLocation);
 		//could set rotation to socket rotation, but it won't always be Avatar->GetActorRotation()
 		//SpawnRotation = SpawnTransform.GetRotation().Rotator();
-		
-		
-		// Debug: Draw a sphere at the spawn location
-		//DrawDebugSphere(GetWorld(), SpawnLocation,10.f,12, FColor::Red,true);
 	}
 	else
 	{ 
@@ -66,22 +62,31 @@ void UGA_Cast_Projectile::SpawnProjectile()
 			+ Avatar->GetActorForwardVector()
 			+ FVector(0.f, 0.f, HeightOffset);
 		SpawnRotation = GetProjectileSpawnRotation(SpawnLocation);
-		
-		// can change to camera rotation
 		UE_LOG(LogTemp, Warning, TEXT("Socket %s does not exist!"), *AbilityData->SpawnSocketName.ToString())
 	}
 
 	if (!ProjectileData)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("projectile data does not exist!"))
+		UE_LOG(LogTemp, Warning, TEXT("projectile data "))
 		return;
 	}
-		
-	ProjectileActor = World->SpawnActor<AProjectile>(ProjectileData->ProjectileActorClass, SpawnLocation, SpawnRotation);
+	if (!ProjectileData->ProjectileActorClass)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("projectile class does not exist!"))
+		return;
+	}
+	
+	FTransform SpawnTransform(GetProjectileSpawnRotation(SpawnLocation), SpawnLocation);
+	ProjectileActor =
+	GetWorld()->SpawnActorDeferred<AProjectile>(
+		ProjectileData->ProjectileActorClass,
+		SpawnTransform);
+	
 	if (ProjectileActor)
 	{
-		InitializeAbilityActor(ProjectileActor);
-		ProjectileActor->InitializeProjectile(ProjectileData);
+		InitializeAbilityActor(this->ProjectileActor);
+		this->ProjectileActor->InitializeProjectile(ProjectileData);
+		ProjectileActor->FinishSpawning(SpawnTransform);
 	}
 	else
 	{
