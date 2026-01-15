@@ -131,7 +131,7 @@ void UHeroicSlam::LandingCheck()
 		Overlaps,
 		Origin,
 		FQuat::Identity,
-		ECC_Pawn,
+		ECC_GameTraceChannel3,
 		FCollisionShape::MakeSphere(SlamRadius),
 		Params);
 
