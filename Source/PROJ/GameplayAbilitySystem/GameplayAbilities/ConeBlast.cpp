@@ -117,7 +117,7 @@ void UConeBlast::ExecuteConeAttack()
 		Overlaps,
 		Origin,
 		FQuat::Identity,
-		ECC_Pawn,
+		ECC_GameTraceChannel3,
 		FCollisionShape::MakeSphere(ConeRange),
 		Params);
 

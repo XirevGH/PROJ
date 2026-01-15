@@ -213,6 +213,7 @@ void UBaseGameplayAbility::ApplyEffectsToTarget(AActor* Target)
 	{
 		if (Spec.IsValid())
 		{
+			UE_LOG(LogTemp, Warning, TEXT("Apply effects to self"));
 			OwnerASC->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
 		}
 	}
@@ -221,6 +222,7 @@ void UBaseGameplayAbility::ApplyEffectsToTarget(AActor* Target)
 	{
 		if (Spec.IsValid())
 		{
+			UE_LOG(LogTemp, Warning, TEXT("Apply effects to target"));
 			TargetASC->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
 		}
 	}

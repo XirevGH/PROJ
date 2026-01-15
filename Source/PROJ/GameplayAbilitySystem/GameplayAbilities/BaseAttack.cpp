@@ -202,9 +202,9 @@ void UBaseAttack::PerformHitScan()
 		}
 	}
 
-/*#if WITH_EDITOR
+#if WITH_EDITOR
 	DrawDebugLine(GetWorld(), Start, End, FColor::Green, false, 1.f, 0, 2.f);
-#endif*/
+#endif
 }
 
 void UBaseAttack::Server_HitScanStart_Implementation()
