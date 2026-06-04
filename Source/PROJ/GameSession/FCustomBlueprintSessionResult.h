@@ -1,7 +1,6 @@
 ﻿#pragma once
 
 #include "CoreMinimal.h"
-#include "BlueprintDataDefinitions.h"
 #include "FindSessionsCallbackProxy.h"
 #include "FCustomBlueprintSessionResult.generated.h"
 
@@ -12,7 +11,4 @@ struct PROJ_API FCustomBlueprintSessionResult
 
 	UPROPERTY(BlueprintReadWrite)
 	FBlueprintSessionResult SessionResult;
-
-	UPROPERTY(BlueprintReadWrite)
-	FBPUniqueNetId HostId;
 };

@@ -227,7 +227,8 @@ public:
 	//(endpoints are considered as sockets for splines)
 	//
 	//Default: (StaticMeshComponent, SplineComponent)
-	UPROPERTY(config, noclear, EditAnywhere, Category = Search, meta = (MetaClass = "SceneComponent"), AdvancedDisplay)
+	UPROPERTY(config, noclear, EditAnywhere, Category = Search,
+	meta = (MetaClass = "/Script/Engine.SceneComponent"), AdvancedDisplay)
 	TArray<FSoftClassPath> SourceComponentClasses;
 
 	//Components to snap to. Target of search operation.
@@ -237,6 +238,7 @@ public:
 	//(endpoints are considered as sockets for splines)
 	//
 	//Default: (StaticMeshComponent, SplineComponent)
-	UPROPERTY(config, noclear, EditAnywhere, Category = Search, meta = (MetaClass = "SceneComponent"), AdvancedDisplay)
+	UPROPERTY(config, noclear, EditAnywhere, Category = Search,
+	meta = (MetaClass = "/Script/Engine.SceneComponent"), AdvancedDisplay)
 	TArray<FSoftClassPath> TargetComponentClasses;
 };

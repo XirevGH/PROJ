@@ -12,7 +12,7 @@ public class PROJ : ModuleRules
 			"GameplayTasks","GameplayTags", "InputCore", "EnhancedInput", "OnlineSubsystem", "OnlineSubsystemUtils",
 			"OnlineSubsystemEOS", "MoviePlayer", "Slate", "SlateCore", "UMG", "DeveloperSettings"});
 
-		PrivateDependencyModuleNames.AddRange(new string[] { "AdvancedSessions", "AdvancedSteamSessions","Niagara" });
+		PrivateDependencyModuleNames.AddRange(new string[] {"Niagara" });
 
 		// Uncomment if you are using Slate UI
 		// PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });

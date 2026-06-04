@@ -2,8 +2,6 @@
 
 #pragma once
 
-#include <steam/steamclientpublic.h>
-
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerState.h"
 #include "AbilitySystemInterface.h"
